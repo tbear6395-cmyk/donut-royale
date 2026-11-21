@@ -390,6 +390,25 @@ main{max-width:1650px}
 #screen-dice .dice-stage{height:300px;display:flex;align-items:center;justify-content:center;perspective:none;overflow:visible}
 #screen-dice #diceVisual{display:block;width:min(100%,340px);height:280px;max-width:340px;flex:none;transform:none!important;filter:none!important;object-fit:contain}
 #screen-dice .dice-stage::before{bottom:15px;opacity:.8}
+
+/* Blackjack cover inspired by neon Minecraft casino thumbnails */
+.game-card.card-blackjack{min-height:244px;overflow:hidden;isolation:isolate;border:2px solid #b52dff;background:radial-gradient(ellipse at 60% 88%,#ab16d9 0%,#4b0875 40%,#170528 79%,#090413 100%);box-shadow:inset 0 0 18px #c74bff88,0 0 13px #b32dff66;padding:15px}
+.card-blackjack .game-art{inset:0;overflow:hidden}
+.card-blackjack .game-art::before{background:radial-gradient(ellipse at 56% 84%,#f647ff55,transparent 56%),repeating-linear-gradient(90deg,transparent 0 18px,#d52dff0c 19px 21px);opacity:1}
+.card-blackjack .game-title{position:absolute;z-index:9;top:10px;left:0;right:0;text-align:center;font-family:Impact,"Arial Black",sans-serif;font-size:clamp(27px,3vw,43px);letter-spacing:2px;line-height:1.15;color:#fff;text-shadow:3px 3px #22042c,0 0 12px #fff8}
+.card-blackjack .minecraft-dealer{position:absolute;z-index:3;left:6%;bottom:-56px;height:220px;max-width:none;image-rendering:pixelated;filter:drop-shadow(0 9px 5px #000b) drop-shadow(0 0 12px #f04cff);transform:rotate(-7deg)}
+.card-blackjack .dealer-glow{position:absolute;z-index:1;left:5%;bottom:-25%;width:70%;height:80%;background:radial-gradient(ellipse,#df38ff8a,transparent 67%);filter:blur(16px)}
+.card-blackjack .dealer-hand{position:absolute;z-index:6;left:47%;bottom:22%;font-size:42px;filter:grayscale(1) drop-shadow(3px 5px 2px #000b);transform:rotate(-18deg)}
+.card-blackjack .dealer-cards{position:absolute;right:7%;top:34%;z-index:5;display:block;width:42%;height:53%;padding:0;transform:none;border:0;background:none;box-shadow:none;text-shadow:none}
+.card-blackjack .playing-card{position:absolute;top:3%;width:62%;height:92%;border:2px solid #d8c8ef;border-radius:7px;background:linear-gradient(140deg,#fff,#e3e0ee);box-shadow:5px 7px 6px #14021b9e;color:#141225;font-family:Georgia,serif;transform:rotate(-17deg);display:flex;align-items:center;justify-content:center}
+.card-blackjack .playing-card small{position:absolute;top:7px;left:7px;font-size:18px;line-height:.9;font-weight:bold}
+.card-blackjack .playing-card strong{font-size:45px;font-weight:normal}
+.card-blackjack .playing-card.card-j{left:0;transform:rotate(-19deg)}
+.card-blackjack .playing-card.card-a{right:0;transform:rotate(12deg)}
+.card-blackjack .game-subtitle{position:absolute;bottom:13px;left:12px;z-index:8;font-size:10px}
+.card-blackjack .game-play{bottom:11px;right:11px;z-index:9}
+.card-blackjack .game-live{top:auto;bottom:42px;right:10px;left:auto;background:#12061bdc;border:1px solid #9438c6;color:#fff}
+@media(max-width:600px){.card-blackjack .minecraft-dealer{height:200px;left:3%}.card-blackjack .game-title{font-size:32px}.card-blackjack .dealer-cards{right:5%;width:43%}}
 </style>
 </head>
 
@@ -471,7 +490,7 @@ main{max-width:1650px}
     <button class="game-card card-coinflip" data-game="coinflip"><span class="game-live">● LIVE</span><span class="game-art art-coin" aria-hidden="true"><span>🪙</span><span>⚡</span></span><span class="game-title">COINFLIP</span><span class="game-subtitle">SONIC VS TAILS</span><span class="game-play">PLAY NOW ↗</span></button>
     <button class="game-card card-dice" data-game="dice"><span class="game-live">● LIVE</span><span class="game-art art-dice" aria-hidden="true"><span class="thumbnail-die">⚄</span><span class="thumbnail-die second">⚅</span></span><span class="game-title">LUCKY DICE</span><span class="game-subtitle">ROLL THE DICE</span><span class="game-play">PLAY NOW ↗</span></button>
     <button class="game-card card-slots" data-game="slots"><span class="game-live">● LIVE</span><span class="game-art art-slots" aria-hidden="true"><span>7</span><span>7</span><span>7</span></span><span class="game-title">TRIPLE SEVENS</span><span class="game-subtitle">JACKPOT SLOTS</span><span class="game-play">PLAY NOW ↗</span></button>
-    <button class="game-card card-blackjack" data-game="blackjack"><span class="game-live">● LIVE</span><span class="game-art art-blackjack" aria-hidden="true"><img class="minecraft-dealer" src="https://mc-heads.net/body/Steve/160" alt=""><span class="dealer-cards">A♠<b>J♣</b></span><span class="dealer-table"></span></span><span class="game-title">BLACKJACK</span><span class="game-subtitle">GET 21 · HIT / STAND</span><span class="game-play">PLAY NOW ↗</span></button>
+    <button class="game-card card-blackjack" data-game="blackjack"><span class="game-live">● LIVE</span><span class="game-art art-blackjack" aria-hidden="true"><img class="minecraft-dealer" src="https://mc-heads.net/body/Technoblade/220" alt=""><span class="dealer-glow"></span><span class="dealer-hand">✊</span><span class="dealer-cards"><span class="playing-card card-j"><small>J<br>♣</small><strong>♣</strong></span><span class="playing-card card-a"><small>A<br>♠</small><strong>♠</strong></span></span></span><span class="game-title">BLACKJACK</span><span class="game-subtitle">GET 21 · HIT / STAND</span><span class="game-play">PLAY NOW ↗</span></button>
     <button class="game-card card-wheel" data-game="wheel"><span class="game-live">● LIVE</span><span class="game-art art-wheel" aria-hidden="true"><span>🎯</span><span class="thumbnail-wheel"></span></span><span class="game-title">COLOR WHEEL</span><span class="game-subtitle">RED OR BLACK</span><span class="game-play">PLAY NOW ↗</span></button>
   </div>
 
