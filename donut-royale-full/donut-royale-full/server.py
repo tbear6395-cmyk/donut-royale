@@ -123,7 +123,7 @@ def create_session(db, uid):
 
 class Handler(BaseHTTPRequestHandler):
     def send_json(self, status, payload, cookie=None):
-        data = json.dumps(payload, ensure_ascii=False).encode("utf-8")
+        data = json.dumps(payload, ensure_ascii=False, default=str).encode("utf-8")
         self.send_response(status)
         self.send_header("Content-Type", "application/json; charset=utf-8")
         self.send_header("Content-Length", str(len(data)))
