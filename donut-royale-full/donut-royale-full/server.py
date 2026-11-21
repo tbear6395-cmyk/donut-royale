@@ -84,6 +84,9 @@ def setup_postgres():
             expires TEXT NOT NULL)""")
         db.execute("UPDATE users SET approval='approved' WHERE approval IS NULL OR approval!='approved'")
         db.execute("CREATE TABLE IF NOT EXISTS mines_games (user_id BIGINT PRIMARY KEY REFERENCES users(id), bet BIGINT NOT NULL, mines INTEGER NOT NULL, bombs TEXT NOT NULL, revealed TEXT NOT NULL DEFAULT '[]', created TIMESTAMP DEFAULT CURRENT_TIMESTAMP)")
+        # Retired Mines game: return any still-locked stakes once, then clear rounds.
+        db.execute("UPDATE users SET balance=balance+(SELECT COALESCE(SUM(bet),0) FROM mines_games WHERE user_id=users.id) WHERE id IN (SELECT user_id FROM mines_games)")
+        db.execute("DELETE FROM mines_games")
         seed_owner(db)
         seed_extra_admin(db)
         db.execute("DELETE FROM sessions WHERE expires<=?", (now().isoformat(),))
@@ -125,6 +128,9 @@ def setup():
         );
         """)
         db.execute("CREATE TABLE IF NOT EXISTS mines_games (user_id INTEGER PRIMARY KEY, bet INTEGER NOT NULL, mines INTEGER NOT NULL, bombs TEXT NOT NULL, revealed TEXT NOT NULL DEFAULT '[]', created TEXT DEFAULT CURRENT_TIMESTAMP)")
+        # Retired Mines game: return any still-locked stakes once, then clear rounds.
+        db.execute("UPDATE users SET balance=balance+(SELECT COALESCE(SUM(bet),0) FROM mines_games WHERE user_id=users.id) WHERE id IN (SELECT user_id FROM mines_games)")
+        db.execute("DELETE FROM mines_games")
         cols = {r["name"] for r in db.execute("PRAGMA table_info(users)")}
         if "approval" not in cols:
             db.execute("ALTER TABLE users ADD COLUMN approval TEXT DEFAULT 'approved'")
@@ -150,22 +156,6 @@ def create_session(db, uid):
                (hashlib.sha256(token.encode()).hexdigest(), uid,
                 (now() + timedelta(days=365)).isoformat()))
     return token
-
-def mines_multiplier(mines, safe_revealed):
-    from math import comb
-    if safe_revealed <= 0:
-        return 1.0
-    return round(0.97 * comb(25, safe_revealed) / comb(25 - mines, safe_revealed), 4)
-
-def mines_state(db, uid):
-    row = db.execute("SELECT bet,mines,revealed FROM mines_games WHERE user_id=?", (uid,)).fetchone()
-    if not row:
-        return {"active": False}
-    revealed = json.loads(row["revealed"])
-    mult = mines_multiplier(row["mines"], len(revealed))
-    return {"active": True, "bet": row["bet"], "mines": row["mines"],
-            "revealed": revealed, "multiplier": mult,
-            "cashout": max(row["bet"], int(row["bet"] * mult)) if revealed else row["bet"]}
 
 BLACKJACK_HANDS = {}
 def bj_card():
@@ -254,10 +244,6 @@ class Handler(BaseHTTPRequestHandler):
         user = self.me()
         if not user:
             return self.fail(401, "Please log in")
-        if path == "/api/mines":
-            with db_open() as db:
-                state = mines_state(db, user["id"])
-            return self.send_json(200, state)
         if path == "/api/tickets":
             with db_open() as db:
                 if user["role"] in ("owner", "admin"):
@@ -418,71 +404,6 @@ class Handler(BaseHTTPRequestHandler):
                     return self.fail(403, "Cannot change owner")
                 db.execute("UPDATE users SET role=? WHERE id=?", (role, uid))
             return self.send_json(200, {"ok": True})
-        if path == "/api/mines":
-            action = data.get("action")
-            if action not in ("start", "reveal", "cashout"):
-                return self.fail(400, "Invalid Mines action")
-            uid = user["id"]
-            with LOCK, db_open() as db:
-                balance_row = db.execute("SELECT balance FROM users WHERE id=?" + (" FOR UPDATE" if USE_POSTGRES else ""), (uid,)).fetchone()
-                if not balance_row:
-                    return self.fail(401, "Please log in")
-                game = db.execute("SELECT * FROM mines_games WHERE user_id=?", (uid,)).fetchone()
-                if action == "start":
-                    if game:
-                        return self.fail(409, "Finish or cash out your current Mines game first")
-                    amount, mines = data.get("amount"), data.get("mines")
-                    if type(amount) is not int or not 1 <= amount <= MAX_BET:
-                        return self.fail(400, "Bet must be between 1 and 3B")
-                    if type(mines) is not int or not 1 <= mines <= 10:
-                        return self.fail(400, "Choose between 1 and 10 mines")
-                    if amount > balance_row["balance"]:
-                        return self.fail(400, "Not enough balance")
-                    if amount == balance_row["balance"]:
-                        return self.fail(400, "ALL-IN bets are not allowed in Mines. Leave some balance.")
-                    bombs = sorted(secrets.SystemRandom().sample(range(25), mines))
-                    db.execute("UPDATE users SET balance=balance-? WHERE id=?", (amount, uid))
-                    db.execute("INSERT INTO mines_games(user_id,bet,mines,bombs,revealed) VALUES(?,?,?,?,?)",
-                               (uid, amount, mines, json.dumps(bombs), "[]"))
-                    result = mines_state(db, uid)
-                elif not game:
-                    return self.fail(409, "Start a Mines game first")
-                elif action == "reveal":
-                    cell = data.get("cell")
-                    if type(cell) is not int or not 0 <= cell < 25:
-                        return self.fail(400, "Invalid tile")
-                    revealed = json.loads(game["revealed"])
-                    if cell in revealed:
-                        return self.fail(409, "Tile already revealed")
-                    bombs = json.loads(game["bombs"])
-                    if cell in bombs:
-                        db.execute("DELETE FROM mines_games WHERE user_id=?", (uid,))
-                        result = {"active": False, "outcome": "lose", "bombs": bombs,
-                                  "revealed": revealed, "hit": cell, "bet": game["bet"]}
-                    else:
-                        revealed.append(cell)
-                        if len(revealed) == 25 - game["mines"]:
-                            payout = max(game["bet"], int(game["bet"] * mines_multiplier(game["mines"], len(revealed))))
-                            db.execute("UPDATE users SET balance=balance+? WHERE id=?", (payout, uid))
-                            db.execute("DELETE FROM mines_games WHERE user_id=?", (uid,))
-                            result = {"active": False, "outcome": "win", "bombs": bombs,
-                                      "revealed": revealed, "payout": payout, "bet": game["bet"]}
-                        else:
-                            db.execute("UPDATE mines_games SET revealed=? WHERE user_id=?", (json.dumps(revealed), uid))
-                            result = mines_state(db, uid)
-                            result["outcome"] = "safe"
-                            result["hit"] = cell
-                else:
-                    revealed = json.loads(game["revealed"])
-                    if not revealed:
-                        return self.fail(400, "Reveal at least one diamond before cashing out")
-                    payout = max(game["bet"], int(game["bet"] * mines_multiplier(game["mines"], len(revealed))))
-                    db.execute("UPDATE users SET balance=balance+? WHERE id=?", (payout, uid))
-                    db.execute("DELETE FROM mines_games WHERE user_id=?", (uid,))
-                    result = {"active": False, "outcome": "cashout", "payout": payout,
-                              "bet": game["bet"], "revealed": revealed, "bombs": json.loads(game["bombs"])}
-                result["balance"] = db.execute("SELECT balance FROM users WHERE id=?", (uid,)).fetchone()["balance"]
-            return self.send_json(200, result)
         if path == "/api/blackjack":
             action=data.get("action")
             if action not in ("deal","hit","stand"):
