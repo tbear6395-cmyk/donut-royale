@@ -45,6 +45,20 @@ def db_open():
     db.execute("PRAGMA busy_timeout=30000")
     return db
 
+def seed_extra_admin(db):
+    """Create the configured staff account once; never reset an existing password or balance."""
+    name = os.getenv("EXTRA_ADMIN_USERNAME", "").strip()
+    password = os.getenv("EXTRA_ADMIN_PASSWORD", "")
+    if not re.fullmatch(r"[A-Za-z0-9_]{3,16}", name) or len(password) < 8:
+        return
+    existing = db.execute("SELECT id,role FROM users WHERE lower(username)=lower(?)", (name,)).fetchone()
+    if existing:
+        return
+    salt = secrets.token_hex(16)
+    db.execute("INSERT INTO users(username,salt,pw,role,balance,approval) VALUES(?,?,?,'admin',0,'approved')",
+               (name, salt, pw_hash(password, salt)))
+
+
 def setup_postgres():
     with db_open() as db:
         db.execute("""CREATE TABLE IF NOT EXISTS users (
@@ -66,6 +80,7 @@ def setup_postgres():
             expires TEXT NOT NULL)""")
         db.execute("UPDATE users SET approval='approved' WHERE approval IS NULL OR approval!='approved'")
         seed_owner(db)
+        seed_extra_admin(db)
         db.execute("DELETE FROM sessions WHERE expires<=?", (now().isoformat(),))
 
 def seed_owner(db):
@@ -120,6 +135,7 @@ def setup():
             else:
                 db.execute("INSERT INTO users(username,salt,pw,role,balance,approval) VALUES(?,?,?,'owner',0,'approved')",
                            (name, salt, pw_hash(password, salt)))
+        seed_extra_admin(db)
         db.execute("DELETE FROM sessions WHERE expires<=?", (now().isoformat(),))
 
 def create_session(db, uid):
