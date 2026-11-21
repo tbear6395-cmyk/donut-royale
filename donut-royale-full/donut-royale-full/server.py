@@ -124,7 +124,7 @@ def create_session(db, uid):
     token = secrets.token_urlsafe(40)
     db.execute("INSERT INTO sessions(token_hash,user_id,expires) VALUES(?,?,?)",
                (hashlib.sha256(token.encode()).hexdigest(), uid,
-                (now() + timedelta(days=30)).isoformat()))
+                (now() + timedelta(days=365)).isoformat()))
     return token
 
 class Handler(BaseHTTPRequestHandler):
@@ -174,7 +174,7 @@ class Handler(BaseHTTPRequestHandler):
         return dict(row) if row else None
 
     def cookie(self, token):
-        cookie = "session=" + token + "; Path=/; HttpOnly; SameSite=Lax; Max-Age=2592000"
+        cookie = "session=" + token + "; Path=/; HttpOnly; SameSite=Lax; Max-Age=31536000"
         if os.getenv("RENDER") or os.getenv("COOKIE_SECURE") == "1":
             cookie += "; Secure"
         return cookie
@@ -212,7 +212,7 @@ class Handler(BaseHTTPRequestHandler):
                                          WHERE t.status='open' ORDER BY t.id DESC""").fetchall()
                 else:
                     rows = db.execute("""SELECT t.*,u.username FROM tickets t JOIN users u ON u.id=t.user_id
-                                         WHERE t.status='open' AND t.user_id=? ORDER BY t.id DESC""",
+                                         WHERE t.user_id=? ORDER BY t.id DESC""",
                                       (user["id"],)).fetchall()
             return self.send_json(200, {"tickets": [dict(r) for r in rows]})
         if path == "/api/users":
