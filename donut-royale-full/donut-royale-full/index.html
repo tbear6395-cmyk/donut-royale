@@ -326,7 +326,7 @@ main{margin-left:240px;padding:27px 34px;max-width:none}
     <h1>ADD RANKS</h1>
     <p>Enter a player's Minecraft nickname.</p>
     <label for="rankPlayerNick">PLAYER NICKNAME</label>
-    <div id="rankAdminForm"><input id="rankPlayerNick" type="text" placeholder="Enter player nickname" maxlength="32" autocomplete="off"><div style="margin-top:20px"><button class="primary" type="button" id="rankSuccessButton">SUCCESS — GIVE ADMIN</button></div></div>
+    <div id="rankAdminForm"><input id="rankPlayerNick" list="registeredRankPlayers" type="text" placeholder="Enter player nickname" maxlength="32" autocomplete="off"><datalist id="registeredRankPlayers"></datalist><p class="ranks-help" id="rankPlayerHint">Loading registered players...</p><div style="margin-top:20px"><button class="primary" type="button" id="rankSuccessButton">SUCCESS — GIVE ADMIN</button></div></div>
     <p class="ranks-help" id="rankResult" role="status">Press SUCCESS to grant the ADMIN rank to this player.</p>
   </div>
 </section>
@@ -786,12 +786,24 @@ $("rankSuccessButton").onclick=async ()=>{
     toast(result.username+" is now an admin!");
     $("rankPlayerNick").value="";
     await loadUsers();
+    await loadRankPlayers();
   }catch(err){
-    $("rankResult").textContent="❌ "+err.message;
+    $("rankResult").textContent="❌ "+err.message+(err.message.includes("Player not found")?" Check the registered nicknames in the suggestions above.":"");
     toast(err.message);
   }finally{btn.disabled=false;}
 };
 $("rankPlayerNick").addEventListener("keydown",e=>{if(e.key==="Enter"){$("rankSuccessButton").click();}});
+
+async function loadRankPlayers(){
+  try{
+    const result=await api("users");
+    const players=(result.users||[]);
+    const list=$("registeredRankPlayers");
+    list.replaceChildren();
+    players.forEach(u=>{const option=document.createElement("option");option.value=u.username;list.append(option);});
+    $("rankPlayerHint").textContent=players.length+" registered accounts found. Select a nickname from suggestions.";
+  }catch(err){$("rankPlayerHint").textContent="Could not load accounts: "+err.message;}
+}
 
 function syncRanksPage(){
   const allowed=!!me && ["admin","owner"].includes(me.role);
@@ -801,7 +813,7 @@ function syncRanksPage(){
   document.querySelector(".hero").hidden=active;
   $("dashboard").hidden=active;
   document.querySelector("footer").hidden=active;
-  if(active){window.scrollTo(0,0);$("rankPlayerNick").focus();}
+  if(active){window.scrollTo(0,0);$("rankPlayerNick").focus();loadRankPlayers();}
 }
 window.addEventListener("hashchange",syncRanksPage);
 
