@@ -235,41 +235,96 @@ body.auth-locked #dashboard .game-card{pointer-events:none}
 .rules-note{padding:10px;background:#121b2d;border:1px solid #40516b;
   border-radius:9px;color:#d4dff0;font-size:12px;line-height:1.5;margin-bottom:15px}
 @media(max-width:700px){#auth .auth-modal{padding:18px}}
+
+/* DONUT ROYALE — neon lobby redesign */
+:root{color-scheme:dark}
+body{background:radial-gradient(ellipse at 75% -10%,#20103e 0,transparent 48%),#090b19;font-family:Inter,Arial,sans-serif}
+header{height:72px;background:#0d0d20ed;border-bottom:1px solid #34304d;box-shadow:0 4px 24px #0004;padding:0 30px}
+.logo{font-size:27px;letter-spacing:-1.4px;text-shadow:0 0 20px #ba43ed40}
+.logo em{font-style:italic;color:#fff}
+.logo span{color:#d04af5}
+#topBalance{font-weight:900;color:#fff;font-size:17px}
+header>div:last-child{display:flex;align-items:center;gap:12px;background:#12172c;border:1px solid #464367;border-radius:12px;padding:9px 15px}
+#account{gap:10px}
+#account button{background:#29203e;color:#f3dcff;border:1px solid #764ba5;border-radius:9px;padding:7px 11px;font-size:12px;font-weight:800}
+aside{top:72px;width:240px;background:linear-gradient(180deg,#121125,#0c1022);border-right:1px solid #33304d;padding:20px 12px}
+aside .side-brand{font-size:16px;margin:3px 15px 23px;color:#f1d1ff;letter-spacing:2px}
+aside h4{margin:26px 16px 9px;color:#9895b3;letter-spacing:1px;font-size:11px}
+aside button,aside a{padding:13px 17px;border:1px solid transparent;font-weight:600;font-size:14px}
+aside button:hover,aside a:hover{background:#2b1b46;border-color:#63388b}
+aside .nav-lobby{background:linear-gradient(95deg,#62248d,#291b46);border:1px solid #b843ef;color:#fff;box-shadow:0 0 18px #ad38e74d}
+aside .winter{margin:32px 14px;color:#aa88cb;font-size:12px}
+main{margin-left:240px;padding:27px 34px;max-width:none}
+.hero{min-height:290px;display:flex;position:relative;overflow:hidden;align-items:center;padding:32px 43px;background:radial-gradient(circle at 83% 55%,#8025bd 0,#3b175d 23%,transparent 50%),linear-gradient(120deg,#161934,#21133d 70%,#37144e);border:1px solid #6840a3;box-shadow:inset 0 0 45px #6e27b324;margin-bottom:24px}
+.hero-copy{position:relative;z-index:1;max-width:650px}
+.hero .eyebrow{color:#d0c4f6;letter-spacing:3px;font-size:12px;font-weight:800}
+.hero h1{font-size:clamp(32px,4.2vw,58px);line-height:1.06;margin:17px 0;letter-spacing:-1.7px;text-transform:none}
+.hero h1 span{color:#e17aff;text-shadow:0 0 24px #d536ef70}
+.hero p:not(.eyebrow){font-size:16px;max-width:460px;line-height:1.5}
+.hero .primary{margin-top:9px}
+.hero-art{position:absolute;right:5%;top:0;bottom:0;width:36%;display:grid;place-items:center;pointer-events:none}
+.hero-crown{font-size:clamp(110px,16vw,230px);transform:rotate(-13deg);filter:drop-shadow(0 0 35px #e75aff)}
+.hero-donut{position:absolute;bottom:13px;left:3%;font-size:75px;transform:rotate(-20deg);filter:drop-shadow(0 0 14px #f55de4)}
+.hero-spark{position:absolute;right:1%;top:25px;font-size:55px;color:#ffe282;text-shadow:0 0 30px #ffcb3d}
+.primary{background:linear-gradient(110deg,#8b2cba,#c344ee);box-shadow:0 0 16px #b338e04d;border:1px solid #ed83ff;border-radius:11px}
+.panel{background:linear-gradient(145deg,#181a35,#101426);border:1px solid #39385f;box-shadow:0 8px 28px #0002}
+.stats{gap:15px}
+.stats .panel{min-height:140px}
+.stats .panel h2{color:#f2d8ff;font-size:25px}
+#gamesHeading{font-size:23px;letter-spacing:-.5px;margin:27px 0 18px}
+.rules-note{background:#19142d;border-color:#3b315a;color:#c9c4df}
+.game-grid{grid-template-columns:repeat(2,minmax(0,1fr));gap:18px}
+.game-card{min-height:210px;position:relative;isolation:isolate;overflow:hidden;display:flex;flex-direction:column;justify-content:flex-end;align-items:flex-start;border-radius:21px;padding:22px 27px;text-align:left;box-shadow:inset 0 0 28px #0007,0 8px 20px #0004;transition:transform .22s,box-shadow .22s}
+.game-card::before{content:"";position:absolute;inset:0;z-index:-1;opacity:.65;background:repeating-linear-gradient(135deg,transparent 0 28px,#fff1 29px 30px,transparent 31px 57px);mask-image:linear-gradient(90deg,transparent,#000)}
+.game-card::after{content:"✦";position:absolute;right:9%;top:12%;font-size:85px;opacity:.22;text-shadow:0 0 28px currentColor}
+.game-card .emoji{font-size:78px;position:absolute;right:12%;bottom:20px;margin:0;filter:drop-shadow(0 0 24px currentColor);transform:rotate(-14deg)}
+.game-card strong{font-size:clamp(25px,3.4vw,44px);font-style:italic;font-weight:1000;letter-spacing:1px;text-shadow:3px 4px 0 #0008,0 0 20px #fff4}
+.game-card small{font-size:12px;font-weight:800;letter-spacing:1.5px;color:#fff9;background:#0007;padding:6px 10px;border-radius:20px;margin-top:8px}
+.game-card:hover{transform:translateY(-5px) scale(1.01);box-shadow:0 0 30px #b644ed40,inset 0 0 28px #0005}
+.card-coinflip{background:radial-gradient(circle at 75% 55%,#d4a02e88,transparent 45%),linear-gradient(130deg,#32210d,#8a5309 65%,#1c160f);border:2px solid #ffca3e}
+.card-dice{background:radial-gradient(circle at 75% 55%,#8f55ff88,transparent 50%),linear-gradient(130deg,#1b1249,#43238d 65%,#140d2e);border:2px solid #ae59ff}
+.card-slots{background:radial-gradient(circle at 75% 55%,#187bff88,transparent 50%),linear-gradient(130deg,#071d53,#1347a1 65%,#0b102d);border:2px solid #438fff}
+.card-wheel{background:radial-gradient(circle at 75% 55%,#ff287b88,transparent 50%),linear-gradient(130deg,#430d27,#a11753 65%,#270d25);border:2px solid #ff4a96}
+.game-window{background:linear-gradient(145deg,#1c1639,#101328);border-color:#a14de4;box-shadow:0 0 60px #aa43ee3b}
+@media(max-width:900px){main{padding:18px}aside{width:200px}main{margin-left:200px}.hero-art{opacity:.55}.hero-copy{max-width:100%}}
+@media(max-width:700px){header{height:65px;padding:8px 12px}.logo{font-size:19px}header>div:last-child{padding:6px 8px;font-size:12px}#topBalance{font-size:13px}aside{position:static;width:auto;height:auto;display:flex;flex-wrap:wrap;gap:4px;padding:8px}aside h4,aside .winter,aside .side-brand{display:none}aside button,aside a{width:auto;font-size:12px;margin:0;padding:9px}main{margin:0;padding:12px}.hero{min-height:250px;padding:24px}.hero-art{right:-8%;opacity:.3}.hero h1{font-size:35px}.stats{grid-template-columns:1fr}.game-grid{grid-template-columns:repeat(2,minmax(0,1fr));gap:10px}.game-card{min-height:165px;padding:15px}.game-card strong{font-size:23px}.game-card .emoji{font-size:50px;right:8%;bottom:30px}.game-card small{font-size:10px;letter-spacing:0}}
 </style>
 </head>
 
 <body>
 
 <header>
-  <div class="logo">🍩 DONUT <span>ROYALE</span></div>
+  <div class="logo">🍩 <em>Donut<span>Royale</span></em></div>
   <div>🪙 <span id="topBalance">0</span> <span id="account"></span></div>
 </header>
 
 <aside>
-  <h2>❄ WINTER ROYALE</h2>
-  <h4>MINIGAMES</h4>
+  <h2 class="side-brand">👑 ROYALE</h2>
+  <a class="nav-lobby" href="#dashboard">⌂ &nbsp; Lobby</a>
+  <h4>GAMES</h4>
   <button data-game="coinflip">🪙 Coinflip</button>
   <button data-game="dice">🎲 Lucky Dice</button>
   <button data-game="slots">🎰 Triple Sevens</button>
   <button data-game="wheel">🎯 Color Wheel</button>
+  <h4>TICKETS</h4>
+  <a href="#myTickets">🎟️ My Tickets</a>
+  <a href="#ticketSection">✎ &nbsp; Create Ticket</a>
   <h4>ACCOUNT</h4>
-  <a href="#ticketSection">🎟️ Private Tickets</a>
-  <a href="#myTickets">📬 My Tickets</a>
   <a href="#admin" id="adminNav" hidden>🛡️ Admin Panel</a>
-  <div class="winter">🎄 Merry Christmas! ❄</div>
+  <div class="winter">🍩 DONUT ROYALE</div>
 </aside>
 
 <main>
 
 <section class="hero">
-  <p>❄ MINECRAFT-INSPIRED WINTER ARCADE</p>
-  <h1>YOUR ARENA.<br><span>YOUR ROYALE.</span></h1>
-  <p>Play Coinflip, Lucky Dice, Triple Sevens and Color Wheel.</p>
-  <button class="primary" id="heroPlay">EXPLORE GAMES →</button>
+  <div class="hero-copy">
+    <p class="eyebrow">✦ DONUTSMP INSPIRED CASINO</p>
+    <h1>WELCOME TO<br><span>DONUT ROYALE.</span></h1>
+    <p>Spin, flip, roll and win. A Minecraft-inspired arcade with private tickets and player accounts.</p>
+    <button class="primary" id="heroPlay">🎮 EXPLORE GAMES</button>
+  </div>
+  <div class="hero-art" aria-hidden="true"><div class="hero-crown">👑</div><div class="hero-donut">🍩</div><div class="hero-spark">✦</div></div>
 </section>
-
-
-
 <div id="dashboard" hidden>
 
   <div class="stats">
@@ -290,29 +345,29 @@ body.auth-locked #dashboard .game-card{pointer-events:none}
     </div>
   </div>
 
-  <h2 id="gamesHeading">⭐ Featured Games</h2>
+  <h2 id="gamesHeading">⭐ Recommended Games</h2>
   <div class="rules-note">Game rules: 40% win chance, 60% loss chance. Winning bets return 2×. Only betting your entire balance (all-in) automatically loses. Maximum bet: 3B.</div>
 
   <div class="game-grid">
-    <button class="game-card" data-game="coinflip">
+    <button class="game-card card-coinflip" data-game="coinflip">
       <span class="emoji">🪙</span>
       <strong>COINFLIP</strong>
       <small>SONIC VS TAILS</small>
     </button>
 
-    <button class="game-card" data-game="dice">
+    <button class="game-card card-dice" data-game="dice">
       <span class="emoji">🎲</span>
       <strong>LUCKY DICE</strong>
       <small>ROLL A SIX</small>
     </button>
 
-    <button class="game-card" data-game="slots">
+    <button class="game-card card-slots" data-game="slots">
       <span class="emoji">🎰</span>
       <strong>TRIPLE SEVENS</strong>
       <small>SPIN THE REELS</small>
     </button>
 
-    <button class="game-card" data-game="wheel">
+    <button class="game-card card-wheel" data-game="wheel">
       <span class="emoji">🎯</span>
       <strong>COLOR WHEEL</strong>
       <small>RED OR BLACK</small>
