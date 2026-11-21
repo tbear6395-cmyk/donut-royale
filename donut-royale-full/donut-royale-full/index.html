@@ -820,7 +820,7 @@ document.querySelectorAll(".wheel-choice").forEach(b=>{
 document.querySelectorAll(".quick").forEach(group=>{
   group.querySelectorAll("button").forEach(b=>{
     b.onclick = ()=>{
-      $(group.dataset.input).value = b.dataset.value;
+      $(group.dataset.input).value = b.textContent.trim();
     };
   });
 });
