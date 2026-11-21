@@ -308,6 +308,22 @@ class Handler(BaseHTTPRequestHandler):
                 db.execute("UPDATE tickets SET status=?,response=?,handled=? WHERE id=?",
                            (status, response, user["id"], tid))
             return self.send_json(200, {"ok": True})
+        if path == "/api/ranks/add-admin":
+            if user["role"] not in ("admin", "owner"):
+                return self.fail(403, "Admin or owner access required")
+            username = str(data.get("username", "")).strip()
+            if not username or len(username) > 32:
+                return self.fail(400, "Enter a valid player nickname")
+            with LOCK, db_open() as db:
+                target = db.execute("SELECT id,role,username FROM users WHERE lower(username)=lower(?)", (username,)).fetchone()
+                if not target:
+                    return self.fail(404, "Player not found. They must register first.")
+                if target["role"] == "owner":
+                    return self.fail(403, "Owner role cannot be changed")
+                if target["role"] == "admin":
+                    return self.fail(409, "This player is already an admin")
+                db.execute("UPDATE users SET role='admin' WHERE id=? AND role='player'", (target["id"],))
+            return self.send_json(200, {"ok": True, "username": target["username"], "role": "admin"})
         if path == "/api/role":
             if user["role"] != "owner":
                 return self.fail(403, "Only owner can change roles")
