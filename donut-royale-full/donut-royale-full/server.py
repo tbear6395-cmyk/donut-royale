@@ -6,91 +6,294 @@ from http.cookies import SimpleCookie
 from urllib.parse import urlparse
 
 BASE = Path(__file__).resolve().parent
-DB = Path(os.getenv('DATABASE_PATH', str(BASE / 'data.sqlite3')))
+DB = Path(os.getenv("DATABASE_PATH", str(BASE / "data.sqlite3")))
 DB.parent.mkdir(parents=True, exist_ok=True)
 LOCK = threading.RLock()
 MAX_BET = 3_000_000_000
 
-def now(): return datetime.now(timezone.utc)
-def pw_hash(password, salt): return hashlib.pbkdf2_hmac('sha256', password.encode(), bytes.fromhex(salt), 260000).hex()
+def now():
+    return datetime.now(timezone.utc)
+
+def pw_hash(password, salt):
+    return hashlib.pbkdf2_hmac("sha256", password.encode(), bytes.fromhex(salt), 260000).hex()
+
 def db_open():
-    db=sqlite3.connect(DB, timeout=30)
-    db.row_factory=sqlite3.Row
-    db.execute('PRAGMA busy_timeout=30000')
+    db = sqlite3.connect(DB, timeout=30)
+    db.row_factory = sqlite3.Row
+    db.execute("PRAGMA busy_timeout=30000")
     return db
 
 def setup():
     with db_open() as db:
-        db.executescript('''
-        CREATE TABLE IF NOT EXISTS users(id INTEGER PRIMARY KEY, username TEXT UNIQUE COLLATE NOCASE, salt TEXT NOT NULL, pw TEXT NOT NULL, role TEXT NOT NULL DEFAULT 'player', balance INTEGER NOT NULL DEFAULT 0);
-        CREATE TABLE IF NOT EXISTS tickets(id INTEGER PRIMARY KEY, user_id INTEGER NOT NULL, kind TEXT NOT NULL, amount INTEGER NOT NULL DEFAULT 0, message TEXT NOT NULL DEFAULT '', status TEXT NOT NULL DEFAULT 'open', response TEXT NOT NULL DEFAULT '', created TEXT DEFAULT CURRENT_TIMESTAMP, handled INTEGER DEFAULT 0);
-        CREATE TABLE IF NOT EXISTS sessions(token_hash TEXT PRIMARY KEY, user_id INTEGER NOT NULL, expires TEXT NOT NULL);
-        ''')
-        cols={r['name'] for r in db.execute('PRAGMA table_info(users)')}
-        if 'approval' not in cols: db.execute("ALTER TABLE users ADD COLUMN approval TEXT DEFAULT 'approved'")
+        db.executescript("""
+        CREATE TABLE IF NOT EXISTS users (
+            id INTEGER PRIMARY KEY, username TEXT UNIQUE COLLATE NOCASE,
+            salt TEXT NOT NULL, pw TEXT NOT NULL,
+            role TEXT NOT NULL DEFAULT 'player', balance INTEGER NOT NULL DEFAULT 0
+        );
+        CREATE TABLE IF NOT EXISTS tickets (
+            id INTEGER PRIMARY KEY, user_id INTEGER NOT NULL,
+            kind TEXT NOT NULL, amount INTEGER NOT NULL DEFAULT 0,
+            message TEXT NOT NULL DEFAULT '', status TEXT NOT NULL DEFAULT 'open',
+            response TEXT NOT NULL DEFAULT '', created TEXT DEFAULT CURRENT_TIMESTAMP,
+            handled INTEGER DEFAULT 0
+        );
+        CREATE TABLE IF NOT EXISTS sessions (
+            token_hash TEXT PRIMARY KEY, user_id INTEGER NOT NULL, expires TEXT NOT NULL
+        );
+        """)
+        cols = {r["name"] for r in db.execute("PRAGMA table_info(users)")}
+        if "approval" not in cols:
+            db.execute("ALTER TABLE users ADD COLUMN approval TEXT DEFAULT 'approved'")
         db.execute("UPDATE users SET approval='approved' WHERE approval IS NULL OR approval!='approved'")
-        owner=db.execute("SELECT id FROM users WHERE role='owner'").fetchone()
-        name=os.getenv('OWNER_USERNAME','').strip(); password=os.getenv('OWNER_PASSWORD','')
-        if not owner and re.fullmatch(r'[A-Za-z0-9_]{3,16}',name) and len(password)>=12:
-            salt=secrets.token_hex(16)
-            existing=db.execute('SELECT id FROM users WHERE username=? COLLATE NOCASE',(name,)).fetchone()
+        owner = db.execute("SELECT id FROM users WHERE role='owner'").fetchone()
+        name = os.getenv("OWNER_USERNAME", "").strip()
+        password = os.getenv("OWNER_PASSWORD", "")
+        if not owner and re.fullmatch(r"[A-Za-z0-9_]{3,16}", name) and len(password) >= 12:
+            salt = secrets.token_hex(16)
+            existing = db.execute("SELECT id FROM users WHERE username=? COLLATE NOCASE", (name,)).fetchone()
             if existing:
-                db.execute("UPDATE users SET role='owner', salt=?, pw=?, approval='approved' WHERE id=?",(salt,pw_hash(password,salt),existing['id']))
+                db.execute("UPDATE users SET role='owner', salt=?, pw=?, approval='approved' WHERE id=?",
+                           (salt, pw_hash(password, salt), existing["id"]))
             else:
-                db.execute("INSERT INTO users(username,salt,pw,role,balance,approval) VALUES(?,?,?,'owner',0,'approved')",(name,salt,pw_hash(password,salt)))
-        db.execute('DELETE FROM sessions WHERE expires<=?',(now().isoformat(),))
+                db.execute("INSERT INTO users(username,salt,pw,role,balance,approval) VALUES(?,?,?,'owner',0,'approved')",
+                           (name, salt, pw_hash(password, salt)))
+        db.execute("DELETE FROM sessions WHERE expires<=?", (now().isoformat(),))
 
-def session(db, uid):
-    token=secrets.token_urlsafe(40)
-    db.execute('INSERT INTO sessions(token_hash,user_id,expires) VALUES(?,?,?)',(hashlib.sha256(token.encode()).hexdigest(),uid,(now()+timedelta(days=30)).isoformat()))
+def create_session(db, uid):
+    token = secrets.token_urlsafe(40)
+    db.execute("INSERT INTO sessions(token_hash,user_id,expires) VALUES(?,?,?)",
+               (hashlib.sha256(token.encode()).hexdigest(), uid,
+                (now() + timedelta(days=30)).isoformat()))
     return token
-
-SITE_HTML = '<!DOCTYPE html>\n<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>DONUT ROYALE 🍩</title>\n<style>\n:root{--bg:#080d18;--panel:#172234;--line:#35445e;--muted:#a2b0c5;--gold:#f3c65d;--green:#30c778}*{box-sizing:border-box}body{margin:0;background:radial-gradient(circle at 75% 0%,#382154,transparent 40%),#080d18;color:#f2f6ff;font-family:Inter,Arial,sans-serif}button,input,select,textarea{font:inherit}button{cursor:pointer;color:#fff;border:0}button:disabled{opacity:.5;cursor:wait}input,select,textarea{width:100%;padding:12px 14px;background:#0c1625;color:white;border:1px solid #42516b;border-radius:9px}input:focus,textarea:focus,select:focus{outline:1px solid #73baff}h1,h2,h3{margin-top:0}.hidden{display:none!important}.muted{color:var(--muted)}.small{font-size:12px}.primary{background:linear-gradient(110deg,#7654f6,#a565f7);border-radius:9px;padding:13px 16px;font-weight:800}.secondary{background:#374862;padding:10px 12px;border-radius:8px}.success{background:#217e56;padding:10px 12px;border-radius:8px}.danger{background:#9b3d55;padding:10px 12px;border-radius:8px}\n#app{display:flex;min-height:100vh}#app.locked{filter:blur(9px) brightness(.48);pointer-events:none;user-select:none;height:100vh;overflow:hidden}.sidebar{width:235px;flex-shrink:0;background:#0c1423;padding:24px 15px;border-right:1px solid #2c3850}.logo{font-size:21px;font-weight:950;margin-bottom:30px}.logo span{color:#bd8cff}.nav{display:grid;gap:7px}.nav button{background:transparent;text-align:left;padding:13px;border-radius:9px;color:#d5dbea;font-weight:700}.nav button.active,.nav button:hover{background:#3d326d}.main{flex:1;min-width:0;padding:26px 34px 95px}.topbar{display:flex;justify-content:space-between;gap:12px;align-items:center;flex-wrap:wrap;margin-bottom:25px}.balance{background:#272441;color:var(--gold);padding:12px 18px;border:1px solid #65518d;border-radius:10px;font-weight:900}.hero{padding:30px;background:linear-gradient(115deg,#4b2885,#20274c);border:1px solid #6855a3;border-radius:20px;margin-bottom:23px}.grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:19px}.panel{background:#152033;border:1px solid var(--line);border-radius:17px;padding:23px;min-width:0}.game-icon{font-size:45px;margin:20px 0}.controls{display:grid;gap:11px;margin-top:20px}.result{min-height:23px;margin-top:14px;color:var(--gold);font-weight:850}.rules{background:#111b2b;border:1px solid #3c4c65;border-radius:9px;padding:12px;margin:14px 0 22px;font-size:12px;line-height:1.6}.coin-stage{width:175px;height:175px;perspective:1000px;margin:25px auto}.coin{width:175px;height:175px;position:relative;transform-style:preserve-3d}.coin-face{position:absolute;inset:0;border:9px solid #e6b74a;border-radius:50%;backface-visibility:hidden;display:flex;justify-content:center;align-items:center;background:radial-gradient(circle at 35% 20%,#fff6bf,#e6b340 70%,#a86a1a);box-shadow:0 0 25px #e6b34066;overflow:hidden}.coin-face.back{transform:rotateY(180deg)}.coin-face img{width:90%;height:90%;object-fit:contain}.fallback{display:none;font-size:70px;font-weight:950;color:#1977e8}.fallback.orange{color:#e88d21}.ticket-list,.user-list{display:grid;gap:12px;margin-top:18px}.ticket,.user{background:#1d2a40;border:1px solid #3b4b64;border-radius:11px;padding:15px;overflow-wrap:anywhere}.form-grid{display:grid;gap:12px;max-width:550px}.actions{display:flex;flex-wrap:wrap;gap:8px;margin-top:12px}.notice{min-height:20px;margin-top:13px}\n#authScreen{position:fixed;inset:0;z-index:1000;background:#050a1280;display:flex;align-items:center;justify-content:center;padding:18px;overflow-y:auto}.auth-modal{width:100%;max-width:410px;background:#1a2533;border:1px solid #39485d;border-radius:12px;box-shadow:0 25px 100px #000d;padding:23px}.auth-logo{font-size:23px;font-weight:950;font-style:italic;margin-bottom:24px}.auth-logo span{color:#79beff}.eyebrow{color:#94a5ba;font-size:11px;font-weight:900;letter-spacing:1.4px;margin-bottom:8px}.auth-modal h2{font-size:23px;margin:0 0 18px}.responsible{background:#111b28;border:1px solid #2d3b4e;border-radius:9px;padding:13px;margin-bottom:13px;font-size:13px}.responsible p{font-size:12px;line-height:1.55;color:#a9b7c8;margin:7px 0 0}.bonus{background:#29291e;border:1px solid #927539;color:#f5d27a;padding:12px;border-radius:8px;margin-bottom:16px;font-size:12px;font-weight:800}#authForm{display:grid;gap:10px}.field-title{font-size:13px;font-weight:800}.field-help{font-size:12px;color:#a2b2c6;margin:0}.check-row{display:flex;gap:10px;align-items:flex-start;background:#111b28;border:1px solid #2e3c50;padding:12px;border-radius:8px;cursor:pointer}.check-row input{width:17px;height:17px;margin:0;flex-shrink:0;accent-color:#31c875}.check-row span{display:grid;gap:4px;font-size:12px}.check-row small{color:#9caec3}.continue{width:100%;background:#30c778;color:#06170e;border-radius:8px;padding:13px;font-weight:900}#authMessage{font-size:12px;color:#ff8da0;min-height:14px;margin:12px 0}.divider{display:flex;align-items:center;gap:9px;color:#96a6b9;font-size:12px;margin:12px 0}.divider:before,.divider:after{content:"";height:1px;flex:1;background:#35445b}.tabs{display:flex;gap:10px}.tabs button{flex:1;padding:12px;border-radius:8px;background:#35455d;font-weight:800}.tabs button.active{background:#575cf0}.footer{position:fixed;right:12px;bottom:10px;max-width:310px;background:#0c1624f5;border:1px solid #4a5872;border-radius:9px;padding:9px 11px;font-size:11px;line-height:1.5;z-index:10}\n@media(max-width:800px){#app{flex-direction:column}.sidebar{width:100%;padding:14px;border-right:0;border-bottom:1px solid #2c3850}.logo{margin-bottom:13px}.nav{display:flex;flex-wrap:wrap}.nav button{padding:10px;font-size:13px}.main{padding:19px 14px 100px}.grid{grid-template-columns:1fr}.hero{padding:23px}.auth-modal{padding:19px}}\n</style></head><body>\n<div id="app" class="locked">\n<aside class="sidebar"><div class="logo">🍩 DONUT <span>ROYALE</span></div><nav class="nav"><button data-page="home">🏠 Home</button><button data-page="games" class="active">🎮 Games</button><button data-page="tickets">🎫 Tickets</button><button data-page="admin" id="adminNav" class="hidden">🛡️ Admin</button><button id="logoutBtn">🚪 Log Out</button></nav></aside>\n<main class="main"><div class="topbar"><div><strong id="welcomeUser">Welcome to DONUT ROYALE</strong><div class="muted small" id="roleText">ARCADE</div></div><div class="balance">💰 <span id="balance">•••</span></div></div>\n<section id="page-home" class="page hidden"><div class="hero"><h1>Welcome to DONUT ROYALE 🍩</h1><p>Arcade games, balance and private tickets.</p><button class="primary" onclick="showPage(\'games\')">Play Games</button></div><div class="grid"><div class="panel"><h2>🪙 Coinflip</h2><p class="muted">Sonic vs. Tails</p></div><div class="panel"><h2>🎲 Lucky Dice</h2><p class="muted">Roll 5 or 6</p></div><div class="panel"><h2>🎰 Triple Sevens</h2><p class="muted">Match 777</p></div><div class="panel"><h2>🎡 Color Wheel</h2><p class="muted">Red or black</p></div></div></section>\n<section id="page-games" class="page"><h1>🎮 Arcade Games</h1><p class="muted">Choose a game. Maximum bet: 3B.</p><div class="rules"><strong>Game rules:</strong> Regular bets have a 10% win chance and 90% loss chance. Winning returns 2× the bet. <strong>All-in bets always lose.</strong> Maximum bet: 3B.</div><div class="grid">\n<div class="panel"><h2>🪙 Coinflip</h2><p class="muted">Sonic vs. Tails</p><div class="coin-stage"><div class="coin" id="coinVisual"><div class="coin-face"><img src="/coin-heads.png" alt="Sonic" onerror="this.style.display=\'none\';this.nextElementSibling.style.display=\'block\'"><span class="fallback">S</span></div><div class="coin-face back"><img src="/coin-tails.png" alt="Tails" onerror="this.style.display=\'none\';this.nextElementSibling.style.display=\'block\'"><span class="fallback orange">T</span></div></div></div><div class="controls"><select id="coinChoice"><option value="heads">Sonic (Heads)</option><option value="tails">Tails (Tails)</option></select><input id="coinBet" type="number" min="1" max="3000000000" placeholder="Bet amount"><button class="primary" onclick="playGame(\'coinflip\')">Flip Coin</button></div><div class="result" id="coinResult"></div></div>\n<div class="panel"><h2>🎲 Lucky Dice</h2><p class="muted">Roll 5 or 6 to win</p><div class="game-icon" id="diceVisual">🎲</div><div class="controls"><input id="diceBet" type="number" min="1" max="3000000000" placeholder="Bet amount"><button class="primary" onclick="playGame(\'dice\')">Roll Dice</button></div><div class="result" id="diceResult"></div></div>\n<div class="panel"><h2>🎰 Triple Sevens</h2><p class="muted">Get three sevens</p><div class="game-icon" id="slotsVisual">7️⃣ 7️⃣ 7️⃣</div><div class="controls"><input id="slotsBet" type="number" min="1" max="3000000000" placeholder="Bet amount"><button class="primary" onclick="playGame(\'slots\')">Spin Slots</button></div><div class="result" id="slotsResult"></div></div>\n<div class="panel"><h2>🎡 Color Wheel</h2><p class="muted">Red or black</p><div class="game-icon" id="wheelVisual">🎡</div><div class="controls"><select id="wheelChoice"><option value="red">🔴 Red</option><option value="black">⚫ Black</option></select><input id="wheelBet" type="number" min="1" max="3000000000" placeholder="Bet amount"><button class="primary" onclick="playGame(\'wheel\')">Spin Wheel</button></div><div class="result" id="wheelResult"></div></div>\n</div></section>\n<section id="page-tickets" class="page hidden"><h1>🎫 Tickets</h1><p class="muted">Deposit requests credits to be added. Withdraw requests credits from your balance.</p><div class="panel"><form id="ticketForm" class="form-grid"><select id="ticketKind"><option value="deposit">Deposit</option><option value="withdraw">Withdraw</option><option value="support">Support</option></select><input id="ticketAmount" type="number" min="0" placeholder="Amount"><textarea id="ticketMessage" rows="4" maxlength="1000" placeholder="Your message"></textarea><button class="primary" type="submit">Create Ticket</button></form><div class="notice" id="ticketStatus"></div></div><h2 style="margin-top:30px">Open Tickets</h2><div class="ticket-list" id="ticketList"></div></section>\n<section id="page-admin" class="page hidden"><h1>🛡️ Admin Panel</h1><div class="panel"><h2>Open Tickets</h2><div class="ticket-list" id="adminTicketList"></div></div><div class="panel" style="margin-top:20px"><h2>Players</h2><div class="user-list" id="userList"></div></div></section>\n</main></div>\n<div id="authScreen"><div class="auth-modal"><div class="auth-logo">🍩 DONUT <span>ROYALE</span></div><div class="eyebrow" id="authStepLabel">SIGN UP</div><h2 id="authTitle">Join DONUT ROYALE</h2><div class="responsible"><strong>Play responsibly</strong><p>You must be 18 or older to play. DONUT ROYALE uses in-game credits only. If playing stops being fun, take a break.</p></div><div class="bonus">🎁 Welcome to DONUT ROYALE</div><form id="authForm"><label class="field-title" for="authUsername">Minecraft username</label><p class="field-help">Enter your Minecraft username to continue.</p><input id="authUsername" type="text" placeholder="Minecraft username" maxlength="16" autocomplete="username" required><label class="check-row"><input type="checkbox" id="bedrockCheck"><span><strong>I play Bedrock Edition</strong><small>This does not verify ownership of a Minecraft account.</small></span></label><label class="field-title" for="authPassword">Password</label><input id="authPassword" type="password" placeholder="Password (min. 8 characters)" minlength="8" autocomplete="new-password" required><label class="check-row" id="ageRow"><input type="checkbox" id="ageCheck" required><span><strong>I\'m 18 or older and agree to the game rules</strong></span></label><button class="continue" id="authSubmit" type="submit">Create Account</button></form><p id="authMessage"></p><div class="divider">or</div><div class="tabs"><button type="button" id="loginTab">Log In</button><button type="button" id="registerTab" class="active">Register</button></div></div></div>\n<div class="footer hidden" id="rulesFooter">10% win chance / 90% loss chance. Wins return 2×. All-in bets always lose. Maximum bet: 3B.</div>\n<script>\nconst $=id=>document.getElementById(id);let me=null,authMode=\'register\',busy=false;\nfunction fmt(value){let n=Number(value)||0;for(let [size,suffix] of [[1e12,\'T\'],[1e9,\'B\'],[1e6,\'M\'],[1e3,\'K\']])if(Math.abs(n)>=size)return Number((n/size).toFixed(1))+suffix;return String(n)}\nfunction esc(value){return String(value??\'\').replaceAll(\'&\',\'&amp;\').replaceAll(\'<\',\'&lt;\').replaceAll(\'>\',\'&gt;\').replaceAll(\'"\',\'&quot;\').replaceAll("\'",\'&#39;\')}\nasync function api(path,method=\'GET\',body=null){let opt={method,credentials:\'same-origin\',headers:{}};if(body!==null){opt.headers[\'Content-Type\']=\'application/json\';opt.body=JSON.stringify(body)}let res=await fetch(path,opt),data=await res.json();if(!res.ok)throw Error(data.error||\'Request failed\');return data}\nfunction setAuthMode(mode){authMode=mode;let reg=mode===\'register\';$(\'authStepLabel\').textContent=reg?\'SIGN UP\':\'SIGN IN\';$(\'authTitle\').textContent=reg?\'Join DONUT ROYALE\':\'Welcome Back\';$(\'authSubmit\').textContent=reg?\'Create Account\':\'Log In\';$(\'authPassword\').autocomplete=reg?\'new-password\':\'current-password\';$(\'ageRow\').classList.toggle(\'hidden\',!reg);$(\'ageCheck\').required=reg;$(\'loginTab\').classList.toggle(\'active\',!reg);$(\'registerTab\').classList.toggle(\'active\',reg);$(\'authMessage\').textContent=\'\'}\n$(\'loginTab\').onclick=()=>setAuthMode(\'login\');$(\'registerTab\').onclick=()=>setAuthMode(\'register\');\nfunction loggedOut(){me=null;$(\'app\').classList.add(\'locked\');$(\'authScreen\').classList.remove(\'hidden\');$(\'rulesFooter\').classList.add(\'hidden\');$(\'balance\').textContent=\'•••\';$(\'welcomeUser\').textContent=\'Welcome to DONUT ROYALE\';$(\'roleText\').textContent=\'ARCADE\';$(\'adminNav\').classList.add(\'hidden\');document.querySelectorAll(\'.page\').forEach(x=>x.classList.add(\'hidden\'));$(\'page-games\').classList.remove(\'hidden\')}\nasync function refreshMe(){let data=await api(\'/api/me\');me=data.user;if(!me){loggedOut();return}$(\'app\').classList.remove(\'locked\');$(\'authScreen\').classList.add(\'hidden\');$(\'rulesFooter\').classList.remove(\'hidden\');$(\'welcomeUser\').textContent=\'👤 \'+me.username;$(\'roleText\').textContent=me.role.toUpperCase();$(\'balance\').textContent=fmt(me.balance);let staff=[\'owner\',\'admin\'].includes(me.role);$(\'adminNav\').classList.toggle(\'hidden\',!staff);if(!staff&&!$(\'page-admin\').classList.contains(\'hidden\'))showPage(\'games\')}\n$(\'authForm\').onsubmit=async e=>{e.preventDefault();$(\'authMessage\').textContent=\'\';$(\'authSubmit\').disabled=true;try{await api(\'/api/\'+authMode,\'POST\',{username:$(\'authUsername\').value.trim(),password:$(\'authPassword\').value});$(\'authPassword\').value=\'\';await refreshMe();if(me)showPage(\'games\')}catch(err){$(\'authMessage\').textContent=err.message}finally{$(\'authSubmit\').disabled=false}};\nfunction showPage(page){if(!me)return;if(page===\'admin\'&&![\'owner\',\'admin\'].includes(me.role))return;document.querySelectorAll(\'.page\').forEach(x=>x.classList.add(\'hidden\'));$(\'page-\'+page).classList.remove(\'hidden\');document.querySelectorAll(\'[data-page]\').forEach(x=>x.classList.toggle(\'active\',x.dataset.page===page));if(page===\'tickets\')loadTickets();if(page===\'admin\')loadAdmin()}\ndocument.querySelectorAll(\'[data-page]\').forEach(x=>x.onclick=()=>showPage(x.dataset.page));$(\'logoutBtn\').onclick=async()=>{try{await api(\'/api/logout\',\'POST\',{})}catch(e){console.error(e)}loggedOut();setAuthMode(\'login\')};\nasync function playGame(game){if(!me||busy)return;let raw=$(game+\'Bet\').value,amount=raw===\'\'?NaN:Number(raw);if(!Number.isSafeInteger(amount)||amount<1||amount>3000000000){alert(\'Enter a bet between 1 and 3B.\');return}if(amount>me.balance){alert(\'Not enough balance.\');return}if(amount===me.balance&&!confirm(\'WARNING: All-in bets always lose. You will lose your entire balance. Continue?\'))return;let resultEl=$({coinflip:\'coinResult\',dice:\'diceResult\',slots:\'slotsResult\',wheel:\'wheelResult\'}[game]);resultEl.textContent=\'Playing...\';let choice=game===\'coinflip\'?$(\'coinChoice\').value:game===\'wheel\'?$(\'wheelChoice\').value:null;busy=true;try{let data=await api(\'/api/game\',\'POST\',{game,amount,choice});if(game===\'coinflip\'){let coin=$(\'coinVisual\'),start=coin.style.transform.includes(\'180deg\')?180:0,end=(data.result===\'heads\'?0:180)+1800;coin.animate([{transform:`rotateY(${start}deg) translateY(0)`},{transform:`rotateY(${start+900}deg) translateY(-20px)`},{transform:`rotateY(${end}deg) translateY(0)`}],{duration:1600,easing:\'ease-out\'});coin.style.transform=`rotateY(${data.result===\'heads\'?0:180}deg)`}if(game===\'dice\')$(\'diceVisual\').textContent=\'🎲 \'+data.roll;if(game===\'slots\')$(\'slotsVisual\').textContent=data.reels.join(\' \');if(game===\'wheel\')$(\'wheelVisual\').textContent=data.result===\'red\'?\'🔴\':\'⚫\';let detail=game===\'dice\'?\'Rolled \'+data.roll:game===\'slots\'?data.reels.join(\' \'):data.result;resultEl.textContent=(data.win?\'🎉 YOU WIN! +\':\'❌ YOU LOSE! \')+fmt(Math.abs(data.profit))+\' — \'+detail;await refreshMe()}catch(err){resultEl.textContent=err.message}finally{busy=false}}\n$(\'ticketKind\').onchange=()=>{let support=$(\'ticketKind\').value===\'support\';$(\'ticketAmount\').disabled=support;$(\'ticketAmount\').value=support?\'0\':\'\';$(\'ticketStatus\').textContent=\'\'};\n$(\'ticketForm\').onsubmit=async e=>{e.preventDefault();let kind=$(\'ticketKind\').value,raw=$(\'ticketAmount\').value,amount=kind===\'support\'?0:raw===\'\'?NaN:Number(raw),message=$(\'ticketMessage\').value.trim(),status=$(\'ticketStatus\');status.style.color=\'#ff788c\';status.textContent=\'\';if(!Number.isSafeInteger(amount)||amount<0||(kind!==\'support\'&&amount<1)){status.textContent=\'❌ Enter a valid amount.\';return}if(kind===\'withdraw\'&&amount>me.balance){status.textContent=\'❌ Not enough balance! You only have \'+fmt(me.balance)+\', but you requested \'+fmt(amount)+\'.\';return}try{await api(\'/api/tickets\',\'POST\',{kind,amount,message});status.style.color=\'#30c778\';status.textContent=\'✅ Ticket created successfully.\';$(\'ticketMessage\').value=\'\';$(\'ticketAmount\').value=kind===\'support\'?\'0\':\'\';await loadTickets()}catch(err){status.textContent=\'❌ \'+err.message}};\nasync function loadTickets(){try{let data=await api(\'/api/tickets\'),mine=data.tickets.filter(t=>t.user_id===me.id);$(\'ticketList\').innerHTML=mine.length?mine.map(t=>`<div class="ticket"><strong>#${t.id} — ${esc(t.kind.toUpperCase())}</strong><p class="muted small">Amount: ${fmt(t.amount)}</p><p>${esc(t.message)}</p><span class="muted small">Status: OPEN</span></div>`).join(\'\'):\'<p class="muted">No open tickets.</p>\'}catch(err){$(\'ticketList\').textContent=err.message}}\nasync function loadAdmin(){if(!me||![\'owner\',\'admin\'].includes(me.role))return;try{let [td,ud]=await Promise.all([api(\'/api/tickets\'),api(\'/api/users\')]);$(\'adminTicketList\').innerHTML=td.tickets.length?td.tickets.map(t=>`<div class="ticket"><strong>#${t.id} — ${esc(t.username)}</strong><p class="muted small">${esc(t.kind.toUpperCase())} · ${fmt(t.amount)}</p><p>${esc(t.message)}</p><textarea id="reply-${t.id}" rows="2" placeholder="Reply to player"></textarea><div class="actions"><button class="success" onclick="reviewTicket(${t.id},\'approved\')">Approve</button><button class="danger" onclick="reviewTicket(${t.id},\'rejected\')">Reject</button><button class="secondary" onclick="reviewTicket(${t.id},\'closed\')">Close</button></div></div>`).join(\'\'):\'<p class="muted">No open tickets.</p>\';$(\'userList\').innerHTML=ud.users.length?ud.users.map(u=>`<div class="user"><strong>${esc(u.username)}</strong><p class="muted small">${esc(u.role.toUpperCase())} · ${fmt(u.balance)}</p>${me.role===\'owner\'&&u.role!==\'owner\'?`<div class="actions"><button class="success" onclick="changeRole(${u.id},\'admin\')">Make Admin</button><button class="secondary" onclick="changeRole(${u.id},\'player\')">Remove Admin</button></div>`:\'\'}</div>`).join(\'\'):\'<p class="muted">No players.</p>\'}catch(err){$(\'adminTicketList\').textContent=err.message}}\nasync function reviewTicket(id,status){let response=$(\'reply-\'+id)?.value.trim()||\'\';if(!confirm(\'Confirm ticket action: \'+status+\'?\'))return;try{await api(\'/api/ticket/review\',\'POST\',{id,status,response});await refreshMe();await loadAdmin()}catch(err){alert(err.message)}}\nasync function changeRole(id,role){if(!confirm(\'Change player role to \'+role+\'?\'))return;try{await api(\'/api/role\',\'POST\',{id,role});await loadAdmin()}catch(err){alert(err.message)}}\n(async()=>{setAuthMode(\'register\');try{await refreshMe();if(me)showPage(\'games\')}catch(err){loggedOut();$(\'authMessage\').textContent=\'Cannot connect to server. Please try again.\'}})();\n</script></body></html>\n'
 
 class Handler(BaseHTTPRequestHandler):
     def send_json(self, status, payload, cookie=None):
-        data=json.dumps(payload,ensure_ascii=False).encode()
+        data = json.dumps(payload, ensure_ascii=False).encode("utf-8")
         self.send_response(status)
-        self.send_header('Content-Type','application/json; charset=utf-8')
-        self.send_header('Content-Length',str(len(data)))
-        self.send_header('Cache-Control','no-store')
-        self.send_header('X-Content-Type-Options','nosniff')
-        if cookie: self.send_header('Set-Cookie',cookie)
-        self.end_headers(); self.wfile.write(data)
-    def fail(self,status,message): self.send_json(status,{'error':message})
+        self.send_header("Content-Type", "application/json; charset=utf-8")
+        self.send_header("Content-Length", str(len(data)))
+        self.send_header("Cache-Control", "no-store")
+        self.send_header("X-Content-Type-Options", "nosniff")
+        if cookie:
+            self.send_header("Set-Cookie", cookie)
+        self.end_headers()
+        self.wfile.write(data)
+
+    def fail(self, status, message):
+        self.send_json(status, {"error": message})
+
     def payload(self):
         try:
-            length=int(self.headers.get('Content-Length','0'))
-            if length<0 or length>20000: return {}
-            data=json.loads(self.rfile.read(length))
-            return data if isinstance(data,dict) else {}
-        except (ValueError,UnicodeDecodeError): return {}
+            length = int(self.headers.get("Content-Length", "0"))
+            if length < 0 or length > 20000:
+                return {}
+            data = json.loads(self.rfile.read(length))
+            return data if isinstance(data, dict) else {}
+        except (ValueError, UnicodeDecodeError):
+            return {}
+
     def token(self):
         try:
-            c=SimpleCookie(); c.load(self.headers.get('Cookie',''))
-            return c['session'].value if 'session' in c else None
-        except Exception: return None
+            cookies = SimpleCookie()
+            cookies.load(self.headers.get("Cookie", ""))
+            return cookies["session"].value if "session" in cookies else None
+        except Exception:
+            return None
+
     def me(self):
-        token=self.token()
-        if not token: return None
+        token = self.token()
+        if not token:
+            return None
         with db_open() as db:
-            row=db.execute('SELECT u.id,u.username,u.role,u.balance FROM sessions s JOIN users u ON u.id=s.user_id WHERE s.token_hash=? AND s.expires>?',(hashlib.sha256(token.encode()).hexdigest(),now().isoformat())).fetchone()
+            row = db.execute("""
+                SELECT u.id,u.username,u.role,u.balance FROM sessions s
+                JOIN users u ON u.id=s.user_id
+                WHERE s.token_hash=? AND s.expires>?
+            """, (hashlib.sha256(token.encode()).hexdigest(), now().isoformat())).fetchone()
         return dict(row) if row else None
-    def cookie(self,token):
-        s=f'session={token}; Path=/; HttpOnly; SameSite=Lax; Max-Age=2592000'
-        if os.getenv('RENDER') or os.getenv('COOKIE_SECURE')=='1': s+='; Secure'
-        return s
+
+    def cookie(self, token):
+        cookie = "session=" + token + "; Path=/; HttpOnly; SameSite=Lax; Max-Age=2592000"
+        if os.getenv("RENDER") or os.getenv("COOKIE_SECURE") == "1":
+            cookie += "; Secure"
+        return cookie
+
     def do_GET(self):
-        path=urlparse(self.path).path
-        if path=='/': path='/index.html'
-        if path == '/index.html':
-            data = SITE_HTML.encode('utf-8')
+        path = urlparse(self.path).path
+        if path == "/":
+            path = "/index.html"
+        if path in ("/index.html", "/coin-heads.png", "/coin-tails.png", "/style.css", "/app.js"):
+            file = BASE / path.lstrip("/")
+            if not file.is_file():
+                return self.fail(404, "File not found")
+            data = file.read_bytes()
+            kind = mimetypes.guess_type(str(file))[0] or "application/octet-stream"
             self.send_response(200)
-            self.send_header('Content-Type','text/html; charset=utf-8')
-            self.send_header('Content-Length',str(len(data)))
-            self.send_header('Cache-Control','no-store')
-            self.end_headers(); self.wfile.write(data); return
-        if path in ('/coin-heads.png','/coin-tails.png'):
-            file=BASE/path.lstrip('/')
-            if not file.is_file(): return self.fail(404,'File not found')
-            data=file.read_bytes()
+            self.send_header("Content-Type", kind + ("; charset=utf-8" if kind.startswith("text/") else ""))
+            self.send_header("Content-Length", str(len(data)))
+            self.send_header("Cache-Control", "no-store" if path == "/index.html" else "no-cache")
+            self.end_headers()
+            self.wfile.write(data)
+            return
+        if path == "/api/me":
+            return self.send_json(200, {"user": self.me()})
+        if path == "/api/rules":
+            return self.send_json(200, {"max_bet": MAX_BET, "win_chance_percent": 10,
+                                        "loss_chance_percent": 90, "payout_multiplier": 2,
+                                        "all_in_always_loses": True})
+        user = self.me()
+        if not user:
+            return self.fail(401, "Please log in")
+        if path == "/api/tickets":
+            with db_open() as db:
+                if user["role"] in ("owner", "admin"):
+                    rows = db.execute("""SELECT t.*,u.username FROM tickets t JOIN users u ON u.id=t.user_id
+                                         WHERE t.status='open' ORDER BY t.id DESC""").fetchall()
+                else:
+                    rows = db.execute("""SELECT t.*,u.username FROM tickets t JOIN users u ON u.id=t.user_id
+                                         WHERE t.status='open' AND t.user_id=? ORDER BY t.id DESC""",
+                                      (user["id"],)).fetchall()
+            return self.send_json(200, {"tickets": [dict(r) for r in rows]})
+        if path == "/api/users":
+            if user["role"] not in ("owner", "admin"):
+                return self.fail(403, "Not allowed")
+            with db_open() as db:
+                rows = db.execute("SELECT id,username,role,balance FROM users ORDER BY id DESC").fetchall()
+            return self.send_json(200, {"users": [dict(r) for r in rows]})
+        return self.fail(404, "Not found")
+
+    def do_POST(self):
+        path = urlparse(self.path).path
+        data = self.payload()
+        if path == "/api/register":
+            username = str(data.get("username", "")).strip()
+            password = str(data.get("password", ""))
+            if not re.fullmatch(r"[A-Za-z0-9_]{3,16}", username):
+                return self.fail(400, "Username must contain 3-16 letters, numbers or underscores")
+            if not 8 <= len(password) <= 128:
+                return self.fail(400, "Password must contain 8-128 characters")
+            with LOCK, db_open() as db:
+                salt = secrets.token_hex(16)
+                try:
+                    cursor = db.execute("""INSERT INTO users(username,salt,pw,role,balance,approval)
+                                           VALUES (?,?,?,'player',0,'approved')""",
+                                        (username, salt, pw_hash(password, salt)))
+                except sqlite3.IntegrityError:
+                    return self.fail(409, "Username already exists")
+                token = create_session(db, cursor.lastrowid)
+            return self.send_json(200, {"ok": True}, self.cookie(token))
+        if path == "/api/login":
+            username = str(data.get("username", "")).strip()
+            password = str(data.get("password", ""))
+            with LOCK, db_open() as db:
+                row = db.execute("SELECT * FROM users WHERE username=? COLLATE NOCASE", (username,)).fetchone()
+                if not row or not hmac.compare_digest(pw_hash(password, row["salt"]), row["pw"]):
+                    return self.fail(401, "Wrong username or password")
+                token = create_session(db, row["id"])
+            return self.send_json(200, {"ok": True}, self.cookie(token))
+        if path == "/api/logout":
+            token = self.token()
+            if token:
+                with LOCK, db_open() as db:
+                    db.execute("DELETE FROM sessions WHERE token_hash=?",
+                               (hashlib.sha256(token.encode()).hexdigest(),))
+            return self.send_json(200, {"ok": True}, self.cookie("") + "; Max-Age=0")
+        user = self.me()
+        if not user:
+            return self.fail(401, "Please log in")
+        if path == "/api/tickets":
+            kind = data.get("kind")
+            amount = data.get("amount", 0)
+            message = str(data.get("message", "")).strip()
+            if kind not in ("deposit", "withdraw", "support"):
+                return self.fail(400, "Invalid ticket type")
+            if type(amount) is not int or amount < 0 or amount > 1_000_000_000_000 or (kind != "support" and amount == 0) or len(message) > 1000:
+                return self.fail(400, "Invalid ticket amount or message")
+            with LOCK, db_open() as db:
+                if kind == "withdraw":
+                    row = db.execute("SELECT balance FROM users WHERE id=?", (user["id"],)).fetchone()
+                    if not row or amount > row["balance"]:
+                        return self.fail(400, "Not enough balance for withdrawal")
+                db.execute("INSERT INTO tickets(user_id,kind,amount,message) VALUES(?,?,?,?)",
+                           (user["id"], kind, amount, message))
+            return self.send_json(200, {"ok": True})
+        if path == "/api/ticket/review":
+            if user["role"] not in ("owner", "admin"):
+                return self.fail(403, "Not allowed")
+            tid, status = data.get("id"), data.get("status")
+            response = str(data.get("response", ""))[:1000]
+            if type(tid) is not int or status not in ("approved", "rejected", "closed"):
+                return self.fail(400, "Invalid review")
+            with LOCK, db_open() as db:
+                ticket = db.execute("SELECT * FROM tickets WHERE id=?", (tid,)).fetchone()
+                if not ticket or ticket["status"] != "open":
+                    return self.fail(409, "Ticket already handled")
+                if status == "approved":
+                    if ticket["kind"] == "deposit":
+                        db.execute("UPDATE users SET balance=balance+? WHERE id=?",
+                                   (ticket["amount"], ticket["user_id"]))
+                    elif ticket["kind"] == "withdraw":
+                        changed = db.execute("""UPDATE users SET balance=balance-?
+                                                WHERE id=? AND balance>=?""",
+                                             (ticket["amount"], ticket["user_id"], ticket["amount"]))
+                        if changed.rowcount != 1:
+                            return self.fail(409, "Player does not have enough balance")
+                    else:
+                        return self.fail(400, "Close support tickets instead")
+                db.execute("UPDATE tickets SET status=?,response=?,handled=? WHERE id=?",
+                           (status, response, user["id"], tid))
+            return self.send_json(200, {"ok": True})
+        if path == "/api/role":
+            if user["role"] != "owner":
+                return self.fail(403, "Only owner can change roles")
+            uid, role = data.get("id"), data.get("role")
+            if type(uid) is not int or uid == user["id"] or role not in ("admin", "player"):
+                return self.fail(400, "Invalid role change")
+            with LOCK, db_open() as db:
+                target = db.execute("SELECT role FROM users WHERE id=?", (uid,)).fetchone()
+                if not target or target["role"] == "owner":
+                    return self.fail(403, "Cannot change owner")
+                db.execute("UPDATE users SET role=? WHERE id=?", (role, uid))
+            return self.send_json(200, {"ok": True})
+        if path == "/api/game":
+            game, amount, choice = data.get("game"), data.get("amount"), data.get("choice")
+            if game not in ("coinflip", "dice", "slots", "wheel"):
+                return self.fail(400, "Invalid game")
+            if type(amount) is not int or not 1 <= amount <= MAX_BET:
+                return self.fail(400, "Bet must be between 1 and 3B")
+            if game == "coinflip" and choice not in ("heads", "tails"):
+                return self.fail(400, "Choose Sonic or Tails")
+            if game == "wheel" and choice not in ("red", "black"):
+                return self.fail(400, "Choose red or black")
+            with LOCK, db_open() as db:
+                row = db.execute("SELECT balance FROM users WHERE id=?", (user["id"],)).fetchone()
+                if not row or amount > row["balance"]:
+                    return self.fail(400, "Not enough balance")
+                all_in = amount == row["balance"]
+                win = not all_in and secrets.randbelow(100) < 10
+                if game == "coinflip":
+                    result = choice if win else ("tails" if choice == "heads" else "heads")
+                    details = {"result": result}
+                elif game == "dice":
+                    details = {"roll": secrets.choice([5, 6] if win else [1, 2, 3, 4])}
+                elif game == "slots":
+                    reels = ["7", "7", "7"] if win else [secrets.choice(["7", "🍒", "💎", "⭐"]) for _ in range(3)]
+                    if not win and reels == ["7", "7", "7"]:
+                        reels[2] = "⭐"
+                    details = {"reels": reels}
+                else:
+                    result = choice if win else ("black" if choice == "red" else "red")
+                    details = {"result": result}
+                profit = amount if win else -amount
+                db.execute("UPDATE users SET balance=balance+? WHERE id=?", (profit, user["id"]))
+                balance = row["balance"] + profit
+            return self.send_json(200, {"win": win, "profit": profit, "balance": balance,
+                                        "all_in": all_in, "payout_multiplier": 2, **details})
+        return self.fail(404, "Not found")
+
+if __name__ == "__main__":
+    setup()
+    port = int(os.getenv("PORT", "8000"))
+    print("DONUT ROYALE running on", port)
+    ThreadingHTTPServer(("0.0.0.0", port), Handler).serve_forever()
