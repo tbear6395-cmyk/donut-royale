@@ -425,32 +425,6 @@ main{max-width:1650px}
 #screen-blackjack .bj-tutorial summary{cursor:pointer;font-weight:800;color:#ffe5a0}
 #screen-blackjack .bj-tutorial p{margin:9px 0;font-size:14px}
 
-/* MINES — premium neon tile game */
-.card-mines{--accent:#55eec9;--glow:#0c9f8d;--base:#073c3c;overflow:hidden;position:relative;background:radial-gradient(circle at 60% 58%,#146d72,#092b42 65%,#071322)!important;border:1px solid #38e8d4!important}
-.card-mines .mines-cover{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;gap:0;transform:none;font-size:70px;filter:drop-shadow(0 12px 15px #0009)}
-.card-mines .mines-cover span:nth-child(1){transform:rotate(-20deg) translate(15px,0)}
-.card-mines .mines-cover span:nth-child(2){transform:translateY(17px) scale(1.2)}
-.card-mines .mines-cover span:nth-child(3){transform:rotate(18deg) translate(-14px,-12px)}
-#screen-mines{background:radial-gradient(ellipse at 50% 0%,#1b3550,#0c172e 60%,#0a1022);border:1px solid #287f8e;border-radius:19px;padding:20px}
-#screen-mines h2{font:900 42px Impact,"Arial Black",sans-serif;letter-spacing:2px;color:#89ffde;text-shadow:0 0 20px #18e4b577}
-#screen-mines>p{color:#c4d5e0}
-.mines-top{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:7px;margin:18px 0}
-.mines-top>div{border:1px solid #2c6778;background:#071c2c;border-radius:10px;padding:10px 4px;min-width:0}
-.mines-top small{display:block;font-size:9px;letter-spacing:.6px;color:#90b5c3}
-.mines-top strong{display:block;margin-top:5px;color:#90ffe2;font-size:clamp(12px,2.4vw,19px);overflow-wrap:anywhere}
-.mines-grid{display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:8px;max-width:470px;margin:14px auto 20px}
-.mines-tile{aspect-ratio:1/1;border:2px solid #35788b;border-bottom:5px solid #184355;border-radius:12px;background:linear-gradient(145deg,#285f78,#15364e);color:#fff;font-size:clamp(20px,5vw,42px);box-shadow:inset 0 3px 7px #ffffff1a,0 4px 8px #0006;transition:transform .15s,background .2s,border .2s;display:grid;place-items:center;min-width:0;padding:0}
-.mines-tile:not(:disabled):hover{transform:translateY(-3px);border-color:#7df5e0;background:#267b8a}
-.mines-tile:disabled{cursor:default;opacity:1}
-.mines-tile.gem{background:radial-gradient(circle,#1c947d,#0b453c);border-color:#42f5ba;box-shadow:0 0 17px #20ffad66,inset 0 2px 12px #83ffe94d;animation:mines-pop .28s ease-out}
-.mines-tile.bomb{background:radial-gradient(circle,#b72b54,#52132c);border-color:#ff6d87}
-.mines-tile.bomb.hit{box-shadow:0 0 24px #ff3e70,0 0 42px #ff224488;animation:mines-pop .28s ease-out}
-@keyframes mines-pop{from{transform:scale(.65)}to{transform:scale(1)}}
-.mines-controls{text-align:left;max-width:470px;margin:auto}
-.mines-controls label{font-size:11px;letter-spacing:1px;font-weight:900;color:#b8e9e0}
-.mines-controls input,.mines-controls select{background:#0a2335;border:1px solid #3a7b89}
-.mines-main-btn{display:block;width:100%;max-width:470px;margin:14px auto 8px;background:linear-gradient(100deg,#14a88f,#47d9b6);color:#062c28;font-weight:900}
-.mines-note{font-size:11px;color:#9cb2be!important;line-height:1.5}
 </style>
 </head>
 
@@ -470,7 +444,6 @@ main{max-width:1650px}
   <button data-game="slots">🎰 Triple Sevens</button>
   <button data-game="wheel">🎯 Color Wheel</button>
   <button data-game="blackjack">🃏 Blackjack</button>
-  <button data-game="mines">💎 Mines</button>
   <h4>TICKETS</h4>
   <a href="#myTickets">🎟️ My Tickets</a>
   <a href="#ticketSection">✎ &nbsp; Create Ticket</a>
@@ -535,7 +508,6 @@ main{max-width:1650px}
     <button class="game-card card-slots" data-game="slots"><span class="game-live">● LIVE</span><span class="game-art art-slots" aria-hidden="true"><span>7</span><span>7</span><span>7</span></span><span class="game-title">TRIPLE SEVENS</span><span class="game-subtitle">JACKPOT SLOTS</span><span class="game-play">PLAY NOW ↗</span></button>
     <button class="game-card card-blackjack" data-game="blackjack"><span class="game-live">● LIVE</span><span class="game-art art-blackjack" aria-hidden="true"><img class="minecraft-dealer" src="https://mc-heads.net/body/Technoblade/220" alt=""><span class="dealer-glow"></span><span class="dealer-hand">✊</span><span class="dealer-cards"><span class="playing-card card-j"><small>J<br>♣</small><strong>♣</strong></span><span class="playing-card card-a"><small>A<br>♠</small><strong>♠</strong></span></span></span><span class="game-title">BLACKJACK</span><span class="game-subtitle">GET 21 · HIT / STAND</span><span class="game-play">PLAY NOW ↗</span></button>
     <button class="game-card card-wheel" data-game="wheel"><span class="game-live">● LIVE</span><span class="game-art art-wheel" aria-hidden="true"><span>🎯</span><span class="thumbnail-wheel"></span></span><span class="game-title">COLOR WHEEL</span><span class="game-subtitle">RED OR BLACK</span><span class="game-play">PLAY NOW ↗</span></button>
-    <button class="game-card card-mines" data-game="mines"><span class="game-live">● LIVE</span><span class="game-art mines-cover" aria-hidden="true"><span>💎</span><span>💣</span><span>💎</span></span><span class="game-title">MINES</span><span class="game-subtitle">FIND GEMS · CASH OUT</span><span class="game-play">PLAY NOW ↗</span></button>
   </div>
 
   <section class="panel" id="ticketSection">
@@ -726,28 +698,6 @@ main{max-width:1650px}
       </div>
       <button class="primary" id="wheelPlay">SPIN WHEEL</button>
       <p class="result" id="wheelResult"></p>
-    </section>
-    <section class="game-screen" id="screen-mines" hidden>
-      <h2>💎 MINES</h2>
-      <p>Reveal diamonds, avoid hidden mines and cash out before you explode!</p>
-      <div class="mines-top">
-        <div><small>BET</small><strong id="minesCurrentBet">—</strong></div>
-        <div><small>DIAMONDS</small><strong id="minesFound">0</strong></div>
-        <div><small>MULTIPLIER</small><strong id="minesMultiplier">1.00×</strong></div>
-        <div><small>CASHOUT</small><strong id="minesPotential">—</strong></div>
-      </div>
-      <div class="mines-grid" id="minesGrid" aria-label="5 by 5 Mines grid"></div>
-      <div class="mines-controls" id="minesSetup">
-        <label for="minesBet">BET AMOUNT</label>
-        <input id="minesBet" value="1000" inputmode="decimal">
-        <div class="quick" data-input="minesBet"><button data-value="1000000">1M</button><button data-value="10000000">10M</button><button data-value="100000000">100M</button></div>
-        <label for="minesCount">NUMBER OF MINES</label>
-        <select id="minesCount"><option value="1">1 mine · Easy</option><option value="3" selected>3 mines · Normal</option><option value="5">5 mines · Hard</option><option value="7">7 mines · Expert</option><option value="10">10 mines · Extreme</option></select>
-        <button class="primary mines-main-btn" id="minesStart">START GAME</button>
-      </div>
-      <button class="primary mines-main-btn" id="minesCashout" hidden disabled>CASH OUT</button>
-      <p class="result" id="minesResult" role="status">Choose your bet and mine count to begin.</p>
-      <p class="mines-note">Payouts use a 97% return factor. Your active game is saved if you refresh. ALL-IN bets are not allowed.</p>
     </section>
     <section class="game-screen" id="screen-blackjack" hidden><h2>🃏 BLACKJACK</h2><p>Get as close to 21 as possible without going over! Over 21 means you lose (22 is too much). Ace = 1 or 11, J/Q/K = 10.</p><h3>DEALER</h3><div class="bj-cards" id="bjDealer">🂠</div><h3>YOUR HAND <span id="bjScore"></span></h3><div class="bj-cards" id="bjPlayer">🃏</div><input id="bjBet" value="1000"><div class="quick" data-input="bjBet"><button data-value="1000000">1M</button><button data-value="10000000">10M</button><button data-value="100000000">100M</button></div><div class="choices"><button class="primary" id="bjDeal">DEAL CARDS</button><button id="bjHit" disabled>HIT</button><button id="bjStand" disabled>STAND</button></div><p class="result" id="bjResult"></p></section>
   </div>
@@ -1080,74 +1030,6 @@ $("bjHit").onclick=()=>blackjackAction("hit");
 $("bjStand").onclick=()=>blackjackAction("stand");
 
 
-let minesActive=false,minesBusy=false,minesLast=null;
-function minesBalance(balance){
-  if(!me || typeof balance!=="number")return;
-  me.balance=balance;
-  $("balance").textContent=fmt(balance);
-  $("topBalance").textContent=fmt(balance);
-}
-function minesDraw(state){
-  minesLast=state;minesActive=!!state.active;
-  const revealed=new Set(state.revealed||[]);
-  const bombs=new Set(state.bombs||[]);
-  const grid=$("minesGrid");grid.replaceChildren();
-  for(let i=0;i<25;i++){
-    const tile=document.createElement("button");
-    tile.type="button";tile.className="mines-tile";
-    if(revealed.has(i)){tile.classList.add("gem");tile.textContent="💎";tile.setAttribute("aria-label","Diamond");}
-    else if(bombs.has(i)){tile.classList.add("bomb");if(i===state.hit)tile.classList.add("hit");tile.textContent="💣";tile.setAttribute("aria-label","Mine");}
-    else {tile.textContent=state.active?"?":"";tile.setAttribute("aria-label","Tile "+(i+1));}
-    tile.disabled=!state.active||revealed.has(i)||minesBusy;
-    if(state.active&&!revealed.has(i))tile.onclick=()=>minesAction("reveal",i);
-    grid.append(tile);
-  }
-  $("minesSetup").hidden=minesActive;
-  $("minesCashout").hidden=!minesActive;
-  $("minesCashout").disabled=minesBusy||!minesActive||!revealed.size;
-  $("minesCashout").textContent="💰 CASH OUT "+fmt(state.cashout||0);
-  $("minesCurrentBet").textContent=state.bet?fmt(state.bet):"—";
-  $("minesFound").textContent=revealed.size;
-  $("minesMultiplier").textContent=(state.multiplier||1).toFixed(2)+"×";
-  $("minesPotential").textContent=state.active?fmt(state.cashout||0):"—";
-  if(state.outcome==="lose")$("minesResult").textContent="💥 BOOM! You hit a mine. Lost "+fmt(state.bet);
-  else if(state.outcome==="cashout")$("minesResult").textContent="💰 CASHED OUT! "+fmt(state.payout)+" paid · Profit "+fmt(state.payout-state.bet);
-  else if(state.outcome==="win")$("minesResult").textContent="🏆 PERFECT CLEAR! "+fmt(state.payout)+" paid!";
-  else if(state.active)$("minesResult").textContent=revealed.size?"💎 Safe! Keep revealing or cash out.":"💎 Game started! Choose your first tile.";
-  else $("minesResult").textContent="Choose your bet and mine count to begin.";
-}
-async function minesLoad(){
-  try{minesDraw(await api("mines"));}
-  catch(e){$("minesResult").textContent=e.message;}
-}
-async function minesAction(action,cell){
-  if(minesBusy)return;
-  let payload={action};
-  if(action==="start"){
-    try{
-      payload.amount=parseAmount($("minesBet").value);
-      payload.mines=Number($("minesCount").value);
-      if(!Number.isInteger(payload.amount)||payload.amount<1||payload.amount>3000000000)throw Error("Bet must be between 1 and 3B");
-      if(!me||payload.amount>me.balance)throw Error("Not enough balance");
-      if(payload.amount===me.balance)throw Error("ALL-IN is not allowed in Mines.");
-    }catch(e){toast(e.message);return;}
-  }
-  if(action==="reveal")payload.cell=cell;
-  minesBusy=true;
-  document.querySelectorAll("#minesGrid button").forEach(b=>b.disabled=true);
-  $("minesStart").disabled=true;$("minesCashout").disabled=true;
-  try{
-    const result=await api("mines",payload);
-    minesBalance(result.balance);minesDraw(result);
-  }catch(e){toast(e.message);await minesLoad();}
-  finally{
-    minesBusy=false;$("minesStart").disabled=false;
-    if(minesLast)minesDraw(minesLast);
-  }
-}
-$("minesStart").onclick=()=>minesAction("start");
-$("minesCashout").onclick=()=>minesAction("cashout");
-minesDraw({active:false});
 function openGame(game){
   if(!me){
     $("auth").hidden=false;
@@ -1162,7 +1044,6 @@ function openGame(game){
 
   $("screen-"+game).hidden = false;
   $("gameOverlay").hidden = false;
-  if(game==="mines")minesLoad();
 }
 
 function closeGame(){
