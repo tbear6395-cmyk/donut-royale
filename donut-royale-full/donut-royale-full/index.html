@@ -375,8 +375,8 @@ body.auth-locked #dashboard .game-card{pointer-events:none}
     <div class="auth-bonus">🎁 Welcome to DONUT ROYALE</div>
     <form id="authForm">
       <label for="username">Minecraft username</label>
-      <div class="auth-help">Enter your Minecraft username to continue.</div>
-      <input id="username" required minlength="3" maxlength="16" pattern="[A-Za-z0-9_]{3,16}" autocomplete="username" placeholder="Minecraft username">
+      <div class="auth-help">Bedrock players use a dot (.) before their username.</div>
+      <input id="username" required minlength="3" maxlength="17" pattern="\.?[A-Za-z0-9_]{3,16}" autocomplete="username" placeholder="Minecraft username">
       <label class="auth-check">
         <input id="bedrockCheck" type="checkbox">
         <span>I play Bedrock Edition<br><small class="auth-help">This does not verify ownership of your Minecraft account.</small></span>
@@ -608,6 +608,19 @@ function setMode(mode){
   $("authError").textContent="";
 }
 
+function syncBedrockUsername(){
+  const input=$("username");
+  const name=input.value.trim().replace(/^\.+/,"");
+  input.value=$("bedrockCheck").checked ? "."+name : name;
+  input.setCustomValidity("");
+}
+$("bedrockCheck").addEventListener("change",syncBedrockUsername);
+$("username").addEventListener("input",()=>{
+  const input=$("username");
+  if($("bedrockCheck").checked && !input.value.startsWith(".")){
+    input.value="."+input.value.replace(/^\.+/,"");
+  }
+});
 $("loginTab").onclick = () => setMode("login");
 $("registerTab").onclick = () => setMode("register");
 
