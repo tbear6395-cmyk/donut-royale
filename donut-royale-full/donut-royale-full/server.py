@@ -220,6 +220,12 @@ class Handler(BaseHTTPRequestHandler):
 
     def do_GET(self):
         path = urlparse(self.path).path
+        if path == "/api/bot/health":
+            expected = os.getenv("BOT_API_KEY", "")
+            provided = self.headers.get("X-Bot-Api-Key", "")
+            if not expected or not hmac.compare_digest(provided, expected):
+                return self.fail(401, "Unauthorized")
+            return self.send_json(200, {"ok": True, "service": "donut-royale-bot"})
         if path == "/":
             path = "/index.html"
         if path in ("/index.html", "/coin-heads.png", "/coin-tails.png", "/style.css", "/app.js", "/coin-sonic-hd.svg", "/coin-tails-hd.svg"):
