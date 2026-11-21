@@ -1,10 +1,14 @@
-import os, re, json, hmac, secrets, sqlite3, hashlib, threading, mimetypes
+import os, re, json, hmac, secrets, sqlite3, hashlib, threading, mimetypes, subprocess, sys
 try:
     import psycopg
     from psycopg.rows import dict_row
 except ImportError:
     psycopg = None
     dict_row = None
+    if os.getenv("DATABASE_URL"):
+        subprocess.check_call([sys.executable, "-m", "pip", "install", "--disable-pip-version-check", "--no-input", "psycopg[binary]>=3.2,<4"])
+        import psycopg
+        from psycopg.rows import dict_row
 from pathlib import Path
 from datetime import datetime, timezone, timedelta
 from http.server import ThreadingHTTPServer, BaseHTTPRequestHandler
