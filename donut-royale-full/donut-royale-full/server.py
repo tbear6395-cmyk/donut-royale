@@ -183,7 +183,7 @@ class Handler(BaseHTTPRequestHandler):
         path = urlparse(self.path).path
         if path == "/":
             path = "/index.html"
-        if path in ("/index.html", "/coin-heads.png", "/coin-tails.png", "/style.css", "/app.js"):
+        if path in ("/index.html", "/coin-heads.png", "/coin-tails.png", "/style.css", "/app.js", "/coin-sonic-hd.svg", "/coin-tails-hd.svg"):
             file = BASE / path.lstrip("/")
             if not file.is_file():
                 return self.fail(404, "File not found")
