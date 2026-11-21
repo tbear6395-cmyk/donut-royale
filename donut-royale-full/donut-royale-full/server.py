@@ -1,6 +1,10 @@
 import os, re, json, hmac, secrets, sqlite3, hashlib, threading, mimetypes
-import psycopg
-from psycopg.rows import dict_row
+try:
+    import psycopg
+    from psycopg.rows import dict_row
+except ImportError:
+    psycopg = None
+    dict_row = None
 from pathlib import Path
 from datetime import datetime, timezone, timedelta
 from http.server import ThreadingHTTPServer, BaseHTTPRequestHandler
@@ -12,6 +16,8 @@ DB = Path(os.getenv("DATABASE_PATH", str(BASE / "data.sqlite3")))
 DB.parent.mkdir(parents=True, exist_ok=True)
 LOCK = threading.RLock()
 USE_POSTGRES = bool(os.getenv('DATABASE_URL'))
+if USE_POSTGRES and psycopg is None:
+    raise RuntimeError('PostgreSQL configured but psycopg is not installed')
 MAX_BET = 3_000_000_000
 
 def now():
@@ -233,7 +239,7 @@ class Handler(BaseHTTPRequestHandler):
                     cursor = db.execute("""INSERT INTO users(username,salt,pw,role,balance,approval)
                                            VALUES (?,?,?,'player',0,'approved')""" + (" RETURNING id" if USE_POSTGRES else ""),
                                         (username, salt, pw_hash(password, salt)))
-                except (sqlite3.IntegrityError, psycopg.IntegrityError):
+                except (sqlite3.IntegrityError, psycopg.IntegrityError if psycopg else sqlite3.IntegrityError):
                     return self.fail(409, "Username already exists")
                 token = create_session(db, cursor.fetchone()['id'] if USE_POSTGRES else cursor.lastrowid)
             return self.send_json(200, {"ok": True}, self.cookie(token))
