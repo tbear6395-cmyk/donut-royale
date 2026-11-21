@@ -1,3 +1,4 @@
+
 const $=id=>document.getElementById(id);let me=null,mode='login';
 async function api(path,data){let r=await fetch('/api/'+path,{method:data===undefined?'GET':'POST',headers:{'Content-Type':'application/json'},body:data===undefined?undefined:JSON.stringify(data)});let j=await r.json();if(!r.ok)throw Error(j.error||'Request failed');return j}
 function toast(s){$('toast').textContent=s;$('toast').style.display='block';setTimeout(()=>$('toast').style.display='none',4000)}
@@ -11,7 +12,25 @@ async function refresh(){let x=await api('me');me=x.user;$('auth').hidden=!!me;$
 $('account').append(node('span',me.username),btn('Log out',async()=>{await api('logout',{});await refresh()}));$('balance').textContent=me.balance.toLocaleString('en-US');$('displayName').textContent=me.username;$('role').textContent=me.role.toUpperCase();$('admin').hidden=!['admin','owner'].includes(me.role);await loadTickets();if(['admin','owner'].includes(me.role))await loadUsers()}
 $('kind').onchange=()=>{$('payInfo').hidden=$('kind').value!=='deposit';$('amount').disabled=$('kind').value==='support';};$('amount').oninput=()=>{$('payCommand').textContent='/pay matejicekjepica '+($('amount').value||'AMOUNT')};
 $('ticketForm').onsubmit=async e=>{e.preventDefault();try{await api('tickets',{kind:$('kind').value,amount:$('kind').value==='support'?0:Number($('amount').value),message:$('message').value});$('message').value='';toast('Ticket created');await loadTickets()}catch(err){toast(err.message)}};
-$('flip').onclick=async()=>{try{let x=await api('game',{game:'coinflip',amount:Number($('bet').value)});$('gameResult').textContent=x.win?'🎉 You won!':'💔 House wins this round';await refresh()}catch(err){toast(err.message)}};
+let selectedSide='heads',selectedColor='red',playing=false;
+function selectGroup(selector,attribute,onSelect){document.querySelectorAll(selector).forEach(b=>b.onclick=()=>{document.querySelectorAll(selector).forEach(x=>x.classList.remove('active'));b.classList.add('active');onSelect(b.dataset[attribute])})}
+selectGroup('.side','side',x=>selectedSide=x);selectGroup('.wheel-choice','color',x=>selectedColor=x);
+const pause=ms=>new Promise(resolve=>setTimeout(resolve,ms));
+async function runGame(game,betId,resultId,buttonId,extras={},animate=async()=>{}){
+ if(playing)return;playing=true;let button=$(buttonId);button.disabled=true;$(resultId).textContent='Rolling...';
+ try{let request=api('game',{game,amount:Number($(betId).value),...extras});await animate();let x=await request;
+ $(resultId).textContent=x.win?'✨ YOU WIN! +'+x.profit.toLocaleString('en-US')+' credits':'HOUSE WINS · −'+Number($(betId).value).toLocaleString('en-US')+' credits';
+ if(game==='coinflip'){$('coinVisual').classList.remove('flipping');$('coinVisual').classList.toggle('tails-result',x.result==='tails');$('coinVisual').classList.toggle('heads-result',x.result==='heads');$(resultId).textContent=(x.result==='heads'?'👑 HEADS':'🍩 TAILS')+' · '+$(resultId).textContent}
+ if(game==='dice'){$('diceVisual').textContent=['⚀','⚁','⚂','⚃','⚄','⚅'][x.roll-1]}
+ if(game==='slots'){$('slotsVisual').replaceChildren(...x.reels.map(s=>node('span',s)))}
+ if(game==='wheel'){$('wheelVisual').textContent=x.result==='red'?'🔴':'⚫'}
+ await refresh();
+ }catch(err){$(resultId).textContent='';toast(err.message)}finally{playing=false;button.disabled=false}
+}
+$('flip').onclick=()=>runGame('coinflip','bet','gameResult','flip',{choice:selectedSide},async()=>{let c=$('coinVisual');c.classList.remove('heads-result','tails-result','flipping');void c.offsetWidth;c.classList.add('flipping');await pause(1700)});
+$('dicePlay').onclick=()=>runGame('dice','diceBet','diceResult','dicePlay',{},async()=>{let d=$('diceVisual');d.classList.add('shaking');await pause(850);d.classList.remove('shaking')});
+$('slotsPlay').onclick=()=>runGame('slots','slotsBet','slotsResult','slotsPlay',{},async()=>{let el=$('slotsVisual');el.classList.add('spinning');await pause(1250);el.classList.remove('spinning')});
+$('wheelPlay').onclick=()=>runGame('wheel','wheelBet','wheelResult','wheelPlay',{choice:selectedColor},async()=>{let w=$('wheelVisual');w.classList.add('shaking');await pause(1000);w.classList.remove('shaking')});
 async function loadTickets(){let all=(await api('tickets')).tickets;$('tickets').replaceChildren();$('adminTickets').replaceChildren();let own=all.filter(t=>t.user_id===me.id);if(!own.length)$('tickets').append(node('p','No tickets yet.'));own.forEach(t=>{let d=line($('tickets'),node('strong','#'+t.id+' '+t.kind.toUpperCase()+' · '+t.status),node('small','Amount: '+t.amount+' · '+t.created),node('p',t.message||'No message'));if(t.response)d.append(node('p','Admin response: '+t.response))});if(['admin','owner'].includes(me.role)){all.forEach(t=>{let d=line($('adminTickets'),node('strong','#'+t.id+' · '+t.username+' · '+t.kind.toUpperCase()+' · '+t.status),node('small','Amount: '+t.amount+' · '+t.created),node('p',t.message||'No message'));if(t.response)d.append(node('p','Response: '+t.response));if(t.status==='open'){for(let status of ['approved','rejected','closed']){if(status==='approved'&&t.kind==='support')continue;d.append(btn(status,async()=>{let response=prompt('Admin note (optional):')??'';try{await api('ticket/review',{id:t.id,status,response});await refresh()}catch(err){toast(err.message)}}))}}})}}
 async function loadUsers(){let all=(await api('users')).users;$('users').replaceChildren();all.forEach(u=>{let d=line($('users'),node('strong',u.username+' · '+u.role),node('small','Balance: '+u.balance.toLocaleString('en-US')));if(me.role==='owner'&&u.role!=='owner'){d.append(btn(u.role==='admin'?'Remove admin':'Make admin',async()=>{if(!confirm('Change role for '+u.username+'?'))return;try{await api('role',{id:u.id,role:u.role==='admin'?'player':'admin'});await refresh()}catch(err){toast(err.message)}}))}})}
 refresh().catch(err=>toast(err.message));
