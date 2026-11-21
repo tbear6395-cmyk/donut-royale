@@ -194,11 +194,13 @@ body.auth-locked #dashboard #myTickets,body.auth-locked #dashboard #admin{displa
 body.auth-locked #dashboard .game-grid{display:grid!important}
 body.auth-locked #dashboard .game-card{pointer-events:none}
 #auth{
+  isolation:isolate;pointer-events:auto;filter:none;
   position:fixed;inset:0;z-index:40;display:flex;align-items:center;
   justify-content:center;padding:18px;background:#03071255;overflow-y:auto
 }
 #auth[hidden]{display:none!important}
 #auth .auth-modal{
+  position:relative;z-index:41;pointer-events:auto;filter:none;
   width:min(420px,100%);max-height:calc(100vh - 36px);overflow:auto;
   padding:24px;border-radius:14px;background:#192331;
   border:1px solid #3b4b60;box-shadow:0 35px 110px #000e
@@ -264,39 +266,7 @@ body.auth-locked #dashboard .game-card{pointer-events:none}
   <button class="primary" id="heroPlay">EXPLORE GAMES →</button>
 </section>
 
-<section id="auth">
-  <div class="auth-modal">
-    <div class="auth-brand">🍩 DONUT <span>ROYALE</span></div>
-    <div class="auth-eyebrow" id="authEyebrow">SIGN UP</div>
-    <h2 id="authHeading">Join DONUT ROYALE</h2>
-    <div class="auth-responsible">
-      <strong>Play responsibly</strong>
-      <p>You must be 18 or older to play. DONUT ROYALE uses Minecraft in-game credits only. If playing stops being fun, stop and take a break.</p>
-    </div>
-    <div class="auth-bonus">🎁 Welcome to DONUT ROYALE</div>
-    <form id="authForm">
-      <label for="username">Minecraft username</label>
-      <div class="auth-help">Enter your Minecraft username to continue.</div>
-      <input id="username" required minlength="3" maxlength="16" pattern="[A-Za-z0-9_]{3,16}" autocomplete="username" placeholder="Minecraft username">
-      <label class="auth-check">
-        <input id="bedrockCheck" type="checkbox">
-        <span>I play Bedrock Edition<br><small class="auth-help">This does not verify ownership of your Minecraft account.</small></span>
-      </label>
-      <label for="password">Password</label>
-      <input id="password" type="password" required minlength="8" autocomplete="new-password" placeholder="Password (minimum 8 characters)">
-      <label class="auth-check" id="ageRow">
-        <input id="ageCheck" type="checkbox" required>
-        <span>I'm 18 or older and agree to the game rules.</span>
-      </label>
-      <button class="primary" id="authSubmit" type="submit">CREATE ACCOUNT</button>
-      <p class="auth-error" id="authError" aria-live="polite"></p>
-    </form>
-    <div class="choices">
-      <button id="loginTab" type="button">LOG IN</button>
-      <button id="registerTab" class="selected" type="button">REGISTER</button>
-    </div>
-  </div>
-</section>
+
 
 <div id="dashboard" hidden>
 
@@ -391,6 +361,41 @@ body.auth-locked #dashboard .game-card{pointer-events:none}
   Independent fan project • Demo credits only
 </footer>
 </main>
+
+<!-- Auth is outside the blurred app so its inputs remain sharp and clickable. -->
+<section id="auth">
+  <div class="auth-modal">
+    <div class="auth-brand">🍩 DONUT <span>ROYALE</span></div>
+    <div class="auth-eyebrow" id="authEyebrow">SIGN UP</div>
+    <h2 id="authHeading">Join DONUT ROYALE</h2>
+    <div class="auth-responsible">
+      <strong>Play responsibly</strong>
+      <p>You must be 18 or older to play. DONUT ROYALE uses Minecraft in-game credits only. If playing stops being fun, stop and take a break.</p>
+    </div>
+    <div class="auth-bonus">🎁 Welcome to DONUT ROYALE</div>
+    <form id="authForm">
+      <label for="username">Minecraft username</label>
+      <div class="auth-help">Enter your Minecraft username to continue.</div>
+      <input id="username" required minlength="3" maxlength="16" pattern="[A-Za-z0-9_]{3,16}" autocomplete="username" placeholder="Minecraft username">
+      <label class="auth-check">
+        <input id="bedrockCheck" type="checkbox">
+        <span>I play Bedrock Edition<br><small class="auth-help">This does not verify ownership of your Minecraft account.</small></span>
+      </label>
+      <label for="password">Password</label>
+      <input id="password" type="password" required minlength="8" autocomplete="new-password" placeholder="Password (minimum 8 characters)">
+      <label class="auth-check" id="ageRow">
+        <input id="ageCheck" type="checkbox" required>
+        <span>I'm 18 or older and agree to the game rules.</span>
+      </label>
+      <button class="primary" id="authSubmit" type="submit">CREATE ACCOUNT</button>
+      <p class="auth-error" id="authError" aria-live="polite"></p>
+    </form>
+    <div class="choices">
+      <button id="loginTab" type="button">LOG IN</button>
+      <button id="registerTab" class="selected" type="button">REGISTER</button>
+    </div>
+  </div>
+</section>
 
 <div class="overlay" id="gameOverlay" hidden>
   <div class="game-window">
