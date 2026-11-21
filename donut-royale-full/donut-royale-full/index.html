@@ -1062,7 +1062,9 @@ async function loadTickets(){
   tickets.forEach(t=>{
     const d = item(
       $("adminTickets"),
-      text("strong","#"+t.id+" · "+t.username+" · "+t.status),
+      text("strong","#"+t.id+" · "+t.username+" · "+t.kind.toUpperCase()+" · "+t.status),
+      text("p",t.kind==="deposit"?"💰 PLAYER WANTS TO DEPOSIT: "+fmt(t.amount):t.kind==="withdraw"?"💸 PLAYER WANTS TO WITHDRAW: "+fmt(t.amount):"💬 SUPPORT REQUEST"),
+      text("small","Exact amount: "+Number(t.amount).toLocaleString("en-US")+" credits"),
       text("p",t.message||"No message")
     );
 
