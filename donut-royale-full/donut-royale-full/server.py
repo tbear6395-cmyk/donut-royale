@@ -283,6 +283,7 @@ class Handler(BaseHTTPRequestHandler):
                 return self.fail(403, "Not allowed")
             tid, status = data.get("id"), data.get("status")
             response = str(data.get("response", ""))[:1000]
+            verified_amount = data.get("verified_amount")
             if type(tid) is not int or status not in ("approved", "rejected", "closed"):
                 return self.fail(400, "Invalid review")
             with LOCK, db_open() as db:
@@ -291,8 +292,11 @@ class Handler(BaseHTTPRequestHandler):
                     return self.fail(409, "Ticket already handled")
                 if status == "approved":
                     if ticket["kind"] == "deposit":
+                        if type(verified_amount) is not int or not 0 <= verified_amount <= ticket["amount"]:
+                            return self.fail(400, "Enter the verified deposit amount (0 to requested amount)")
                         db.execute("UPDATE users SET balance=balance+? WHERE id=?",
-                                   (ticket["amount"], ticket["user_id"]))
+                                   (verified_amount, ticket["user_id"]))
+                        response = ("Verified deposit credited: " + str(verified_amount) + ". " + response)[:1000]
                     elif ticket["kind"] == "withdraw":
                         changed = db.execute("""UPDATE users SET balance=balance-?
                                                 WHERE id=? AND balance>=?""",
