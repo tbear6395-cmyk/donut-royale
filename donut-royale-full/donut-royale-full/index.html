@@ -734,7 +734,7 @@ async function refresh(){
   $("account").replaceChildren();
 
   if(!me){
-    chatInitializedFor=null;chatUnread=0;updateChatBadge();$("chatNotification").hidden=true;
+    chatInitializedFor=null;chatLatestId=0;chatUnread=0;updateChatBadge();$("chatNotification").hidden=true;
     $("topBalance").textContent = "•••";
     $("adminNav").hidden = true;
     $("ranksNav").hidden = true;
@@ -824,6 +824,7 @@ let chatLatestId=0;
 let chatInitializedFor=null;
 let chatUnread=0;
 let chatNotificationTimeout=null;
+let chatFetchInProgress=false;
 function updateChatBadge(){
   $("adminChatBadge").hidden=chatUnread===0;
   $("adminChatBadge").textContent=chatUnread>99?"99+":String(chatUnread);
@@ -837,7 +838,8 @@ function showChatNotification(message){
 }
 $("chatNotification").onclick=()=>{location.hash="#adminChat";$("chatNotification").hidden=true;};
 async function loadAdminChat(){
-  if(!me || !["admin","owner"].includes(me.role))return;
+  if(!me || !["admin","owner"].includes(me.role) || chatFetchInProgress)return;
+  chatFetchInProgress=true;
   try{
     const result=await api("admin-chat");
     const messages=result.messages||[];
@@ -847,7 +849,7 @@ async function loadAdminChat(){
       chatLatestId=messages.length?Math.max(...messages.map(m=>Number(m.id))):0;
       chatUnread=0;
     }else{
-      const fresh=messages.filter(m=>Number(m.id)>chatLatestId && m.username.toLowerCase()!==me.username.toLowerCase());
+      const fresh=messages.filter(m=>Number(m.id)>chatLatestId && Number(m.user_id)!==Number(me.id));
       if(fresh.length){
         if(location.hash!=="#adminChat")chatUnread+=fresh.length;
         showChatNotification(fresh[fresh.length-1]);
@@ -868,9 +870,10 @@ async function loadAdminChat(){
     if(!messages.length)el.textContent="No messages yet.";
     el.scrollTop=el.scrollHeight;
   }catch(err){if(location.hash==="#adminChat")$("adminChatStatus").textContent=err.message;}
+  finally{chatFetchInProgress=false;}
 }
-setInterval(()=>{if(me && ["admin","owner"].includes(me.role) && !document.hidden)loadAdminChat();},5000);
-$("adminChatForm").onsubmit=async e=>{e.preventDefault();const message=$("adminChatInput").value.trim();if(!message)return;try{await api("admin-chat",{message});$("adminChatInput").value="";$("adminChatStatus").textContent="Sent!";await loadAdminChat();}catch(err){$("adminChatStatus").textContent=err.message;}};
+setInterval(()=>{if(me && ["admin","owner"].includes(me.role))loadAdminChat();},1000);
+$("adminChatForm").onsubmit=async e=>{e.preventDefault();const input=$("adminChatInput");const message=input.value.trim();if(!message)return;input.value="";$("adminChatStatus").textContent="";try{await api("admin-chat",{message});await loadAdminChat();}catch(err){input.value=message;$("adminChatStatus").textContent=err.message;}};
 $("adminChatRefresh").onclick=loadAdminChat;
 $("removeRankButton").onclick=async ()=>{const username=$("removeRankNick").value;if(!username)return;if(!confirm("Remove ADMIN rank from "+username+"?"))return;try{await api("ranks/remove-admin",{username});$("removeRankResult").textContent="✅ ADMIN rank removed from "+username;await loadRankPlayers();await loadUsers();}catch(err){$("removeRankResult").textContent="❌ "+err.message;}};
 function syncRanksPage(){
