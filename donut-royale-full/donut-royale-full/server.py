@@ -119,4 +119,4 @@ class Handler(BaseHTTPRequestHandler):
    return self.send(200,{'win':win,'profit':profit,**details})
   return self.send(403,{'error':'Not allowed'})
 if __name__=='__main__':
- init();port=int(os.getenv('PORT','8000'));print(f'Open http://localhost:{port}');ThreadingHTTPServer(('
+ init();port=int(os.getenv('PORT','8000'));print(f'Open http://localhost:{port}');ThreadingHTTPServer(('0.0.0.0',port),Han
