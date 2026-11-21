@@ -425,13 +425,37 @@ main{max-width:1650px}
 #screen-blackjack .bj-tutorial summary{cursor:pointer;font-weight:800;color:#ffe5a0}
 #screen-blackjack .bj-tutorial p{margin:9px 0;font-size:14px}
 
+
+/* Centered wallet navigation and transaction page */
+header{position:sticky}
+.wallet-nav{position:absolute;left:50%;transform:translateX(-50%);background:linear-gradient(110deg,#5d31c7,#8f4ef1);border:1px solid #c093ff;border-radius:13px;padding:11px 22px;color:#fff;font-weight:900;letter-spacing:.6px;white-space:nowrap;box-shadow:0 0 23px #7e41e044;z-index:1}
+.wallet-nav:hover{background:linear-gradient(110deg,#7540e5,#aa64ff)}
+.wallet-nav span{font-size:12px;color:#e9d7ff}
+.wallet-panel{max-width:740px;margin:25px auto 35px;padding:clamp(18px,4vw,32px);background:radial-gradient(circle at 50% 0%,#2d2058,#16152f 65%);border:1px solid #7352b2;box-shadow:0 15px 45px #0005}
+.wallet-eyebrow{text-align:center;color:#bb98ff;font-weight:900;font-size:11px;letter-spacing:2px}
+.wallet-panel h2{text-align:center;font-size:clamp(25px,4vw,37px);margin:12px 0 5px}
+.wallet-intro{text-align:center;color:#b7b2d1}
+.wallet-tabs{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin:25px 0}
+.wallet-tabs button{border:1px solid #574978;border-radius:12px;background:#151329;color:#b9afd7;padding:17px 8px;font-weight:900}
+.wallet-tabs button.selected{background:linear-gradient(120deg,#7040d7,#aa60f2);color:white;border-color:#bd8aff;box-shadow:0 0 18px #8c49eb55}
+.wallet-label{display:block;font-size:12px;font-weight:900;color:#cab5ef;letter-spacing:1px;margin:18px 0 9px}
+.wallet-panel input,.wallet-panel textarea{width:100%;background:#100e25;border:1px solid #57447e;border-radius:10px;padding:14px;color:#fff}
+.wallet-command-box{margin:22px 0;background:#0d1429;border:1px solid #8662d2;border-radius:15px;padding:20px;text-align:center}
+.wallet-command-label{font-size:11px;font-weight:900;letter-spacing:1px;color:#c3aaff}
+.wallet-command-box code{display:block;margin:15px 0;font-size:clamp(14px,3vw,23px);font-weight:900;color:#80ffbd;overflow-wrap:anywhere;user-select:all}
+.wallet-copy{background:#302455;border:1px solid #8265c1;color:#fff;border-radius:9px;padding:10px 18px;font-weight:800}
+#walletNickWarning{color:#ffd393;font-size:12px;line-height:1.5}
+.wallet-withdraw-info{padding:18px;background:#0e2330;border:1px solid #267f83;border-radius:13px;color:#c1f4ec;line-height:1.6}
+.wallet-submit{display:block;width:100%;margin-top:20px;padding:17px;font-weight:900;font-size:16px}
+.wallet-disclaimer{font-size:12px;color:#a9a3c5;line-height:1.5;text-align:center}
+@media(max-width:750px){header{height:auto;min-height:100px;align-items:flex-start;padding-top:10px}.wallet-nav{top:53px;padding:8px 14px;font-size:12px}.wallet-nav span{font-size:11px}.logo{font-size:19px}header>div:last-child{font-size:12px}}
 </style>
 </head>
 
 <body>
 
 <header>
-  <div class="logo">🍩 <em>Donut<span>Royale</span></em></div>
+  <div class="logo">🍩 <em>Donut<span>Royale</span></em></div><button type="button" id="walletNav" class="wallet-nav">💸 WITHDRAW <span> / DEPOSIT</span></button>
   <div>🪙 <span id="topBalance">0</span> <span id="account"></span></div>
 </header>
 
@@ -444,9 +468,9 @@ main{max-width:1650px}
   <button data-game="slots">🎰 Triple Sevens</button>
   <button data-game="wheel">🎯 Color Wheel</button>
   <button data-game="blackjack">🃏 Blackjack</button>
-  <h4>TICKETS</h4>
-  <a href="#myTickets">🎟️ My Tickets</a>
-  <a href="#ticketSection">✎ &nbsp; Create Ticket</a>
+  <h4>WALLET</h4>
+  <button type="button" id="walletSide">💸 Deposit / Withdraw</button>
+  <a href="#myTickets">📋 Transaction Requests</a>
   <h4>ACCOUNT</h4>
   <a href="#admin" id="adminNav" hidden>🛡️ Admin Panel</a>
   <a href="#addRanks" id="ranksNav" hidden>🏅 Add Ranks</a>
@@ -510,40 +534,38 @@ main{max-width:1650px}
     <button class="game-card card-wheel" data-game="wheel"><span class="game-live">● LIVE</span><span class="game-art art-wheel" aria-hidden="true"><span>🎯</span><span class="thumbnail-wheel"></span></span><span class="game-title">COLOR WHEEL</span><span class="game-subtitle">RED OR BLACK</span><span class="game-play">PLAY NOW ↗</span></button>
   </div>
 
-  <section class="panel" id="ticketSection">
-    <h2>🎟️ Private Tickets</h2>
+  <section class="panel wallet-panel" id="ticketSection">
+    <div class="wallet-eyebrow">DONUT ROYALE • PLAYER WALLET</div>
+    <h2>💸 DEPOSIT & WITHDRAW</h2>
+    <p class="wallet-intro">Choose what you want to do with your DonutSMP balance.</p>
+    <div class="wallet-tabs"><button type="button" id="walletDepositTab" class="selected">⬇ DEPOSIT</button><button type="button" id="walletWithdrawTab">⬆ WITHDRAW</button></div>
     <form id="ticketForm">
-      <label>Type
-        <select id="kind">
-          <option value="deposit">Deposit</option>
-          <option value="withdraw">Withdraw</option>
-          <option value="support">Support</option>
-        </select>
-      </label>
-      <label>Amount
-        <input id="amount" value="1000">
-      </label>
-      <label>Message
-        <textarea id="message" maxlength="1000"></textarea>
-      </label>
-      <div class="notice" id="payInfo">
-        <strong class="pay-warning-title">PAY FIRST, THEN CREATE YOUR TICKET!</strong>
-        <p>Send the exact deposit amount in Minecraft:</p>
-        <code id="payCommand">/pay matejicekjepica 1000</code>
-        <p>You must send the in-game payment BEFORE creating your deposit ticket. Staff will verify it independently.</p>
+      <select id="kind" hidden><option value="deposit">Deposit</option><option value="withdraw">Withdraw</option></select>
+      <label class="wallet-label" for="amount">AMOUNT (K / M / B)</label>
+      <input id="amount" value="2M" placeholder="e.g. 2M" inputmode="decimal" autocomplete="off">
+      <div class="quick" data-input="amount"><button type="button" data-value="1000000">1M</button><button type="button" data-value="2000000">2M</button><button type="button" data-value="10000000">10M</button><button type="button" data-value="100000000">100M</button></div>
+      <div class="wallet-command-box" id="payInfo">
+        <div class="wallet-command-label">STEP 1 · SEND THIS COMMAND ON DONUTSMP.NET</div>
+        <code id="payCommand">/pay YOUR_BEDROCK_NICK 2000000</code>
+        <button type="button" id="walletCopy" class="wallet-copy">📋 COPY COMMAND</button>
+        <p id="walletNickWarning">⚠️ Bedrock receiving nickname is not configured yet. Do not send any payment until it is confirmed.</p>
       </div>
-      <button class="primary">CREATE TICKET</button>
+      <div class="wallet-withdraw-info" id="walletWithdrawInfo" hidden>⬆ Enter how much you want to withdraw from your DONUT ROYALE balance. Staff will review your request and arrange the DonutSMP payout.</div>
+      <label class="wallet-label" for="message">MINECRAFT NICK / NOTE (OPTIONAL)</label>
+      <textarea id="message" maxlength="1000" placeholder="Your Minecraft nickname or extra information"></textarea>
+      <button class="primary wallet-submit" id="walletSubmit">CONTINUE TO DEPOSIT</button>
+      <p class="wallet-disclaimer">Requests are reviewed by staff. Deposits are not credited automatically until payment verification is connected.</p>
     </form>
   </section>
 
   <section class="panel" id="myTickets">
-    <h2>📬 My Tickets</h2>
+    <h2>📋 Transaction Requests</h2>
     <div id="tickets"></div>
   </section>
 
   <section class="panel" id="admin" hidden>
     <h2>🛡️ Admin Panel</h2>
-    <h3>Ticket Queue</h3>
+    <h3>Transaction & Support Queue</h3>
     <div id="adminTickets"></div>
     <h3>Players & Roles</h3>
     <div id="users"></div>
@@ -556,7 +578,7 @@ main{max-width:1650px}
 </footer>
 </main>
 
-<section class="deposit-confirm" id="depositConfirm" hidden role="dialog" aria-modal="true" aria-labelledby="depositTitle"><div class="deposit-box"><div style="font-size:45px">⚠️</div><h2 id="depositTitle">PAY FIRST, THEN CREATE YOUR TICKET!</h2><p>Send the exact selected deposit amount to <strong>matejicekjepica</strong> in Minecraft before creating your ticket.</p><p id="depositBreakdown"></p><div class="deposit-command" id="depositCommand"></div><p>Confirm only after paying. Staff will verify the payment and credit <strong>only the actual received deposit</strong>.</p><div class="deposit-actions"><button type="button" class="deposit-cancel" id="depositCancel">CANCEL</button><button type="button" class="primary" id="depositAccept">I HAVE PAID — CREATE TICKET</button></div></div></section>
+<section class="deposit-confirm" id="depositConfirm" hidden role="dialog" aria-modal="true" aria-labelledby="depositTitle"><div class="deposit-box"><div style="font-size:45px">💎</div><h2 id="depositTitle">CONFIRM YOUR DONUTSMP DEPOSIT</h2><p>Send the exact amount to the configured Bedrock account on DonutSMP.net.</p><p id="depositBreakdown"></p><div class="deposit-command" id="depositCommand"></div><p>Only confirm after paying. Staff must independently verify your payment before credits are added.</p><div class="deposit-actions"><button type="button" class="deposit-cancel" id="depositCancel">CANCEL</button><button type="button" class="primary" id="depositAccept">I HAVE PAID — SUBMIT REQUEST</button></div></div></section>
 <!-- Auth is outside the blurred app so its inputs remain sharp and clickable. -->
 <section id="auth">
   <div class="auth-modal">
@@ -1350,69 +1372,70 @@ $("wheelPlay").onclick = ()=>play(
   "wheel","wheelBet","wheelResult","wheelPlay",{choice:color}
 );
 
-function updateTicketForm(){
-  const kind = $("kind").value;
-
-  $("amount").disabled = kind==="support";
-  $("payInfo").hidden = kind!=="deposit";
-
-  if(kind==="deposit"){
-    try{
-      $("payCommand").textContent =
-        "/pay matejicekjepica "+parseAmount($("amount").value);
-    }catch{
-      $("payCommand").textContent =
-        "/pay matejicekjepica AMOUNT";
-    }
-  }
+const DEPOSIT_BEDROCK_NICK = ""; // Set the exact DonutSMP Bedrock nickname after confirmation.
+function walletShow(kind){
+  $("kind").value=kind;
+  $("walletDepositTab").classList.toggle("selected",kind==="deposit");
+  $("walletWithdrawTab").classList.toggle("selected",kind==="withdraw");
+  $("payInfo").hidden=kind!=="deposit";
+  $("walletWithdrawInfo").hidden=kind!=="withdraw";
+  $("walletSubmit").textContent=kind==="deposit"?"CONTINUE TO DEPOSIT":"REQUEST WITHDRAWAL";
+  updateTicketForm();
 }
-
-$("kind").onchange = updateTicketForm;
-$("amount").oninput = updateTicketForm;
-
-$("ticketForm").onsubmit = async e=>{
+function walletOpen(){
+  if(!me){$("auth").hidden=false;toast("Log in first.");return;}
+  $("ticketSection").scrollIntoView({behavior:"smooth",block:"start"});
+}
+$("walletNav").onclick=walletOpen;
+$("walletSide").onclick=walletOpen;
+$("walletDepositTab").onclick=()=>walletShow("deposit");
+$("walletWithdrawTab").onclick=()=>walletShow("withdraw");
+function updateTicketForm(){
+  const nick=DEPOSIT_BEDROCK_NICK||"YOUR_BEDROCK_NICK";
+  let amount="AMOUNT";
+  try{amount=String(parseAmount($("amount").value));}catch{}
+  $("payCommand").textContent="/pay "+nick+" "+amount;
+  $("walletNickWarning").hidden=!!DEPOSIT_BEDROCK_NICK;
+  $("walletCopy").disabled=!DEPOSIT_BEDROCK_NICK||amount==="AMOUNT";
+}
+$("walletCopy").onclick=async()=>{
+  if(!DEPOSIT_BEDROCK_NICK)return toast("Bedrock nickname has not been configured yet.");
+  try{await navigator.clipboard.writeText($("payCommand").textContent);toast("Command copied!");}
+  catch(e){toast("Select the command and copy it manually.");}
+};
+$("kind").onchange=updateTicketForm;
+$("amount").oninput=updateTicketForm;
+walletShow("deposit");
+$("ticketForm").onsubmit=async e=>{
   e.preventDefault();
-
   try{
-    const kind = $("kind").value;
-    const amount = kind==="support"
-      ? 0
-      : parseAmount($("amount").value);
-
-    if(kind!=="support" && (amount<1 || amount>1000000000000)){
-      throw Error("Invalid ticket amount");
-    }
-    if(kind==="withdraw" && amount>me.balance){
-      throw Error("Not enough balance! You only have "+fmt(me.balance)+" but requested "+fmt(amount)+".");
-    }
-
+    if(!me)throw Error("Please log in first");
+    const kind=$("kind").value;
+    const amount=parseAmount($("amount").value);
+    if(amount<1||amount>1000000000000)throw Error("Amount must be between 1 and 1T");
+    if(kind==="withdraw"&&amount>me.balance)throw Error("Not enough balance. Available: "+fmt(me.balance));
     let ticketMessage=$("message").value.trim();
     if(kind==="deposit"){
-      const total=amount;
-      $("depositBreakdown").textContent="YOUR DEPOSIT: "+fmt(amount)+" ("+total.toLocaleString("en-US")+" credits)";
-      $("depositCommand").textContent="/pay matejicekjepica "+total;
+      if(!DEPOSIT_BEDROCK_NICK)throw Error("Deposit receiver is not configured yet. Ask the owner to set their Bedrock nickname.");
+      $("depositBreakdown").textContent="YOUR DEPOSIT: "+fmt(amount)+" ("+amount.toLocaleString("en-US")+" credits)";
+      $("depositCommand").textContent="/pay "+DEPOSIT_BEDROCK_NICK+" "+amount;
       $("depositConfirm").hidden=false;
       const confirmed=await new Promise(resolve=>{
-        $("depositAccept").onclick=()=>resolve(true);
-        $("depositCancel").onclick=()=>resolve(false);
+        const accept=()=>{cleanup();resolve(true);};
+        const cancel=()=>{cleanup();resolve(false);};
+        const cleanup=()=>{$("depositAccept").removeEventListener("click",accept);$("depositCancel").removeEventListener("click",cancel);};
+        $("depositAccept").addEventListener("click",accept);
+        $("depositCancel").addEventListener("click",cancel);
       });
       $("depositConfirm").hidden=true;
       if(!confirmed)return;
-      ticketMessage=("[PAYMENT INSTRUCTIONS] /pay matejicekjepica "+total+". [PLAYER MESSAGE] "+ticketMessage).slice(0,1000);
+      ticketMessage=("[PAYMENT COMMAND] /pay "+DEPOSIT_BEDROCK_NICK+" "+amount+". [PLAYER MESSAGE] "+ticketMessage).slice(0,1000);
     }
-
-    await api("tickets",{
-      kind,
-      amount,
-      message:ticketMessage
-    });
-
-    $("message").value = "";
-    toast("Ticket created");
+    await api("tickets",{kind,amount,message:ticketMessage});
+    $("message").value="";
+    toast(kind==="deposit"?"Deposit request submitted for staff verification":"Withdrawal request submitted");
     await loadTickets();
-  }catch(err){
-    toast(err.message);
-  }
+  }catch(err){toast(err.message);}
 };
 
 async function loadTickets(){
