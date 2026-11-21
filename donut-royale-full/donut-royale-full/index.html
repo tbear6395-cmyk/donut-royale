@@ -393,7 +393,7 @@ main{margin-left:240px;padding:27px 34px;max-width:none}
       <div class="notice" id="payInfo">
         Deposit command:
         <code id="payCommand">/pay matejicekjepica 1000</code>
-        <p>Staff must verify payments independently.</p>
+        <p>You must send the in-game payment BEFORE creating your deposit ticket. Staff will verify it independently.</p>
       </div>
       <button class="primary">CREATE TICKET</button>
     </form>
@@ -1070,6 +1070,18 @@ $("ticketForm").onsubmit = async e=>{
     }
     if(kind==="withdraw" && amount>me.balance){
       throw Error("Not enough balance! You only have "+fmt(me.balance)+" but requested "+fmt(amount)+".");
+    }
+
+    if(kind==="deposit"){
+      const command="/pay matejicekjepica "+amount;
+      const acknowledged=confirm(
+        "⚠️ BEFORE CREATING A DEPOSIT TICKET\\n\\n"+
+        "First send "+fmt(amount)+" in-game to matejicekjepica.\\n\\n"+
+        "Minecraft command:\\n"+command+"\\n\\n"+
+        "Only click OK after you have actually sent the payment. "+
+        "Creating a ticket does NOT send money automatically. Staff will verify your payment."
+      );
+      if(!acknowledged)return;
     }
 
     await api("tickets",{
