@@ -350,6 +350,29 @@ main{max-width:1650px}
 .pips-6 i:nth-child(3){grid-area:2/1}
 .pips-6 i:nth-child(4){grid-area:2/3}
 #screen-dice .primary{font-size:17px;padding:15px 34px;box-shadow:0 0 22px #a03cfb70}
+
+/* Artwork-based Minecraft arcade thumbnails */
+.game-card{min-height:242px;height:242px;justify-content:flex-start;padding:13px 18px}
+.game-card .game-title{position:absolute;top:17px;left:50%;transform:translateX(-50%);white-space:nowrap;font-size:clamp(22px,2.7vw,37px);z-index:4;text-align:center;text-shadow:3px 4px #000,0 0 16px var(--accent)}
+.game-card .game-subtitle{position:absolute;bottom:18px;left:17px;z-index:4}
+.game-card .game-live{z-index:5;top:11px;left:11px}
+.game-card .game-play{z-index:5;bottom:13px}
+.game-card .game-art{position:absolute;inset:0;top:0;left:0;right:0;bottom:0;width:100%;height:100%;transform:none;display:block;font-size:initial;filter:none;z-index:0}
+.game-card:hover .game-art{transform:scale(1.04)}
+.game-card .game-art:before{content:"";position:absolute;inset:0;background:repeating-conic-gradient(from 5deg at 50% 55%,#fff2 0deg 10deg,transparent 11deg 24deg);opacity:.7}
+.art-blackjack .minecraft-dealer{position:absolute;left:33%;bottom:-32px;height:220px;width:auto;image-rendering:pixelated;filter:drop-shadow(0 8px 9px #000c) drop-shadow(0 0 18px #df87ff);z-index:2}
+.art-blackjack .dealer-cards{position:absolute;right:10%;top:35%;display:flex;gap:6px;transform:rotate(-12deg);font:bold 36px Georgia;color:#12142b;text-shadow:none;z-index:3;background:#fff;border:3px solid #d4c6ff;border-radius:6px;padding:8px 6px;box-shadow:5px 7px 0 #0009}
+.art-blackjack .dealer-cards b{color:#bc2b58;font:inherit}
+.art-blackjack .dealer-table{position:absolute;bottom:-24px;left:7%;right:7%;height:68px;border-radius:50%;background:radial-gradient(ellipse,#166a48,#083c2c);border:9px solid #77502b;box-shadow:0 -8px 16px #0009;z-index:3}
+.art-dice .thumbnail-die{position:absolute;top:67px;left:22%;font-size:102px;color:#fff;filter:drop-shadow(5px 10px 4px #0009);transform:rotate(-20deg)}
+.art-dice .thumbnail-die.second{left:53%;top:95px;font-size:85px;transform:rotate(20deg)}
+.art-coin span{position:absolute;top:72px;left:32%;font-size:116px;filter:drop-shadow(0 8px 9px #000b)}
+.art-coin span+span{left:59%;top:108px;font-size:75px}
+.art-slots{display:flex!important;align-items:center;justify-content:center;gap:7px;padding-top:36px}
+.art-slots span{font:bold 74px Georgia;color:#ffe28a;background:linear-gradient(#34213c,#120e27);padding:0 10px;border:3px solid #ffb3df;border-radius:11px;box-shadow:0 0 22px #ff6aa7}
+.art-wheel>span:first-child{position:absolute;left:17%;top:80px;font-size:75px;z-index:2}
+.thumbnail-wheel{position:absolute;right:17%;top:65px;width:142px;height:142px;border-radius:50%;border:8px solid #e6b15d;background:repeating-conic-gradient(#e83c6c 0deg 30deg,#101322 30deg 60deg);box-shadow:0 0 24px #3d9cff}
+@media(max-width:580px){.game-card{min-height:230px;height:230px}}
 </style>
 </head>
 
@@ -428,11 +451,11 @@ main{max-width:1650px}
   <div class="rules-note">Game rules: 40% win chance, 60% loss chance. Winning bets return 2×. Only betting your entire balance (all-in) automatically loses. Maximum bet: 3B.</div>
 
   <div class="game-grid">
-    <button class="game-card card-coinflip" data-game="coinflip"><span class="game-live">● LIVE</span><span class="game-art" aria-hidden="true">🪙</span><span class="game-title">COINFLIP</span><span class="game-subtitle">SONIC VS TAILS</span><span class="game-play">PLAY NOW ↗</span></button>
-    <button class="game-card card-dice" data-game="dice"><span class="game-live">● LIVE</span><span class="game-art" aria-hidden="true">🎲</span><span class="game-title">LUCKY DICE</span><span class="game-subtitle">ROLL THE DICE</span><span class="game-play">PLAY NOW ↗</span></button>
-    <button class="game-card card-slots" data-game="slots"><span class="game-live">● LIVE</span><span class="game-art" aria-hidden="true">🎰</span><span class="game-title">TRIPLE SEVENS</span><span class="game-subtitle">JACKPOT SLOTS</span><span class="game-play">PLAY NOW ↗</span></button>
-    <button class="game-card card-blackjack" data-game="blackjack"><span class="game-live">● LIVE</span><span class="game-art" aria-hidden="true">🃏</span><span class="game-title">BLACKJACK</span><span class="game-subtitle">GET 21 · HIT / STAND</span><span class="game-play">PLAY NOW ↗</span></button>
-    <button class="game-card card-wheel" data-game="wheel"><span class="game-live">● LIVE</span><span class="game-art" aria-hidden="true">🎯</span><span class="game-title">COLOR WHEEL</span><span class="game-subtitle">RED OR BLACK</span><span class="game-play">PLAY NOW ↗</span></button>
+    <button class="game-card card-coinflip" data-game="coinflip"><span class="game-live">● LIVE</span><span class="game-art art-coin" aria-hidden="true"><span>🪙</span><span>⚡</span></span><span class="game-title">COINFLIP</span><span class="game-subtitle">SONIC VS TAILS</span><span class="game-play">PLAY NOW ↗</span></button>
+    <button class="game-card card-dice" data-game="dice"><span class="game-live">● LIVE</span><span class="game-art art-dice" aria-hidden="true"><span class="thumbnail-die">⚄</span><span class="thumbnail-die second">⚅</span></span><span class="game-title">LUCKY DICE</span><span class="game-subtitle">ROLL THE DICE</span><span class="game-play">PLAY NOW ↗</span></button>
+    <button class="game-card card-slots" data-game="slots"><span class="game-live">● LIVE</span><span class="game-art art-slots" aria-hidden="true"><span>7</span><span>7</span><span>7</span></span><span class="game-title">TRIPLE SEVENS</span><span class="game-subtitle">JACKPOT SLOTS</span><span class="game-play">PLAY NOW ↗</span></button>
+    <button class="game-card card-blackjack" data-game="blackjack"><span class="game-live">● LIVE</span><span class="game-art art-blackjack" aria-hidden="true"><img class="minecraft-dealer" src="https://mc-heads.net/body/Steve/160" alt=""><span class="dealer-cards">A♠<b>J♣</b></span><span class="dealer-table"></span></span><span class="game-title">BLACKJACK</span><span class="game-subtitle">GET 21 · HIT / STAND</span><span class="game-play">PLAY NOW ↗</span></button>
+    <button class="game-card card-wheel" data-game="wheel"><span class="game-live">● LIVE</span><span class="game-art art-wheel" aria-hidden="true"><span>🎯</span><span class="thumbnail-wheel"></span></span><span class="game-title">COLOR WHEEL</span><span class="game-subtitle">RED OR BLACK</span><span class="game-play">PLAY NOW ↗</span></button>
   </div>
 
   <section class="panel" id="ticketSection">
