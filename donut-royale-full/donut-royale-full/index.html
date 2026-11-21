@@ -1,288 +1,1024 @@
-<!doctype html>
+<!DOCTYPE html>
 <html lang="en">
 <head>
-<meta charset="utf-8">
-<meta name="viewport" content="width=device-width,initial-scale=1">
-<title>DONUT ROYALE | Winter Arcade</title>
-<link rel="stylesheet" href="/style.css">
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>DONUT ROYALE</title>
+
+<style>
+*{box-sizing:border-box}
+[hidden]{display:none!important}
+body{margin:0;background:#090b19;color:white;font-family:Arial,sans-serif}
+button,input,select,textarea{font:inherit}
+button{cursor:pointer}
+button:disabled{opacity:.5;cursor:wait}
+a{color:#c6b4ff;text-decoration:none}
+
+header{
+  height:70px;background:#111429;border-bottom:1px solid #292d4b;
+  display:flex;align-items:center;justify-content:space-between;
+  padding:0 25px;position:sticky;top:0;z-index:5
+}
+.logo{font-size:24px;font-weight:900}
+.logo span{color:#ae7aff}
+#account{display:flex;align-items:center;gap:12px}
+
+aside{
+  position:fixed;top:70px;bottom:0;left:0;width:220px;
+  background:#101326;padding:20px;overflow:auto;
+  border-right:1px solid #292d4b
+}
+aside button,aside a{
+  display:block;width:100%;background:transparent;color:#c8c9dd;
+  text-align:left;border:0;padding:14px;border-radius:10px;
+  margin:5px 0
+}
+aside button:hover,aside a:hover{background:#262044;color:white}
+aside h4{color:#777c9c;font-size:12px;margin-top:25px}
+main{margin-left:220px;padding:25px;max-width:1450px}
+.hero{
+  padding:45px;border-radius:22px;
+  background:linear-gradient(120deg,#26204e,#171735,#40204c);
+  border:1px solid #594080;margin-bottom:25px
+}
+.hero h1{font-size:clamp(35px,6vw,65px);margin:15px 0}
+.hero h1 span{color:#b995ff}
+.hero p{color:#c5c1db}
+.panel{
+  background:#15182c;border:1px solid #30334e;
+  border-radius:17px;padding:22px;margin:20px 0
+}
+.primary{
+  background:linear-gradient(120deg,#8050e8,#ae67f4);
+  color:white;border:0;padding:13px 24px;border-radius:10px;
+  font-weight:bold
+}
+input,select,textarea{
+  display:block;width:100%;padding:13px;background:#0c1022;
+  color:white;border:1px solid #3a3d5a;border-radius:9px;
+  margin:8px 0 15px
+}
+label{display:block;color:#c4c6df;margin-top:12px}
+textarea{min-height:90px}
+.game-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:15px}
+.game-card{
+  min-height:210px;background:linear-gradient(145deg,#292247,#14182c);
+  border:1px solid #4b3e74;color:white;border-radius:18px;
+  padding:20px;text-align:left;transition:.2s
+}
+.game-card:hover{transform:translateY(-5px);border-color:#a775ff}
+.game-card .emoji{font-size:65px;display:block;margin-bottom:20px}
+.game-card strong{display:block;font-size:19px}
+.game-card small{color:#aaa5c8}
+.stats{display:grid;grid-template-columns:repeat(3,1fr);gap:15px}
+.stats .panel{margin:0}
+.stats h2{color:#c4a0ff}
+.item{padding:14px;background:#0e1225;border-radius:10px;margin:10px 0}
+.item>*{display:block;margin:7px 0}
+.item button{display:inline-block;margin-right:8px;padding:8px}
+.notice{padding:15px;background:#26223d;border-radius:10px}
+.overlay{
+  position:fixed;inset:0;background:#03040cdd;z-index:20;
+  display:grid;place-items:center;padding:15px
+}
+.game-window{
+  width:min(650px,100%);max-height:95vh;overflow:auto;
+  background:#171a31;border:1px solid #7657a8;
+  border-radius:22px;padding:25px;text-align:center
+}
+.modal-top{display:flex;justify-content:space-between;align-items:center}
+.modal-top button{background:#33314f;color:white;border:0;padding:10px}
+.game-screen h2{font-size:32px}
+.game-screen input{max-width:320px;margin:15px auto}
+.choices{display:flex;gap:10px;justify-content:center;margin:20px 0}
+.choices button{
+  padding:12px 20px;background:#282943;color:white;
+  border:1px solid #555777;border-radius:10px
+}
+.choices .selected{background:#6843ac;border-color:#bd8bff}
+.result{min-height:30px;color:#e8cc78;font-weight:bold}
+.quick button{
+  background:#30314c;color:white;border:0;border-radius:6px;
+  padding:8px 13px;margin:4px
+}
+
+/* SONIC + TAILS COIN */
+.coin-stage{perspective:800px;margin:35px auto}
+.coin{
+  width:180px;height:180px;position:relative;margin:auto;
+  transform-style:preserve-3d
+}
+.coin-face{
+  position:absolute;inset:0;border-radius:50%;
+  backface-visibility:hidden;overflow:hidden;
+  border:9px solid #d8a83c;
+  box-shadow:inset 0 0 18px #fff7,0 0 30px #e9b44455;
+  background:radial-gradient(circle,#ffe5a1,#ba7b20)
+}
+.coin-face img{width:100%;height:100%;object-fit:contain}
+.coin-face.back{transform:rotateY(180deg)}
+
+/* DICE */
+.dice-stage{height:200px;display:grid;place-items:center;perspective:700px}
+.dice{
+  width:110px;height:110px;position:relative;
+  transform-style:preserve-3d
+}
+.dice-face{
+  position:absolute;width:110px;height:110px;
+  display:grid;place-items:center;font-size:78px;
+  background:#f5f2ff;color:#17132c;
+  border:5px solid #b5a4ef;border-radius:14px
+}
+.f1{transform:translateZ(55px)}
+.f2{transform:rotateY(90deg) translateZ(55px)}
+.f3{transform:rotateX(90deg) translateZ(55px)}
+.f4{transform:rotateX(-90deg) translateZ(55px)}
+.f5{transform:rotateY(-90deg) translateZ(55px)}
+.f6{transform:rotateY(180deg) translateZ(55px)}
+
+/* SLOTS */
+.slots{display:flex;justify-content:center;gap:12px;margin:30px 0}
+.reel{
+  width:100px;height:115px;display:grid;place-items:center;
+  background:#080b1a;border:3px solid #bd85f7;
+  border-radius:13px;font-size:65px
+}
+
+/* ROULETTE */
+.wheel-wrap{position:relative;width:230px;margin:30px auto}
+.pointer{position:absolute;top:-20px;left:calc(50% - 13px);z-index:2;font-size:28px}
+.wheel{
+  width:230px;height:230px;border-radius:50%;
+  border:12px solid #d3a94c;
+  background:repeating-conic-gradient(
+    from -15deg,#e74463 0deg 30deg,#15182b 30deg 60deg
+  );
+  box-shadow:0 0 35px #ae78ff44
+}
+.wheel:after{
+  content:"🍩";display:grid;place-items:center;
+  position:relative;top:75px;margin:auto;
+  width:55px;height:55px;border-radius:50%;
+  background:#e7bb67;font-size:30px
+}
+#toast{
+  display:none;position:fixed;right:20px;bottom:20px;z-index:50;
+  background:#322452;padding:17px;border-radius:12px;
+  border:1px solid #9a71e6
+}
+footer{color:#777c99;text-align:center;padding:35px}
+@media(max-width:1000px){
+  .game-grid{grid-template-columns:repeat(2,1fr)}
+  .stats{grid-template-columns:1fr}
+}
+@media(max-width:700px){
+  aside{position:static;width:auto;height:auto;padding:10px}
+  aside h4,aside .winter{display:none}
+  main{margin:0;padding:12px}
+  header{padding:10px}
+  .hero{padding:25px}
+  .game-grid{grid-template-columns:1fr 1fr}
+  .game-card{min-height:170px;padding:13px}
+  .game-card .emoji{font-size:43px}
+}
+</style>
 </head>
+
 <body>
 
-<header class="topbar">
-  <a class="brand" href="#home">🍩 DONUT <b>ROYALE</b></a>
-  <div class="top-actions">
-    <span class="balance">🪙 <span id="topBalance">0</span></span>
-    <span id="account"></span>
-  </div>
+<header>
+  <div class="logo">🍩 DONUT <span>ROYALE</span></div>
+  <div>🪙 <span id="topBalance">0</span> <span id="account"></span></div>
 </header>
 
-<aside class="sidebar">
-  <div class="side-brand">
-    <span class="side-emoji">🎅🍩</span>
-    <strong>DONUT ROYALE</strong>
-    <small>❄ WINTER EDITION ❄</small>
-  </div>
-  <div class="nav-title">EXPLORE</div>
-  <a href="#home">🏠 <span>Lobby</span></a>
-  <div class="nav-title">MINIGAMES</div>
-  <button class="nav-game" data-game="coinflip">🪙 Coinflip</button>
-  <button class="nav-game" data-game="dice">🎲 Lucky Dice</button>
-  <button class="nav-game" data-game="slots">🎰 Triple Sevens</button>
-  <button class="nav-game" data-game="wheel">🎯 Color Wheel</button>
-  <div class="nav-title">ACCOUNT</div>
+<aside>
+  <h2>❄ WINTER ROYALE</h2>
+  <h4>MINIGAMES</h4>
+  <button data-game="coinflip">🪙 Coinflip</button>
+  <button data-game="dice">🎲 Lucky Dice</button>
+  <button data-game="slots">🎰 Triple Sevens</button>
+  <button data-game="wheel">🎯 Color Wheel</button>
+  <h4>ACCOUNT</h4>
   <a href="#ticketSection">🎟️ Private Tickets</a>
   <a href="#myTickets">📬 My Tickets</a>
   <a href="#admin" id="adminNav" hidden>🛡️ Admin Panel</a>
-  <div class="winter-card">
-    <span>🎄 🎁 ❄️</span>
-    <strong>WINTER ROYALE</strong>
-    <p>A little winter magic in the arcade.</p>
-  </div>
+  <div class="winter">🎄 Merry Christmas! ❄</div>
 </aside>
 
-<main id="home">
-  <section class="hero">
-    <div>
-      <div class="eyebrow">❄ MINECRAFT-INSPIRED WINTER ARCADE</div>
-      <h1>YOUR ARENA.<br><em>YOUR ROYALE.</em></h1>
-      <p>Play your favorite minigames in a glowing winter lobby.</p>
-      <button id="heroPlay" class="primary">EXPLORE GAMES →</button>
-    </div>
-    <div class="hero-art">👑 🍩 ❄️</div>
-  </section>
+<main>
 
-  <section id="auth" class="panel auth">
-    <h2>🔐 Player Account</h2>
-    <p>Log in or create your arcade account.</p>
-    <div class="tabs">
-      <button id="loginTab" class="selected" type="button">LOG IN</button>
-      <button id="registerTab" type="button">REGISTER</button>
+<section class="hero">
+  <p>❄ MINECRAFT-INSPIRED WINTER ARCADE</p>
+  <h1>YOUR ARENA.<br><span>YOUR ROYALE.</span></h1>
+  <p>Play Coinflip, Lucky Dice, Triple Sevens and Color Wheel.</p>
+  <button class="primary" id="heroPlay">EXPLORE GAMES →</button>
+</section>
+
+<section class="panel" id="auth">
+  <h2>🔐 Player Account</h2>
+  <div class="choices">
+    <button id="loginTab" class="selected" type="button">LOG IN</button>
+    <button id="registerTab" type="button">REGISTER</button>
+  </div>
+  <form id="authForm">
+    <label>Minecraft username
+      <input id="username" required minlength="3" maxlength="16"
+             pattern="[A-Za-z0-9_]{3,16}">
+    </label>
+    <label>Password
+      <input id="password" type="password" required minlength="8">
+    </label>
+    <button class="primary" id="authSubmit">LOG IN</button>
+  </form>
+</section>
+
+<div id="dashboard" hidden>
+
+  <div class="stats">
+    <div class="panel">
+      <small>YOUR BALANCE</small>
+      <h2>🪙 <span id="balance">0</span></h2>
+      <p>Demo credits</p>
     </div>
-    <form id="authForm">
-      <label>Minecraft username
-        <input id="username" required minlength="3" maxlength="16"
-               autocomplete="username" pattern="[A-Za-z0-9_]{3,16}">
+    <div class="panel">
+      <small>PLAYER PROFILE</small>
+      <h2 id="displayName">Player</h2>
+      <p id="role">PLAYER</p>
+    </div>
+    <div class="panel">
+      <small>SUPPORT</small>
+      <h2>🎟️ Tickets</h2>
+      <a href="#ticketSection">Create ticket →</a>
+    </div>
+  </div>
+
+  <h2>⭐ Featured Games</h2>
+
+  <div class="game-grid">
+    <button class="game-card" data-game="coinflip">
+      <span class="emoji">🪙</span>
+      <strong>COINFLIP</strong>
+      <small>SONIC VS TAILS</small>
+    </button>
+
+    <button class="game-card" data-game="dice">
+      <span class="emoji">🎲</span>
+      <strong>LUCKY DICE</strong>
+      <small>ROLL A SIX</small>
+    </button>
+
+    <button class="game-card" data-game="slots">
+      <span class="emoji">🎰</span>
+      <strong>TRIPLE SEVENS</strong>
+      <small>SPIN THE REELS</small>
+    </button>
+
+    <button class="game-card" data-game="wheel">
+      <span class="emoji">🎯</span>
+      <strong>COLOR WHEEL</strong>
+      <small>RED OR BLACK</small>
+    </button>
+  </div>
+
+  <section class="panel" id="ticketSection">
+    <h2>🎟️ Private Tickets</h2>
+    <form id="ticketForm">
+      <label>Type
+        <select id="kind">
+          <option value="deposit">Deposit</option>
+          <option value="withdraw">Withdraw</option>
+          <option value="support">Support</option>
+        </select>
       </label>
-      <label>Password
-        <input id="password" type="password" required minlength="8"
-               autocomplete="current-password">
+      <label>Amount
+        <input id="amount" value="1000">
       </label>
-      <button id="authSubmit" class="primary">LOG IN</button>
+      <label>Message
+        <textarea id="message" maxlength="1000"></textarea>
+      </label>
+      <div class="notice" id="payInfo">
+        Deposit command:
+        <code id="payCommand">/pay matejicekjepica 1000</code>
+        <p>Staff must verify payments independently.</p>
+      </div>
+      <button class="primary">CREATE TICKET</button>
     </form>
   </section>
 
-  <div id="dashboard" hidden>
-    <div class="stats">
-      <div class="panel stat">
-        <small>YOUR BALANCE</small>
-        <h2>🪙 <span id="balance">0</span></h2>
-        <p>Demo credits</p>
-      </div>
-      <div class="panel stat">
-        <small>PLAYER PROFILE</small>
-        <h2 id="displayName">Player</h2>
-        <p id="role">PLAYER</p>
-      </div>
-      <div class="panel stat">
-        <small>SUPPORT</small>
-        <h2>🎟️ Tickets</h2>
-        <a href="#ticketSection">Create a private ticket →</a>
-      </div>
-    </div>
+  <section class="panel" id="myTickets">
+    <h2>📬 My Tickets</h2>
+    <div id="tickets"></div>
+  </section>
 
-    <div class="section-title">
-      <h2>⭐ Featured Games</h2>
-      <p>Choose a game to open its own menu</p>
-    </div>
+  <section class="panel" id="admin" hidden>
+    <h2>🛡️ Admin Panel</h2>
+    <h3>Ticket Queue</h3>
+    <div id="adminTickets"></div>
+    <h3>Players & Roles</h3>
+    <div id="users"></div>
+  </section>
 
-    <div class="game-grid">
-      <button class="game-card gold" data-game="coinflip">
-        <span class="art">🪙</span>
-        <strong>COINFLIP</strong>
-        <small>HEADS OR TAILS</small>
-        <span class="play-tag">PLAY NOW →</span>
-      </button>
-      <button class="game-card blue" data-game="dice">
-        <span class="art">🎲</span>
-        <strong>LUCKY DICE</strong>
-        <small>ROLL A SIX</small>
-        <span class="play-tag">PLAY NOW →</span>
-      </button>
-      <button class="game-card pink" data-game="slots">
-        <span class="art">🎰</span>
-        <strong>TRIPLE SEVENS</strong>
-        <small>SPIN THE REELS</small>
-        <span class="play-tag">PLAY NOW →</span>
-      </button>
-      <button class="game-card red" data-game="wheel">
-        <span class="art">🎯</span>
-        <strong>COLOR WHEEL</strong>
-        <small>RED OR BLACK</small>
-        <span class="play-tag">PLAY NOW →</span>
-      </button>
-    </div>
+</div>
 
-    <section id="ticketSection" class="panel tickets-panel">
-      <h2>🎟️ Private Tickets</h2>
-      <p>Submit a deposit, withdrawal or support request.</p>
-      <form id="ticketForm">
-        <label>Ticket type
-          <select id="kind">
-            <option value="deposit">Deposit</option>
-            <option value="withdraw">Withdraw</option>
-            <option value="support">Support</option>
-          </select>
-        </label>
-        <label>Amount
-          <input id="amount" type="text" value="1000"
-                 inputmode="decimal" placeholder="1000, 10K, 1M">
-        </label>
-        <label>Message
-          <textarea id="message" maxlength="1000"
-                    placeholder="Describe your request"></textarea>
-        </label>
-        <div id="payInfo" class="notice">
-          Deposit command:
-          <code id="payCommand">/pay matejicekjepica 1000</code>
-          <p>Admins must independently verify receipt before approval.</p>
-        </div>
-        <button class="primary">CREATE TICKET</button>
-      </form>
-    </section>
-
-    <section id="myTickets" class="panel tickets-panel">
-      <h2>📬 My Tickets</h2>
-      <div id="tickets"></div>
-    </section>
-
-    <section id="admin" class="panel tickets-panel" hidden>
-      <h2>🛡️ Admin Panel</h2>
-      <h3>Ticket Queue</h3>
-      <div id="adminTickets"></div>
-      <h3>Players & Roles</h3>
-      <div id="users"></div>
-    </section>
-  </div>
-  <footer>Independent fan project • Demo credits only</footer>
+<footer>
+  Independent fan project • Demo credits only
+</footer>
 </main>
 
-<div id="gameOverlay" class="overlay" hidden>
-  <div class="game-window" role="dialog" aria-modal="true">
+<div class="overlay" id="gameOverlay" hidden>
+  <div class="game-window">
     <div class="modal-top">
-      <span class="modal-brand">🍩 DONUT ROYALE</span>
-      <button id="closeGame" type="button">✕ CLOSE</button>
+      <strong>🍩 DONUT ROYALE</strong>
+      <button id="closeGame">✕ CLOSE</button>
     </div>
 
     <section class="game-screen" id="screen-coinflip" hidden>
       <h2>🪙 COINFLIP</h2>
-      <p class="subtitle">Pick a side and watch the coin land.</p>
+      <p>SONIC VS TAILS</p>
+
       <div class="coin-stage">
-        <div id="coinVisual" class="coin3d">
+        <div class="coin" id="coinVisual">
           <div class="coin-face front">
-            <img src="/coin-heads.png" alt="Heads side">
+            <img id="sonicCoin" alt="Sonic">
           </div>
           <div class="coin-face back">
-            <img src="/coin-tails.png" alt="Tails side">
+            <img id="tailsCoin" alt="Tails">
           </div>
         </div>
       </div>
+
       <div class="choices">
-        <button class="side selected" data-side="heads">👑 HEADS</button>
-        <button class="side" data-side="tails">🍩 TAILS</button>
+        <button class="side selected" data-side="heads">
+          💙 SONIC
+        </button>
+        <button class="side" data-side="tails">
+          🧡 TAILS
+        </button>
       </div>
-      <label>BET AMOUNT
-        <input id="bet" type="text" value="100" placeholder="100, 10K, 1M">
-      </label>
-      <div class="quick-bets" data-input="bet">
+
+      <input id="bet" value="1000">
+      <div class="quick" data-input="bet">
         <button data-value="100">100</button>
-        <button data-value="1K">1K</button>
-        <button data-value="10K">10K</button>
-        <button data-value="1M">1M</button>
+        <button data-value="1000">1K</button>
+        <button data-value="10000">10K</button>
       </div>
-      <button class="primary play" id="flip">FLIP THE COIN</button>
-      <p id="gameResult" class="result" aria-live="polite"></p>
-      <p class="odds">30% player win chance • 2× payout</p>
+      <button class="primary" id="flip">FLIP COIN</button>
+      <p class="result" id="gameResult"></p>
     </section>
 
     <section class="game-screen" id="screen-dice" hidden>
       <h2>🎲 LUCKY DICE</h2>
-      <p class="subtitle">The cube rolls before showing the result.</p>
+      <p>Roll a six to win!</p>
+
       <div class="dice-stage">
-        <div id="diceVisual" class="dice3d">
-          <div class="dice-face face-1">⚀</div>
-          <div class="dice-face face-2">⚁</div>
-          <div class="dice-face face-3">⚂</div>
-          <div class="dice-face face-4">⚃</div>
-          <div class="dice-face face-5">⚄</div>
-          <div class="dice-face face-6">⚅</div>
+        <div class="dice" id="diceVisual">
+          <div class="dice-face f1">⚀</div>
+          <div class="dice-face f2">⚁</div>
+          <div class="dice-face f3">⚂</div>
+          <div class="dice-face f4">⚃</div>
+          <div class="dice-face f5">⚄</div>
+          <div class="dice-face f6">⚅</div>
         </div>
       </div>
-      <label>BET AMOUNT
-        <input id="diceBet" type="text" value="100" placeholder="100, 10K, 1M">
-      </label>
-      <div class="quick-bets" data-input="diceBet">
+
+      <input id="diceBet" value="1000">
+      <div class="quick" data-input="diceBet">
         <button data-value="100">100</button>
-        <button data-value="1K">1K</button>
-        <button data-value="10K">10K</button>
-        <button data-value="1M">1M</button>
+        <button data-value="1000">1K</button>
+        <button data-value="10000">10K</button>
       </div>
-      <button class="primary play" id="dicePlay">ROLL DICE</button>
-      <p id="diceResult" class="result" aria-live="polite"></p>
-      <p class="odds">Roll 6 to win • 1 in 6 • 5× payout</p>
+      <button class="primary" id="dicePlay">ROLL DICE</button>
+      <p class="result" id="diceResult"></p>
     </section>
 
     <section class="game-screen" id="screen-slots" hidden>
       <h2>🎰 TRIPLE SEVENS</h2>
-      <p class="subtitle">Three reels spin and stop one by one.</p>
-      <div class="slots-stage" id="slotsVisual">
+      <p>Get three sevens to win!</p>
+
+      <div class="slots" id="slotsVisual">
         <div class="reel"><span>7</span></div>
-        <div class="reel"><span>🍒</span></div>
-        <div class="reel"><span>💎</span></div>
+        <div class="reel"><span>7</span></div>
+        <div class="reel"><span>7</span></div>
       </div>
-      <label>BET AMOUNT
-        <input id="slotsBet" type="text" value="100" placeholder="100, 10K, 1M">
-      </label>
-      <div class="quick-bets" data-input="slotsBet">
+
+      <input id="slotsBet" value="1000">
+      <div class="quick" data-input="slotsBet">
         <button data-value="100">100</button>
-        <button data-value="1K">1K</button>
-        <button data-value="10K">10K</button>
-        <button data-value="1M">1M</button>
+        <button data-value="1000">1K</button>
+        <button data-value="10000">10K</button>
       </div>
-      <button class="primary play" id="slotsPlay">SPIN REELS</button>
-      <p id="slotsResult" class="result" aria-live="polite"></p>
-      <p class="odds">Triple 7 wins • 1 in 16 • 8× payout</p>
+      <button class="primary" id="slotsPlay">SPIN SLOTS</button>
+      <p class="result" id="slotsResult"></p>
     </section>
 
     <section class="game-screen" id="screen-wheel" hidden>
       <h2>🎯 COLOR WHEEL</h2>
-      <p class="subtitle">Watch the roulette wheel stop on a color.</p>
-      <div class="wheel-stage">
-        <div class="wheel-pointer">▼</div>
-        <div class="wheel-disc" id="wheelVisual">
-          <div class="wheel-center">🍩</div>
-        </div>
+      <p>Choose red or black.</p>
+
+      <div class="wheel-wrap">
+        <div class="pointer">▼</div>
+        <div class="wheel" id="wheelVisual"></div>
       </div>
+
       <div class="choices">
-        <button class="wheel-choice selected" data-color="red">🔴 RED</button>
-        <button class="wheel-choice" data-color="black">⚫ BLACK</button>
+        <button class="wheel-choice selected" data-color="red">
+          🔴 RED
+        </button>
+        <button class="wheel-choice" data-color="black">
+          ⚫ BLACK
+        </button>
       </div>
-      <label>BET AMOUNT
-        <input id="wheelBet" type="text" value="100" placeholder="100, 10K, 1M">
-      </label>
-      <div class="quick-bets" data-input="wheelBet">
+
+      <input id="wheelBet" value="1000">
+      <div class="quick" data-input="wheelBet">
         <button data-value="100">100</button>
-        <button data-value="1K">1K</button>
-        <button data-value="10K">10K</button>
-        <button data-value="1M">1M</button>
+        <button data-value="1000">1K</button>
+        <button data-value="10000">10K</button>
       </div>
-      <button class="primary play" id="wheelPlay">SPIN WHEEL</button>
-      <p id="wheelResult" class="result" aria-live="polite"></p>
-      <p class="odds">40% player win chance • 2× payout</p>
+      <button class="primary" id="wheelPlay">SPIN WHEEL</button>
+      <p class="result" id="wheelResult"></p>
     </section>
   </div>
 </div>
 
-<div id="toast" role="status"></div>
-<script src="/app.js"></script>
+<div id="toast"></div>
+
+<script>
+"use strict";
+
+const $ = id => document.getElementById(id);
+const sleep = ms => new Promise(r => setTimeout(r,ms));
+const fmt = n => Number(n).toLocaleString("en-US");
+
+let me = null;
+let authMode = "login";
+let side = "heads";
+let color = "red";
+let playing = false;
+let coinAngle = 0;
+let wheelAngle = 0;
+
+function toast(message){
+  const t = $("toast");
+  t.textContent = message;
+  t.style.display = "block";
+  setTimeout(() => t.style.display = "none",4000);
+}
+
+async function api(path,data){
+  const response = await fetch("/api/"+path,{
+    method:data===undefined?"GET":"POST",
+    credentials:"same-origin",
+    headers:{"Content-Type":"application/json"},
+    body:data===undefined?undefined:JSON.stringify(data)
+  });
+
+  const result = await response.json();
+
+  if(!response.ok){
+    throw Error(result.error || "Server error");
+  }
+
+  return result;
+}
+
+function parseAmount(raw){
+  const match = /^(\d+(?:[.,]\d+)?)([KMB]?)$/i.exec(
+    String(raw).trim()
+  );
+
+  if(!match) throw Error("Invalid amount");
+
+  const multipliers = {"":1,K:1000,M:1000000,B:1000000000};
+
+  const amount =
+    Number(match[1].replace(",",".")) *
+    multipliers[match[2].toUpperCase()];
+
+  if(!Number.isSafeInteger(amount) || amount<0){
+    throw Error("Invalid amount");
+  }
+
+  return amount;
+}
+
+function text(tag,value){
+  const e = document.createElement(tag);
+  e.textContent = String(value);
+  return e;
+}
+
+function button(label,fn){
+  const b = text("button",label);
+  b.onclick = fn;
+  return b;
+}
+
+function item(parent,...children){
+  const d = document.createElement("div");
+  d.className = "item";
+  d.append(...children);
+  parent.append(d);
+  return d;
+}
+
+function setMode(mode){
+  authMode = mode;
+
+  $("loginTab").classList.toggle("selected",mode==="login");
+  $("registerTab").classList.toggle("selected",mode==="register");
+  $("authSubmit").textContent =
+    mode==="login" ? "LOG IN" : "REGISTER";
+}
+
+$("loginTab").onclick = () => setMode("login");
+$("registerTab").onclick = () => setMode("register");
+
+$("authForm").onsubmit = async e => {
+  e.preventDefault();
+
+  try{
+    await api(authMode,{
+      username:$("username").value.trim(),
+      password:$("password").value
+    });
+
+    $("password").value = "";
+    await refresh();
+    toast("Welcome to DONUT ROYALE!");
+  }catch(err){
+    toast(err.message);
+  }
+};
+
+async function refresh(){
+  const result = await api("me");
+  me = result.user || null;
+
+  $("auth").hidden = !!me;
+  $("dashboard").hidden = !me;
+  $("account").replaceChildren();
+
+  if(!me){
+    $("topBalance").textContent = "0";
+    $("adminNav").hidden = true;
+    return;
+  }
+
+  $("account").append(
+    text("span",me.username),
+    button("LOG OUT",async()=>{
+      if(playing)return;
+
+      try{
+        await api("logout",{});
+        closeGame();
+        await refresh();
+      }catch(err){
+        toast(err.message);
+      }
+    })
+  );
+
+  $("balance").textContent = fmt(me.balance);
+  $("topBalance").textContent = fmt(me.balance);
+  $("displayName").textContent = me.username;
+  $("role").textContent = me.role.toUpperCase();
+
+  const isAdmin = ["admin","owner"].includes(me.role);
+
+  $("admin").hidden = !isAdmin;
+  $("adminNav").hidden = !isAdmin;
+
+  await loadTickets();
+
+  if(isAdmin){
+    await loadUsers();
+  }
+}
+
+function openGame(game){
+  if(!me){
+    $("auth").scrollIntoView({behavior:"smooth"});
+    toast("Log in first.");
+    return;
+  }
+
+  if(playing)return;
+
+  document.querySelectorAll(".game-screen")
+    .forEach(s=>s.hidden=true);
+
+  $("screen-"+game).hidden = false;
+  $("gameOverlay").hidden = false;
+}
+
+function closeGame(){
+  if(playing)return;
+  $("gameOverlay").hidden = true;
+}
+
+document.querySelectorAll("[data-game]").forEach(b=>{
+  b.onclick = () => openGame(b.dataset.game);
+});
+
+$("closeGame").onclick = closeGame;
+
+$("gameOverlay").onclick = e => {
+  if(e.target===$("gameOverlay"))closeGame();
+};
+
+document.addEventListener("keydown",e=>{
+  if(e.key==="Escape")closeGame();
+});
+
+$("heroPlay").onclick = ()=>{
+  document.querySelector(me?".game-grid":"#auth")
+    .scrollIntoView({behavior:"smooth"});
+};
+
+document.querySelectorAll(".side").forEach(b=>{
+  b.onclick = ()=>{
+    side = b.dataset.side;
+
+    document.querySelectorAll(".side").forEach(x=>{
+      x.classList.toggle("selected",x===b);
+    });
+  };
+});
+
+document.querySelectorAll(".wheel-choice").forEach(b=>{
+  b.onclick = ()=>{
+    color = b.dataset.color;
+
+    document.querySelectorAll(".wheel-choice").forEach(x=>{
+      x.classList.toggle("selected",x===b);
+    });
+  };
+});
+
+document.querySelectorAll(".quick").forEach(group=>{
+  group.querySelectorAll("button").forEach(b=>{
+    b.onclick = ()=>{
+      $(group.dataset.input).value = b.dataset.value;
+    };
+  });
+});
+
+async function animateCoin(request){
+  const result = await request;
+
+  const target = result.result==="heads" ? 0 : 180;
+
+  const end =
+    coinAngle + 1800 +
+    ((target-(coinAngle%360)+360)%360);
+
+  const coin = $("coinVisual");
+
+  const animation = coin.animate([
+    {transform:`rotateY(${coinAngle}deg)`},
+    {transform:`rotateY(${end}deg)`}
+  ],{
+    duration:1900,
+    easing:"cubic-bezier(.16,.73,.19,1)"
+  });
+
+  await animation.finished;
+
+  coinAngle = end;
+  coin.style.transform = `rotateY(${end}deg)`;
+
+  return result;
+}
+
+async function animateDice(request){
+  const result = await request;
+
+  const face = Number(result.roll);
+
+  const positions = {
+    1:[0,0],
+    2:[0,-90],
+    3:[-90,0],
+    4:[90,0],
+    5:[0,90],
+    6:[0,180]
+  };
+
+  const position = positions[face];
+
+  if(!position)throw Error("Invalid dice result");
+
+  const cube = $("diceVisual");
+
+  const animation = cube.animate([
+    {transform:"rotateX(0deg) rotateY(0deg)"},
+    {
+      transform:
+      `rotateX(${position[0]+1440}deg) `+
+      `rotateY(${position[1]+1800}deg)`
+    }
+  ],{
+    duration:1800,
+    easing:"cubic-bezier(.2,.7,.2,1)"
+  });
+
+  await animation.finished;
+
+  cube.style.transform =
+    `rotateX(${position[0]}deg) rotateY(${position[1]}deg)`;
+
+  return result;
+}
+
+async function animateSlots(request){
+  const reels = [...document.querySelectorAll(".reel span")];
+  const symbols = ["7","🍒","💎","⭐"];
+
+  const timers = reels.map((reel,i)=>setInterval(()=>{
+    reel.textContent =
+      symbols[Math.floor(Math.random()*symbols.length)];
+  },65+i*15));
+
+  try{
+    const result = await request;
+
+    if(!Array.isArray(result.reels)){
+      throw Error("Invalid slots result");
+    }
+
+    for(let i=0;i<3;i++){
+      await sleep(500);
+      clearInterval(timers[i]);
+      reels[i].textContent = result.reels[i];
+    }
+
+    return result;
+  }finally{
+    timers.forEach(clearInterval);
+  }
+}
+
+async function animateWheel(request){
+  const result = await request;
+
+  const target = result.result==="red" ? 0 : 30;
+
+  const end =
+    wheelAngle + 2160 +
+    ((target-(wheelAngle%360)+360)%360);
+
+  const wheel = $("wheelVisual");
+
+  const animation = wheel.animate([
+    {transform:`rotate(${wheelAngle}deg)`},
+    {transform:`rotate(${end}deg)`}
+  ],{
+    duration:2700,
+    easing:"cubic-bezier(.12,.72,.15,1)"
+  });
+
+  await animation.finished;
+
+  wheelAngle = end;
+  wheel.style.transform = `rotate(${end}deg)`;
+
+  return result;
+}
+
+async function play(game,inputId,resultId,buttonId,extra={}){
+  if(playing)return;
+
+  let amount;
+
+  try{
+    amount = parseAmount($(inputId).value);
+
+    if(amount<1 || amount>1000000){
+      throw Error("Bet must be between 1 and 1M");
+    }
+
+    if(!me || amount>me.balance){
+      throw Error("Not enough credits");
+    }
+  }catch(err){
+    toast(err.message);
+    return;
+  }
+
+  playing = true;
+
+  const b = $(buttonId);
+  b.disabled = true;
+  $(resultId).textContent = "Spinning...";
+
+  try{
+    const request = api("game",{game,amount,...extra});
+
+    const animations = {
+      coinflip:animateCoin,
+      dice:animateDice,
+      slots:animateSlots,
+      wheel:animateWheel
+    };
+
+    const result = await animations[game](request);
+
+    let prefix = "";
+
+    if(game==="coinflip"){
+      prefix = result.result==="heads"
+        ? "💙 SONIC · "
+        : "🧡 TAILS · ";
+    }
+
+    if(game==="dice"){
+      prefix = "🎲 "+result.roll+" · ";
+    }
+
+    if(game==="wheel"){
+      prefix = result.result==="red"
+        ? "🔴 RED · "
+        : "⚫ BLACK · ";
+    }
+
+    $(resultId).textContent = prefix + (
+      result.win
+        ? "✨ YOU WIN! +"+fmt(result.profit)
+        : "HOUSE WINS · -"+fmt(amount)
+    );
+
+    await refresh();
+  }catch(err){
+    $(resultId).textContent = "";
+    toast(err.message);
+  }finally{
+    playing = false;
+    b.disabled = false;
+  }
+}
+
+$("flip").onclick = ()=>play(
+  "coinflip","bet","gameResult","flip",{choice:side}
+);
+
+$("dicePlay").onclick = ()=>play(
+  "dice","diceBet","diceResult","dicePlay"
+);
+
+$("slotsPlay").onclick = ()=>play(
+  "slots","slotsBet","slotsResult","slotsPlay"
+);
+
+$("wheelPlay").onclick = ()=>play(
+  "wheel","wheelBet","wheelResult","wheelPlay",{choice:color}
+);
+
+function updateTicketForm(){
+  const kind = $("kind").value;
+
+  $("amount").disabled = kind==="support";
+  $("payInfo").hidden = kind!=="deposit";
+
+  if(kind==="deposit"){
+    try{
+      $("payCommand").textContent =
+        "/pay matejicekjepica "+parseAmount($("amount").value);
+    }catch{
+      $("payCommand").textContent =
+        "/pay matejicekjepica AMOUNT";
+    }
+  }
+}
+
+$("kind").onchange = updateTicketForm;
+$("amount").oninput = updateTicketForm;
+
+$("ticketForm").onsubmit = async e=>{
+  e.preventDefault();
+
+  try{
+    const kind = $("kind").value;
+    const amount = kind==="support"
+      ? 0
+      : parseAmount($("amount").value);
+
+    if(kind!=="support" && (amount<1 || amount>1000000000)){
+      throw Error("Invalid ticket amount");
+    }
+
+    await api("tickets",{
+      kind,
+      amount,
+      message:$("message").value.trim()
+    });
+
+    $("message").value = "";
+    toast("Ticket created");
+    await loadTickets();
+  }catch(err){
+    toast(err.message);
+  }
+};
+
+async function loadTickets(){
+  const result = await api("tickets");
+  const tickets = result.tickets || [];
+
+  $("tickets").replaceChildren();
+  $("adminTickets").replaceChildren();
+
+  const own = tickets.filter(t=>Number(t.user_id)===Number(me.id));
+
+  if(!own.length){
+    $("tickets").append(text("p","No tickets yet."));
+  }
+
+  own.forEach(t=>{
+    const d = item(
+      $("tickets"),
+      text("strong","#"+t.id+" · "+t.kind+" · "+t.status),
+      text("small","Amount: "+fmt(t.amount)),
+      text("p",t.message||"No message")
+    );
+
+    if(t.response){
+      d.append(text("p","Admin: "+t.response));
+    }
+  });
+
+  if(!["admin","owner"].includes(me.role))return;
+
+  tickets.forEach(t=>{
+    const d = item(
+      $("adminTickets"),
+      text("strong","#"+t.id+" · "+t.username+" · "+t.status),
+      text("p",t.message||"No message")
+    );
+
+    if(t.status!=="open")return;
+
+    ["approved","rejected","closed"].forEach(status=>{
+      d.append(button(status.toUpperCase(),async()=>{
+        if(status==="approved" &&
+           !confirm("Have you verified this request?"))return;
+
+        const response = prompt("Admin response:","");
+
+        if(response===null)return;
+
+        try{
+          await api("ticket/review",{
+            id:t.id,status,response
+          });
+
+          await refresh();
+        }catch(err){
+          toast(err.message);
+        }
+      }));
+    });
+  });
+}
+
+async function loadUsers(){
+  const result = await api("users");
+
+  $("users").replaceChildren();
+
+  (result.users||[]).forEach(u=>{
+    const d = item(
+      $("users"),
+      text("strong",u.username+" · "+u.role),
+      text("small","Balance: "+fmt(u.balance))
+    );
+
+    if(me.role!=="owner" || u.role==="owner")return;
+
+    const newRole = u.role==="admin"?"player":"admin";
+
+    d.append(button(
+      newRole==="admin"?"MAKE ADMIN":"REMOVE ADMIN",
+      async()=>{
+        if(!confirm("Change role of "+u.username+"?"))return;
+
+        try{
+          await api("role",{id:u.id,role:newRole});
+          await refresh();
+        }catch(err){
+          toast(err.message);
+        }
+      }
+    ));
+  });
+}
+
+updateTicketForm();
+
+refresh().catch(err=>toast(err.message));
+</script>
+
 </body>
 </html>
