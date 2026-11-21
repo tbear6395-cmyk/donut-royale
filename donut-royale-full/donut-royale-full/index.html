@@ -385,6 +385,11 @@ main{max-width:1650px}
 #screen-dice #diceVisual .f5{transform:rotateY(-90deg) translateZ(64px)}
 #screen-dice #diceVisual .f6{transform:rotateY(180deg) translateZ(64px)}
 #screen-dice .dice-stage::before{bottom:3px;width:220px;height:48px;filter:blur(17px)}
+
+/* Canvas-rendered 3D cube: independent of CSS preserve-3d/browser flattening */
+#screen-dice .dice-stage{height:300px;display:flex;align-items:center;justify-content:center;perspective:none;overflow:visible}
+#screen-dice #diceVisual{display:block;width:min(100%,340px);height:280px;max-width:340px;flex:none;transform:none!important;filter:none!important;object-fit:contain}
+#screen-dice .dice-stage::before{bottom:15px;opacity:.8}
 </style>
 </head>
 
@@ -599,14 +604,7 @@ main{max-width:1650px}
       <p>Roll a six to win!</p>
 
       <div class="dice-stage">
-        <div class="dice" id="diceVisual">
-          <div class="dice-face f1"><div class="dice-pips pips-1"><i></i></div></div>
-          <div class="dice-face f2"><div class="dice-pips pips-2"><i></i><i></i></div></div>
-          <div class="dice-face f3"><div class="dice-pips pips-3"><i></i><i></i><i></i></div></div>
-          <div class="dice-face f4"><div class="dice-pips pips-4"><i></i><i></i><i></i><i></i></div></div>
-          <div class="dice-face f5"><div class="dice-pips pips-5"><i></i><i></i><i></i><i></i><i></i></div></div>
-          <div class="dice-face f6"><div class="dice-pips pips-6"><i></i><i></i><i></i><i></i><i></i><i></i></div></div>
-        </div>
+        <canvas id="diceVisual" width="680" height="560" aria-label="Three-dimensional rolling dice" role="img"></canvas>
       </div>
 
       <input id="diceBet" value="1000">
@@ -1098,25 +1096,78 @@ async function animateCoin(request){
   return result;
 }
 
-let diceRotation=[-27,-35];
+// Real projected 3D mesh drawn onto a canvas, including three visible faces.
+const diceCanvas=$("diceVisual");
+const diceCtx=diceCanvas.getContext("2d");
+let diceRotation=[-.48,-.65];
+const diceFaces=[
+  {n:1,normal:[0,0,1],u:[1,0,0],v:[0,1,0],shade:1},
+  {n:2,normal:[1,0,0],u:[0,0,-1],v:[0,1,0],shade:.77},
+  {n:3,normal:[0,-1,0],u:[1,0,0],v:[0,0,1],shade:.91},
+  {n:4,normal:[0,1,0],u:[1,0,0],v:[0,0,-1],shade:.82},
+  {n:5,normal:[-1,0,0],u:[0,0,1],v:[0,1,0],shade:.75},
+  {n:6,normal:[0,0,-1],u:[-1,0,0],v:[0,1,0],shade:.7}
+];
+const pipPositions={
+  1:[[0,0]],2:[[-.48,-.48],[.48,.48]],
+  3:[[-.48,-.48],[0,0],[.48,.48]],
+  4:[[-.48,-.48],[.48,-.48],[-.48,.48],[.48,.48]],
+  5:[[-.48,-.48],[.48,-.48],[0,0],[-.48,.48],[.48,.48]],
+  6:[[-.48,-.5],[.48,-.5],[-.48,0],[.48,0],[-.48,.5],[.48,.5]]
+};
+function drawDice(rx=diceRotation[0],ry=diceRotation[1]){
+  const c=diceCtx;if(!c)return;
+  const W=diceCanvas.width,H=diceCanvas.height;
+  c.clearRect(0,0,W,H);
+  const transform=([x,y,z])=>{
+    const cy=Math.cos(ry),sy=Math.sin(ry),cx=Math.cos(rx),sx=Math.sin(rx);
+    const xx=x*cy+z*sy,zz=-x*sy+z*cy;
+    return [xx,y*cx-zz*sx,y*sx+zz*cx];
+  };
+  const project=p=>{const d=5.3/(5.3-p[2]);return [W/2+p[0]*135*d,H/2-8-p[1]*135*d];};
+  const corner=(f,u,v)=>f.normal.map((n,i)=>n+u*f.u[i]+v*f.v[i]);
+  const visible=diceFaces.map(f=>({...f,front:transform(f.normal)[2]})).filter(f=>f.front>.005).sort((a,b)=>a.front-b.front);
+  c.save();c.shadowColor="#0009";c.shadowBlur=30;c.shadowOffsetY=20;
+  for(const f of visible){
+    const points=[[-1,-1],[1,-1],[1,1],[-1,1]].map(([u,v])=>project(transform(corner(f,u,v))));
+    c.beginPath();points.forEach(([x,y],i)=>i?c.lineTo(x,y):c.moveTo(x,y));c.closePath();
+    const shade=Math.min(1,Math.max(.55,.65+.35*f.front));
+    const lum=Math.round(236*shade);
+    c.fillStyle=`rgb(${lum},${Math.min(255,lum+2)},${Math.min(255,lum+13)})`;
+    c.fill();c.shadowBlur=0;c.shadowOffsetY=0;
+    c.strokeStyle="#b6a3e7";c.lineWidth=6;c.lineJoin="round";c.stroke();
+    for(const [u,v] of pipPositions[f.n]){
+      const center=project(transform(corner(f,u,v)));
+      const edge=project(transform(corner(f,u+.16,v)));
+      const radius=Math.max(5,Math.hypot(center[0]-edge[0],center[1]-edge[1]));
+      c.beginPath();c.ellipse(center[0],center[1],radius,radius*.94,0,0,Math.PI*2);
+      c.fillStyle="#261b39";c.fill();c.strokeStyle="#a9a0bb";c.lineWidth=1.5;c.stroke();
+    }
+    c.shadowColor="#0009";c.shadowBlur=22;c.shadowOffsetY=10;
+  }
+  c.restore();
+}
+drawDice();
 async function animateDice(request){
   const result=await request;
   const face=Number(result.roll);
-  const positions={1:[0,0],2:[0,-90],3:[-90,0],4:[90,0],5:[0,90],6:[0,180]};
-  const position=positions[face];
-  if(!position)throw Error("Invalid dice result");
-  const cube=$("diceVisual");
-  const finalX=position[0]-22,finalY=position[1]-28;
-  const spinX=finalX+1440,spinY=finalY+1800;
-  const animation=cube.animate([
-    {transform:`rotateX(${diceRotation[0]}deg) rotateY(${diceRotation[1]}deg)`,offset:0},
-    {transform:`rotateX(${spinX-260}deg) rotateY(${spinY-360}deg)`,offset:.75},
-    {transform:`rotateX(${spinX}deg) rotateY(${spinY}deg)`,offset:1}
-  ],{duration:2200,easing:"cubic-bezier(.18,.65,.16,1)"});
-  await animation.finished;
-  diceRotation=[finalX,finalY];
-  cube.style.transform=`rotateX(${finalX}deg) rotateY(${finalY}deg)`;
-  return result;
+  const positions={1:[0,0],2:[0,-Math.PI/2],3:[-Math.PI/2,0],4:[Math.PI/2,0],5:[0,Math.PI/2],6:[0,Math.PI]};
+  const p=positions[face];if(!p)throw Error("Invalid dice result");
+  const from=[...diceRotation],to=[p[0]-.35,p[1]-.4];
+  const spin=[to[0]+Math.PI*8,to[1]+Math.PI*10];
+  const duration=2200,start=performance.now();
+  await new Promise(resolve=>{
+    function frame(t){
+      const progress=Math.min(1,(t-start)/duration);
+      const eased=1-Math.pow(1-progress,3);
+      const x=from[0]+(spin[0]-from[0])*eased;
+      const y=from[1]+(spin[1]-from[1])*eased;
+      drawDice(x,y);
+      if(progress<1)requestAnimationFrame(frame);else resolve();
+    }
+    requestAnimationFrame(frame);
+  });
+  diceRotation=to;drawDice();return result;
 }
 
 async function animateSlots(request){
