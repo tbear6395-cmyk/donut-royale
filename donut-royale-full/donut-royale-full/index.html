@@ -315,7 +315,7 @@ main{margin-left:240px;padding:27px 34px;max-width:none}
   <h4>ACCOUNT</h4>
   <a href="#admin" id="adminNav" hidden>🛡️ Admin Panel</a>
   <a href="#addRanks" id="ranksNav" hidden>🏅 Add Ranks</a>
-  <a href="#adminChat" id="adminChatNav" hidden>💬 Admin Chat</a>
+  <a href="#adminChat" id="adminChatNav" hidden>💬 Admin Chat <span id="adminChatBadge" hidden style="background:#e238a9;color:white;border-radius:12px;padding:2px 7px;font-size:12px">0</span></a>
   <div class="winter">🍩 DONUT ROYALE</div>
 </aside>
 
@@ -333,6 +333,7 @@ main{margin-left:240px;padding:27px 34px;max-width:none}
   <div class="panel ranks-page-panel" style="margin-top:20px"><h2>🗑️ REMOVE RANKS</h2><p>Select an admin to remove their rank.</p><select id="removeRankNick" style="width:100%;padding:13px;border-radius:10px;background:#171222;color:white;border:1px solid #6d558b"></select><div style="margin-top:16px"><button class="primary" type="button" id="removeRankButton">REMOVE ADMIN</button></div><p id="removeRankResult" role="status"></p></div>
   <div class="panel ranks-page-panel" style="margin-top:20px"><h2>🛡️ ALL ADMINS</h2><div id="rankAdminList">Loading...</div></div>
 </section>
+<div id="chatNotification" hidden role="status" style="position:fixed;top:18px;right:18px;z-index:99999;max-width:min(340px,calc(100vw - 36px));padding:16px 18px;border:1px solid #b769ff;border-radius:14px;background:#20112f;color:white;box-shadow:0 12px 40px #0009;cursor:pointer;font-weight:700"></div>
 <section id="adminChatPage" hidden><div class="panel ranks-page-panel"><h1>💬 ADMIN CHAT</h1><p>Private chat for admins and owner. Separate from tickets.</p><div id="adminChatMessages" style="min-height:180px;max-height:380px;overflow-y:auto;text-align:left;margin:20px 0"></div><form id="adminChatForm"><input id="adminChatInput" maxlength="1000" placeholder="Write a message..." required style="width:100%"><button class="primary" type="submit" style="margin-top:12px">SEND MESSAGE</button></form><p id="adminChatStatus" role="status"></p><button type="button" id="adminChatRefresh">↻ REFRESH CHAT</button></div></section>
 <section class="hero">
   <div class="hero-copy">
@@ -733,6 +734,7 @@ async function refresh(){
   $("account").replaceChildren();
 
   if(!me){
+    chatInitializedFor=null;chatUnread=0;updateChatBadge();$("chatNotification").hidden=true;
     $("topBalance").textContent = "•••";
     $("adminNav").hidden = true;
     $("ranksNav").hidden = true;
@@ -818,13 +820,56 @@ async function loadRankPlayers(){
   }catch(err){$("rankPlayerHint").textContent="Could not load accounts: "+err.message;}
 }
 
-async function loadAdminChat(){
-  try{const result=await api("admin-chat");const el=$("adminChatMessages");el.replaceChildren();
-    (result.messages||[]).forEach(m=>{const p=document.createElement("p");const name=document.createElement("strong");name.textContent=m.username+": ";p.append(name,document.createTextNode(m.message));el.append(p);});
-    if(!(result.messages||[]).length)el.textContent="No messages yet.";
-    el.scrollTop=el.scrollHeight;
-  }catch(err){$("adminChatStatus").textContent=err.message;}
+let chatLatestId=0;
+let chatInitializedFor=null;
+let chatUnread=0;
+let chatNotificationTimeout=null;
+function updateChatBadge(){
+  $("adminChatBadge").hidden=chatUnread===0;
+  $("adminChatBadge").textContent=chatUnread>99?"99+":String(chatUnread);
 }
+function showChatNotification(message){
+  const el=$("chatNotification");
+  el.textContent="💬 "+message.username+" wrote: "+message.message.slice(0,120);
+  el.hidden=false;
+  clearTimeout(chatNotificationTimeout);
+  chatNotificationTimeout=setTimeout(()=>{el.hidden=true;},6500);
+}
+$("chatNotification").onclick=()=>{location.hash="#adminChat";$("chatNotification").hidden=true;};
+async function loadAdminChat(){
+  if(!me || !["admin","owner"].includes(me.role))return;
+  try{
+    const result=await api("admin-chat");
+    const messages=result.messages||[];
+    const accountKey=String(me.id);
+    if(chatInitializedFor!==accountKey){
+      chatInitializedFor=accountKey;
+      chatLatestId=messages.length?Math.max(...messages.map(m=>Number(m.id))):0;
+      chatUnread=0;
+    }else{
+      const fresh=messages.filter(m=>Number(m.id)>chatLatestId && m.username.toLowerCase()!==me.username.toLowerCase());
+      if(fresh.length){
+        if(location.hash!=="#adminChat")chatUnread+=fresh.length;
+        showChatNotification(fresh[fresh.length-1]);
+      }
+      if(messages.length)chatLatestId=Math.max(chatLatestId,...messages.map(m=>Number(m.id)));
+    }
+    if(location.hash==="#adminChat")chatUnread=0;
+    updateChatBadge();
+    const el=$("adminChatMessages");
+    el.replaceChildren();
+    messages.forEach(m=>{
+      const p=document.createElement("p");
+      const name=document.createElement("strong");
+      name.textContent=m.username+": ";
+      p.append(name,document.createTextNode(m.message));
+      el.append(p);
+    });
+    if(!messages.length)el.textContent="No messages yet.";
+    el.scrollTop=el.scrollHeight;
+  }catch(err){if(location.hash==="#adminChat")$("adminChatStatus").textContent=err.message;}
+}
+setInterval(()=>{if(me && ["admin","owner"].includes(me.role) && !document.hidden)loadAdminChat();},5000);
 $("adminChatForm").onsubmit=async e=>{e.preventDefault();const message=$("adminChatInput").value.trim();if(!message)return;try{await api("admin-chat",{message});$("adminChatInput").value="";$("adminChatStatus").textContent="Sent!";await loadAdminChat();}catch(err){$("adminChatStatus").textContent=err.message;}};
 $("adminChatRefresh").onclick=loadAdminChat;
 $("removeRankButton").onclick=async ()=>{const username=$("removeRankNick").value;if(!username)return;if(!confirm("Remove ADMIN rank from "+username+"?"))return;try{await api("ranks/remove-admin",{username});$("removeRankResult").textContent="✅ ADMIN rank removed from "+username;await loadRankPlayers();await loadUsers();}catch(err){$("removeRankResult").textContent="❌ "+err.message;}};
@@ -840,7 +885,7 @@ function syncRanksPage(){
   $("dashboard").hidden=active||chatActive;
   document.querySelector("footer").hidden=active||chatActive;
   if(active){window.scrollTo(0,0);$("rankPlayerNick").focus();loadRankPlayers();}
-  if(chatActive){window.scrollTo(0,0);loadAdminChat();}
+  if(chatActive){window.scrollTo(0,0);chatUnread=0;updateChatBadge();loadAdminChat();}
 }
 window.addEventListener("hashchange",syncRanksPage);
 
