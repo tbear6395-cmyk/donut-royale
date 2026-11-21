@@ -326,7 +326,7 @@ main{margin-left:240px;padding:27px 34px;max-width:none}
     <h1>ADD RANKS</h1>
     <p>Enter a player's Minecraft nickname.</p>
     <label for="rankPlayerNick">PLAYER NICKNAME</label>
-    <form id="rankAdminForm"><input id="rankPlayerNick" type="text" placeholder="Enter player nickname" maxlength="32" autocomplete="off" required><div style="margin-top:20px"><button class="primary" type="submit" id="rankSuccessButton">SUCCESS</button></div></form>
+    <div id="rankAdminForm"><input id="rankPlayerNick" type="text" placeholder="Enter player nickname" maxlength="32" autocomplete="off"><div style="margin-top:20px"><button class="primary" type="button" id="rankSuccessButton">SUCCESS — GIVE ADMIN</button></div></div>
     <p class="ranks-help" id="rankResult" role="status">Press SUCCESS to grant the ADMIN rank to this player.</p>
   </div>
 </section>
@@ -772,14 +772,14 @@ async function refresh(){
   syncRanksPage();
 }
 
-$("rankAdminForm").onsubmit=async e=>{
-  e.preventDefault();
+$("rankSuccessButton").onclick=async ()=>{
   if(!me || !["admin","owner"].includes(me.role)){toast("Access denied");return;}
   const username=$("rankPlayerNick").value.trim();
-  if(!username){toast("Enter a player nickname");return;}
+  if(!username){$("rankResult").textContent="❌ Enter a player nickname first.";toast("Enter a player nickname");return;}
   if(!confirm("Grant ADMIN rank to "+username+"?"))return;
   const btn=$("rankSuccessButton");
   btn.disabled=true;
+  $("rankResult").textContent="⏳ Granting ADMIN rank to "+username+"...";
   try{
     const result=await api("ranks/add-admin",{username});
     $("rankResult").textContent="✅ SUCCESS! "+result.username+" is now an ADMIN.";
@@ -791,6 +791,7 @@ $("rankAdminForm").onsubmit=async e=>{
     toast(err.message);
   }finally{btn.disabled=false;}
 };
+$("rankPlayerNick").addEventListener("keydown",e=>{if(e.key==="Enter"){$("rankSuccessButton").click();}});
 
 function syncRanksPage(){
   const allowed=!!me && ["admin","owner"].includes(me.role);
