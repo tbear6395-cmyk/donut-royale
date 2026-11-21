@@ -409,6 +409,17 @@ main{max-width:1650px}
 .card-blackjack .game-play{bottom:11px;right:11px;z-index:9}
 .card-blackjack .game-live{top:auto;bottom:42px;right:10px;left:auto;background:#12061bdc;border:1px solid #9438c6;color:#fff}
 @media(max-width:600px){.card-blackjack .minecraft-dealer{height:200px;left:3%}.card-blackjack .game-title{font-size:32px}.card-blackjack .dealer-cards{right:5%;width:43%}}
+
+/* Fix Blackjack title clipping and keep the headline above the illustration */
+.game-card.card-blackjack{min-height:270px;padding:0;overflow:hidden;display:block;position:relative}
+.game-card.card-blackjack .game-title{position:absolute!important;top:9px!important;left:12px!important;right:12px!important;width:auto!important;z-index:20!important;display:block!important;text-align:center!important;font-family:Impact,"Arial Black",sans-serif!important;font-size:clamp(27px,2.7vw,42px)!important;line-height:1.1!important;letter-spacing:1px!important;white-space:nowrap!important;overflow:visible!important;transform:none!important;text-shadow:3px 4px #21062d,0 0 15px #e8a6ff!important}
+.game-card.card-blackjack .game-art{position:absolute!important;inset:0!important;z-index:1!important;pointer-events:none}
+.game-card.card-blackjack .minecraft-dealer{left:5%!important;bottom:-42px!important;height:200px!important;z-index:4!important}
+.game-card.card-blackjack .dealer-cards{top:37%!important;right:5%!important;height:49%!important}
+.game-card.card-blackjack .game-subtitle{left:12px!important;bottom:14px!important;z-index:21!important}
+.game-card.card-blackjack .game-play{right:11px!important;bottom:12px!important;z-index:22!important}
+.game-card.card-blackjack .game-live{top:59px!important;right:10px!important;bottom:auto!important;z-index:22!important}
+@media(max-width:500px){.game-card.card-blackjack .game-title{font-size:29px!important}.game-card.card-blackjack .minecraft-dealer{height:185px!important}}
 </style>
 </head>
 
