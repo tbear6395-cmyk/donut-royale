@@ -145,6 +145,15 @@ def create_session(db, uid):
                 (now() + timedelta(days=365)).isoformat()))
     return token
 
+BLACKJACK_HANDS = {}
+def bj_card():
+    return secrets.choice(["A","2","3","4","5","6","7","8","9","10","J","Q","K"])
+def bj_score(cards):
+    total=sum(11 if c=="A" else 10 if c in ("J","Q","K") else int(c) for c in cards)
+    for c in cards:
+        if c=="A" and total>21: total-=10
+    return total
+
 class Handler(BaseHTTPRequestHandler):
     def send_json(self, status, payload, cookie=None):
         data = json.dumps(payload, ensure_ascii=False, default=str).encode("utf-8")
@@ -383,6 +392,46 @@ class Handler(BaseHTTPRequestHandler):
                     return self.fail(403, "Cannot change owner")
                 db.execute("UPDATE users SET role=? WHERE id=?", (role, uid))
             return self.send_json(200, {"ok": True})
+        if path == "/api/blackjack":
+            action=data.get("action")
+            if action not in ("deal","hit","stand"):
+                return self.fail(400,"Invalid blackjack action")
+            uid=user["id"]
+            with LOCK, db_open() as db:
+                hand=BLACKJACK_HANDS.get(uid)
+                if action=="deal":
+                    if hand:return self.fail(409,"Finish your current hand first")
+                    amount=data.get("amount")
+                    if type(amount) is not int or not 1<=amount<=MAX_BET:
+                        return self.fail(400,"Bet must be between 1 and 3B")
+                    row=db.execute("SELECT balance FROM users WHERE id=?",(uid,)).fetchone()
+                    if not row or amount>row["balance"]:
+                        return self.fail(400,"Not enough balance")
+                    db.execute("UPDATE users SET balance=balance-? WHERE id=?",(amount,uid))
+                    hand={"amount":amount,"player":[bj_card(),bj_card()],"dealer":[bj_card(),bj_card()],"all_in":amount==row["balance"]}
+                    BLACKJACK_HANDS[uid]=hand
+                elif not hand:
+                    return self.fail(400,"Deal cards first")
+                if action=="hit":hand["player"].append(bj_card())
+                player_score=bj_score(hand["player"])
+                finished=action=="stand" or player_score>=21 or (action=="deal" and player_score==21)
+                outcome="playing"
+                payout=0
+                if finished:
+                    if player_score>21 or hand["all_in"]:
+                        outcome="lose"
+                    else:
+                        while bj_score(hand["dealer"])<17:hand["dealer"].append(bj_card())
+                        dealer_score=bj_score(hand["dealer"])
+                        if dealer_score>21 or player_score>dealer_score:
+                            outcome="win";payout=hand["amount"]*2
+                        elif player_score==dealer_score:
+                            outcome="push";payout=hand["amount"]
+                        else:outcome="lose"
+                    if payout:db.execute("UPDATE users SET balance=balance+? WHERE id=?",(payout,uid))
+                    del BLACKJACK_HANDS[uid]
+                balance=db.execute("SELECT balance FROM users WHERE id=?",(uid,)).fetchone()["balance"]
+                return self.send_json(200,{"player":hand["player"],"dealer":hand["dealer"] if finished else [hand["dealer"][0], "🂠"],"player_score":player_score,"dealer_score":bj_score(hand["dealer"]) if finished else None,"outcome":outcome,"payout":payout,"amount":hand["amount"],"balance":balance})
         if path == "/api/game":
             game, amount, choice = data.get("game"), data.get("amount"), data.get("choice")
             if game not in ("coinflip", "dice", "slots", "wheel"):
