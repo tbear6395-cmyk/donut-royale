@@ -447,6 +447,7 @@ header{position:sticky}
 #walletNickWarning{color:#ffd393;font-size:12px;line-height:1.5}
 .wallet-withdraw-info{padding:18px;background:#0e2330;border:1px solid #267f83;border-radius:13px;color:#c1f4ec;line-height:1.6}
 .wallet-submit{display:block;width:100%;margin-top:20px;padding:17px;font-weight:900;font-size:16px}
+.wallet-nick-help{font-size:12px;color:#bdb3d9;line-height:1.5;margin-top:7px}
 .wallet-disclaimer{font-size:12px;color:#a9a3c5;line-height:1.5;text-align:center}
 @media(max-width:750px){header{height:auto;min-height:100px;align-items:flex-start;padding-top:10px}.wallet-nav{top:53px;padding:8px 14px;font-size:12px}.wallet-nav span{font-size:11px}.logo{font-size:19px}header>div:last-child{font-size:12px}}
 </style>
@@ -551,8 +552,9 @@ header{position:sticky}
         <p id="walletNickWarning">⚠️ Bedrock receiving nickname is not configured yet. Do not send any payment until it is confirmed.</p>
       </div>
       <div class="wallet-withdraw-info" id="walletWithdrawInfo" hidden>⬆ Enter how much you want to withdraw from your DONUT ROYALE balance. Staff will review your request and arrange the DonutSMP payout.</div>
-      <label class="wallet-label" for="message">MINECRAFT NICK / NOTE (OPTIONAL)</label>
-      <textarea id="message" maxlength="1000" placeholder="Your Minecraft nickname or extra information"></textarea>
+      <label class="wallet-label" for="message">MINECRAFT NICKNAME (REQUIRED) *</label>
+      <input id="message" type="text" maxlength="17" required pattern="\\.?[A-Za-z0-9_]{3,16}" title="Enter your Minecraft nickname (3–16 letters, numbers or underscores; optional Bedrock dot)" placeholder="Enter your Minecraft nickname" autocomplete="off">
+      <p class="wallet-nick-help">Required for both Deposit and Withdraw. Bedrock players: include the dot (.) if your name starts with one.</p>
       <button class="primary wallet-submit" id="walletSubmit">CONTINUE TO DEPOSIT</button>
       <p class="wallet-disclaimer">Requests are reviewed by staff. Deposits are not credited automatically until payment verification is connected.</p>
     </form>
@@ -1414,7 +1416,9 @@ $("ticketForm").onsubmit=async e=>{
     const amount=parseAmount($("amount").value);
     if(amount<1||amount>1000000000000)throw Error("Amount must be between 1 and 1T");
     if(kind==="withdraw"&&amount>me.balance)throw Error("Not enough balance. Available: "+fmt(me.balance));
-    let ticketMessage=$("message").value.trim();
+    const playerNick=$("message").value.trim();
+    if(!/^\\.?[A-Za-z0-9_]{3,16}$/.test(playerNick))throw Error("Minecraft nickname is required (3–16 characters, optional Bedrock dot).");
+    let ticketMessage="[MINECRAFT NICK] "+playerNick;
     if(kind==="deposit"){
       if(!DEPOSIT_BEDROCK_NICK)throw Error("Deposit receiver is not configured yet. Ask the owner to set their Bedrock nickname.");
       $("depositBreakdown").textContent="YOUR DEPOSIT: "+fmt(amount)+" ("+amount.toLocaleString("en-US")+" credits)";
