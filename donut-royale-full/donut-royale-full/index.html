@@ -739,6 +739,11 @@ document.querySelectorAll(".side").forEach(b=>{
     document.querySelectorAll(".side").forEach(x=>{
       x.classList.toggle("selected",x===b);
     });
+    // Show the chosen side before the flip, not only after the result.
+    if(!playing){
+      coinAngle = side==="heads" ? 0 : 180;
+      $("coinVisual").style.transform = `rotateY(${coinAngle}deg)`;
+    }
   };
 });
 
