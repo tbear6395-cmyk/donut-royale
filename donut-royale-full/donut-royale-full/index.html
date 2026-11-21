@@ -289,7 +289,7 @@ body.auth-locked #dashboard .game-card{pointer-events:none}
   </div>
 
   <h2 id="gamesHeading">⭐ Featured Games</h2>
-  <div class="rules-note">Game rules: 40% win chance, 60% loss chance. Winning bets return 2×. If a bet would leave 200M or less in your balance, that bet automatically loses (including all-in). Maximum bet: 3B.</div>
+  <div class="rules-note">Game rules: 40% win chance, 60% loss chance. Winning bets return 2×. Only betting your entire balance (all-in) automatically loses. Maximum bet: 3B.</div>
 
   <div class="game-grid">
     <button class="game-card" data-game="coinflip">
@@ -897,7 +897,7 @@ async function play(game,inputId,resultId,buttonId,extra={}){
     if(!me || amount>me.balance){
       throw Error("Not enough credits");
     }
-    if(me.balance-amount<=200000000 && !confirm("WARNING: This bet will leave "+fmt(me.balance-amount)+" in your balance (200M or less). Under the game rules, this bet is guaranteed to LOSE. Continue?"))return;
+    if(amount===me.balance && !confirm("WARNING: Betting your entire balance (all-in) is guaranteed to LOSE. Continue?"))return;
   }catch(err){
     toast(err.message);
     return;
