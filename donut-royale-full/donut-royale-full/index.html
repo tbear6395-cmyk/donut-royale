@@ -313,6 +313,7 @@ main{margin-left:240px;padding:27px 34px;max-width:none}
   <a href="#ticketSection">✎ &nbsp; Create Ticket</a>
   <h4>ACCOUNT</h4>
   <a href="#admin" id="adminNav" hidden>🛡️ Admin Panel</a>
+  <a href="#addRanks" id="ranksNav" hidden>🏅 Add Ranks</a>
   <div class="winter">🍩 DONUT ROYALE</div>
 </aside>
 
@@ -405,6 +406,12 @@ main{margin-left:240px;padding:27px 34px;max-width:none}
   <section class="panel" id="myTickets">
     <h2>📬 My Tickets</h2>
     <div id="tickets"></div>
+  </section>
+
+  <section class="panel" id="addRanks" hidden>
+    <h2>🏅 Add Ranks</h2>
+    <p>Rank management — admins and owner only.</p>
+    <div id="rankManagement">Rank controls will appear here.</div>
   </section>
 
   <section class="panel" id="admin" hidden>
@@ -719,6 +726,8 @@ async function refresh(){
   if(!me){
     $("topBalance").textContent = "•••";
     $("adminNav").hidden = true;
+    $("ranksNav").hidden = true;
+    $("addRanks").hidden = true;
     return;
   }
 
@@ -746,6 +755,8 @@ async function refresh(){
 
   $("admin").hidden = !isAdmin;
   $("adminNav").hidden = !isAdmin;
+  $("ranksNav").hidden = !isAdmin;
+  $("addRanks").hidden = !isAdmin;
 
   await loadTickets();
 
