@@ -96,13 +96,27 @@ class Handler(BaseHTTPRequestHandler):
     c.execute("UPDATE users SET role=? WHERE id=? AND role!='owner'",(role,uid))
    return self.send(200,{'ok':True})
   if path=='/api/game':
-   amount=d.get('amount');game=d.get('game')
-   if not isinstance(amount,int) or isinstance(amount,bool) or amount<1 or amount>1000000 or game!='coinflip':return self.send(400,{'error':'Invalid bet'})
+   amount=d.get('amount');game=d.get('game');choice=d.get('choice')
+   if not isinstance(amount,int) or isinstance(amount,bool) or amount<1 or amount>1000000 or game not in ('coinflip','dice','slots','wheel'):return self.send(400,{'error':'Invalid bet'})
+   if game=='coinflip' and choice not in ('heads','tails'):return self.send(400,{'error':'Choose Heads or Tails'})
+   if game=='wheel' and choice not in ('red','black'):return self.send(400,{'error':'Choose Red or Black'})
    with LOCK,conn() as c:
-    if c.execute('SELECT balance FROM users WHERE id=?',(u['id'],)).fetchone()['balance']<amount:return self.send(409,{'error':'Insufficient balance'})
-    win=secrets.randbelow(100)<30
-    c.execute('UPDATE users SET balance=balance+? WHERE id=?',((amount if win else -amount),u['id']))
-   return self.send(200,{'win':win,'odds':'Player 30% / House 70%'})
+    if c.execute('SELECT balance FROM users WHERE id=?',(u['id'],)).fetchone()['balance']<amount:return self.send(409,{'error':'Insufficient demo credits'})
+    if game=='coinflip':
+     win=secrets.randbelow(100)<30; result=choice if win else ('tails' if choice=='heads' else 'heads'); payout=2; details={'result':result,'odds':'Player 30%, house 70%'}
+    elif game=='dice':
+     roll=secrets.randbelow(6)+1;win=roll==6;payout=5;details={'roll':roll,'odds':'1 in 6'}
+    elif game=='slots':
+     win=secrets.randbelow(16)==0;payout=8
+     symbols=['7','🍒','💎','⭐'];reels=[secrets.choice(symbols) for _ in range(3)]
+     if win:reels=['7','7','7']
+     elif reels==['7','7','7']:reels[2]='⭐'
+     details={'reels':reels,'odds':'1 in 16'}
+    else:
+     win=secrets.randbelow(100)<40;payout=2;result=choice if win else ('black' if choice=='red' else 'red');details={'result':result,'odds':'Player 40%, house 60%'}
+    profit=amount*(payout-1) if win else -amount
+    c.execute('UPDATE users SET balance=balance+? WHERE id=?',(profit,u['id']))
+   return self.send(200,{'win':win,'profit':profit,**details})
   return self.send(403,{'error':'Not allowed'})
 if __name__=='__main__':
- init();port=int(os.getenv('PORT','8000'));print(f'Open http://localhost:{port}');ThreadingHTTPServer(('0.0.0.0',port),Handler).serve_forever()
+ init();port=int(os.getenv('PORT','8000'));print(f'Open http://localhost:{port}');ThreadingHTTPServer(('
