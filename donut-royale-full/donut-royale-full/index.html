@@ -182,6 +182,55 @@ footer{color:#777c99;text-align:center;padding:35px}
   .game-card{min-height:170px;padding:13px}
   .game-card .emoji{font-size:43px}
 }
+
+/* AUTH OVER THE REAL, BLURRED ARCADE */
+body.auth-locked{overflow:hidden}
+body.auth-locked header,body.auth-locked aside,body.auth-locked main{
+  filter:blur(9px) brightness(.45);pointer-events:none;user-select:none
+}
+body.auth-locked #dashboard{display:block!important}
+body.auth-locked #dashboard .stats,body.auth-locked #dashboard #ticketSection,
+body.auth-locked #dashboard #myTickets,body.auth-locked #dashboard #admin{display:none!important}
+body.auth-locked #dashboard .game-grid{display:grid!important}
+body.auth-locked #dashboard .game-card{pointer-events:none}
+#auth{
+  position:fixed;inset:0;z-index:40;display:flex;align-items:center;
+  justify-content:center;padding:18px;background:#03071255;overflow-y:auto
+}
+#auth[hidden]{display:none!important}
+#auth .auth-modal{
+  width:min(420px,100%);max-height:calc(100vh - 36px);overflow:auto;
+  padding:24px;border-radius:14px;background:#192331;
+  border:1px solid #3b4b60;box-shadow:0 35px 110px #000e
+}
+.auth-brand{font-size:24px;font-weight:950;font-style:italic;margin-bottom:22px}
+.auth-brand span{color:#78bdff}
+.auth-eyebrow{color:#9aacc2;font-size:11px;font-weight:900;letter-spacing:1.3px}
+#auth h2{font-size:23px;margin:7px 0 17px}
+.auth-responsible{
+  background:#101a27;border:1px solid #2e3b50;border-radius:9px;
+  padding:13px;font-size:13px;line-height:1.5;margin-bottom:13px
+}
+.auth-responsible p{font-size:12px;color:#a6b6c8;margin:7px 0 0}
+.auth-bonus{
+  padding:12px;background:#2a2a20;border:1px solid #927744;
+  border-radius:9px;color:#f7d47d;font-weight:800;font-size:12px;margin-bottom:17px
+}
+#auth .choices{margin:12px 0 0}
+#auth label{margin-top:9px;font-size:13px;font-weight:700}
+#auth input{margin:8px 0 12px}
+#auth .auth-check{display:flex;align-items:flex-start;gap:10px;padding:12px;
+  background:#101a27;border:1px solid #304056;border-radius:8px;cursor:pointer}
+#auth .auth-check input{width:17px;height:17px;margin:0;flex:none;accent-color:#32c875}
+#auth .auth-check span{font-size:12px;line-height:1.5}
+#authSubmit{width:100%;background:#31c875;color:#07190e;font-weight:900}
+#auth .choices button{flex:1}
+#auth .choices button.selected{background:#575cf0}
+.auth-help{font-size:12px;color:#a6b6c8;line-height:1.5}
+.auth-error{min-height:16px;color:#ff8da1;font-size:12px}
+.rules-note{padding:10px;background:#121b2d;border:1px solid #40516b;
+  border-radius:9px;color:#d4dff0;font-size:12px;line-height:1.5;margin-bottom:15px}
+@media(max-width:700px){#auth .auth-modal{padding:18px}}
 </style>
 </head>
 
@@ -215,22 +264,38 @@ footer{color:#777c99;text-align:center;padding:35px}
   <button class="primary" id="heroPlay">EXPLORE GAMES →</button>
 </section>
 
-<section class="panel" id="auth">
-  <h2>🔐 Player Account</h2>
-  <div class="choices">
-    <button id="loginTab" class="selected" type="button">LOG IN</button>
-    <button id="registerTab" type="button">REGISTER</button>
+<section id="auth">
+  <div class="auth-modal">
+    <div class="auth-brand">🍩 DONUT <span>ROYALE</span></div>
+    <div class="auth-eyebrow" id="authEyebrow">SIGN UP</div>
+    <h2 id="authHeading">Join DONUT ROYALE</h2>
+    <div class="auth-responsible">
+      <strong>Play responsibly</strong>
+      <p>You must be 18 or older to play. DONUT ROYALE uses Minecraft in-game credits only. If playing stops being fun, stop and take a break.</p>
+    </div>
+    <div class="auth-bonus">🎁 Welcome to DONUT ROYALE</div>
+    <form id="authForm">
+      <label for="username">Minecraft username</label>
+      <div class="auth-help">Enter your Minecraft username to continue.</div>
+      <input id="username" required minlength="3" maxlength="16" pattern="[A-Za-z0-9_]{3,16}" autocomplete="username" placeholder="Minecraft username">
+      <label class="auth-check">
+        <input id="bedrockCheck" type="checkbox">
+        <span>I play Bedrock Edition<br><small class="auth-help">This does not verify ownership of your Minecraft account.</small></span>
+      </label>
+      <label for="password">Password</label>
+      <input id="password" type="password" required minlength="8" autocomplete="new-password" placeholder="Password (minimum 8 characters)">
+      <label class="auth-check" id="ageRow">
+        <input id="ageCheck" type="checkbox" required>
+        <span>I'm 18 or older and agree to the game rules.</span>
+      </label>
+      <button class="primary" id="authSubmit" type="submit">CREATE ACCOUNT</button>
+      <p class="auth-error" id="authError" aria-live="polite"></p>
+    </form>
+    <div class="choices">
+      <button id="loginTab" type="button">LOG IN</button>
+      <button id="registerTab" class="selected" type="button">REGISTER</button>
+    </div>
   </div>
-  <form id="authForm">
-    <label>Minecraft username
-      <input id="username" required minlength="3" maxlength="16"
-             pattern="[A-Za-z0-9_]{3,16}">
-    </label>
-    <label>Password
-      <input id="password" type="password" required minlength="8">
-    </label>
-    <button class="primary" id="authSubmit">LOG IN</button>
-  </form>
 </section>
 
 <div id="dashboard" hidden>
@@ -253,7 +318,8 @@ footer{color:#777c99;text-align:center;padding:35px}
     </div>
   </div>
 
-  <h2>⭐ Featured Games</h2>
+  <h2 id="gamesHeading">⭐ Featured Games</h2>
+  <div class="rules-note">Game rules: 10% win chance, 90% loss chance. Winning bets return 2×. All-in bets always lose. Maximum bet: 3B.</div>
 
   <div class="game-grid">
     <button class="game-card" data-game="coinflip">
@@ -449,10 +515,10 @@ footer{color:#777c99;text-align:center;padding:35px}
 
 const $ = id => document.getElementById(id);
 const sleep = ms => new Promise(r => setTimeout(r,ms));
-const fmt = n => Number(n).toLocaleString("en-US");
+const fmt = n => {const x=Number(n)||0;for(const [v,s] of [[1e12,"T"],[1e9,"B"],[1e6,"M"],[1e3,"K"]])if(Math.abs(x)>=v)return Number((x/v).toFixed(1))+s;return String(x)};
 
 let me = null;
-let authMode = "login";
+let authMode = "register";
 let side = "heads";
 let color = "red";
 let playing = false;
@@ -524,12 +590,17 @@ function item(parent,...children){
 }
 
 function setMode(mode){
-  authMode = mode;
-
-  $("loginTab").classList.toggle("selected",mode==="login");
-  $("registerTab").classList.toggle("selected",mode==="register");
-  $("authSubmit").textContent =
-    mode==="login" ? "LOG IN" : "REGISTER";
+  authMode=mode;
+  const register=mode==="register";
+  $("loginTab").classList.toggle("selected",!register);
+  $("registerTab").classList.toggle("selected",register);
+  $("authSubmit").textContent=register?"CREATE ACCOUNT":"LOG IN";
+  $("authHeading").textContent=register?"Join DONUT ROYALE":"Welcome Back";
+  $("authEyebrow").textContent=register?"SIGN UP":"SIGN IN";
+  $("ageRow").hidden=!register;
+  $("ageCheck").required=register;
+  $("password").autocomplete=register?"new-password":"current-password";
+  $("authError").textContent="";
 }
 
 $("loginTab").onclick = () => setMode("login");
@@ -546,8 +617,12 @@ $("authForm").onsubmit = async e => {
 
     $("password").value = "";
     await refresh();
-    toast("Welcome to DONUT ROYALE!");
+    if(me){
+      $("gamesHeading").scrollIntoView({behavior:"smooth",block:"start"});
+      toast("Welcome to DONUT ROYALE!");
+    }
   }catch(err){
+    $("authError").textContent=err.message;
     toast(err.message);
   }
 };
@@ -556,12 +631,13 @@ async function refresh(){
   const result = await api("me");
   me = result.user || null;
 
-  $("auth").hidden = !!me;
-  $("dashboard").hidden = !me;
+  $("auth").hidden=!!me;
+  document.body.classList.toggle("auth-locked",!me);
+  $("dashboard").hidden=false;
   $("account").replaceChildren();
 
   if(!me){
-    $("topBalance").textContent = "0";
+    $("topBalance").textContent = "•••";
     $("adminNav").hidden = true;
     return;
   }
@@ -600,7 +676,7 @@ async function refresh(){
 
 function openGame(game){
   if(!me){
-    $("auth").scrollIntoView({behavior:"smooth"});
+    $("auth").hidden=false;
     toast("Log in first.");
     return;
   }
@@ -634,8 +710,8 @@ document.addEventListener("keydown",e=>{
 });
 
 $("heroPlay").onclick = ()=>{
-  document.querySelector(me?".game-grid":"#auth")
-    .scrollIntoView({behavior:"smooth"});
+  if(!me){$("auth").hidden=false;return;}
+  $("gamesHeading").scrollIntoView({behavior:"smooth"});
 };
 
 document.querySelectorAll(".side").forEach(b=>{
@@ -796,13 +872,14 @@ async function play(game,inputId,resultId,buttonId,extra={}){
   try{
     amount = parseAmount($(inputId).value);
 
-    if(amount<1 || amount>1000000){
-      throw Error("Bet must be between 1 and 1M");
+    if(amount<1 || amount>3000000000){
+      throw Error("Bet must be between 1 and 3B");
     }
 
     if(!me || amount>me.balance){
       throw Error("Not enough credits");
     }
+    if(amount===me.balance && !confirm("WARNING: All-in bets always lose. You will lose your entire balance. Continue?"))return;
   }catch(err){
     toast(err.message);
     return;
@@ -905,8 +982,11 @@ $("ticketForm").onsubmit = async e=>{
       ? 0
       : parseAmount($("amount").value);
 
-    if(kind!=="support" && (amount<1 || amount>1000000000)){
+    if(kind!=="support" && (amount<1 || amount>1000000000000)){
       throw Error("Invalid ticket amount");
+    }
+    if(kind==="withdraw" && amount>me.balance){
+      throw Error("Not enough balance! You only have "+fmt(me.balance)+" but requested "+fmt(amount)+".");
     }
 
     await api("tickets",{
@@ -1016,7 +1096,9 @@ async function loadUsers(){
 }
 
 updateTicketForm();
-
+setMode("register");
+document.body.classList.add("auth-locked");
+$("dashboard").hidden=false;
 refresh().catch(err=>toast(err.message));
 </script>
 
