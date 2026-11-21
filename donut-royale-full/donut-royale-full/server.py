@@ -237,7 +237,7 @@ class Handler(BaseHTTPRequestHandler):
             if user["role"] not in ("owner", "admin"):
                 return self.fail(403, "Staff only")
             with db_open() as db:
-                rows = db.execute("SELECT c.id,c.message,c.created,u.username FROM admin_chat c JOIN users u ON u.id=c.user_id ORDER BY c.id DESC LIMIT 100").fetchall()
+                rows = db.execute("SELECT c.id,c.user_id,c.message,c.created,u.username FROM admin_chat c JOIN users u ON u.id=c.user_id ORDER BY c.id DESC LIMIT 100").fetchall()
             return self.send_json(200, {"messages": [dict(row) for row in reversed(rows)]})
         if path == "/api/users":
             if user["role"] not in ("owner", "admin"):
