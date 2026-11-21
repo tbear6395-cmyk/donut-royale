@@ -1,1 +1,226 @@
-<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>DONUT ROYALE</title><link rel="stylesheet" href="/style.css"></head><body><header><a class="brand" href="/">🍩 DONUT<span>ROYALE</span></a><div id="account"></div></header><main><section class="hero"><div class="eyebrow">DONUTSMP INSPIRED • INDEPENDENT DEMO</div><h1>YOUR GAME.<br><em>YOUR ROYALE.</em></h1><p>Pick your game. Feel the spin. A Minecraft-inspired demo arcade with private tickets and player accounts.</p></section><section id="auth" class="panel narrow"><h2>Welcome to the arena</h2><p>Create your account or sign in to access the games.</p><div class="tabs"><button id="loginTab" class="active">Log in</button><button id="registerTab">Register</button></div><form id="authForm"><label>Minecraft username<input id="username" autocomplete="username" minlength="3" maxlength="16" required placeholder="YourMinecraftName"></label><label>Password<input id="password" type="password" autocomplete="current-password" minlength="8" required placeholder="At least 8 characters"></label><button class="primary" id="authSubmit">Log in</button></form></section><div id="dashboard" hidden><div class="stats"><div class="panel"><small>YOUR BALANCE</small><h2 id="balance">0</h2><small>Demo credits</small></div><div class="panel"><small>ACCOUNT</small><h2 id="displayName">—</h2><small id="role">Player</small></div></div><div class="layout"><section class="panel game"><div class="heading"><div><div class="eyebrow">THE ARENA · LIVE ANIMATIONS</div><h2>🪙 Coinflip</h2></div><details><summary>ⓘ Game Info</summary><p>Player win chance: <b>30%</b> · House: <b>70%</b>. Winning bet pays 2× total stake. Your choice of Heads or Tails does not change the win probability. Demo credits only.</p></details></div><div class="coin-stage"><div id="coinVisual" class="coin3d"><div class="coin-face coin-front">H</div><div class="coin-face coin-back">T</div></div><div class="stage-glow"></div></div><div class="choice-label">CHOOSE YOUR SIDE</div><div class="choice-row"><button type="button" class="side active" data-side="heads">👑 HEADS</button><button type="button" class="side" data-side="tails">🍩 TAILS</button></div><label>Bet amount<input id="bet" type="number" min="1" max="1000000" value="100"></label><button id="flip" class="primary">FLIP THE COIN ✨</button><p id="gameResult" class="feedback" aria-live="polite">Pick a side and watch it spin.</p></section><section class="panel games-panel"><div class="eyebrow">MORE WAYS TO PLAY</div><h2>🎮 Mini games</h2><p>Every game is server-verified. Demo credits only.</p><div class="minigame"><div class="mini-head"><div><h3>🎲 Lucky Dice</h3><small>Roll a 6 to win 5× · 1 in 6 chance</small></div><div id="diceVisual" class="dice-icon">⚄</div></div><label>Bet<input id="diceBet" type="number" min="1" max="1000000" value="100"></label><button id="dicePlay" class="primary">ROLL DICE</button><p id="diceResult" class="feedback" aria-live="polite"></p></div><div class="minigame"><div class="mini-head"><div><h3>🎰 Triple Sevens</h3><small>Match all 3 symbols to win 8× · 1 in 16 chance</small></div></div><div class="reels" id="slotsVisual"><span>7</span><span>🍒</span><span>💎</span></div><label>Bet<input id="slotsBet" type="number" min="1" max="1000000" value="100"></label><button id="slotsPlay" class="primary">SPIN SLOTS</button><p id="slotsResult" class="feedback" aria-live="polite"></p></div><div class="minigame"><div class="mini-head"><div><h3>🔴 Color Wheel</h3><small>Choose red or black · 40% player win chance · pays 2×</small></div><div id="wheelVisual" class="wheel-icon">◉</div></div><div class="choice-row"><button type="button" class="wheel-choice active" data-color="red">🔴 RED</button><button type="button" class="wheel-choice" data-color="black">⚫ BLACK</button></div><label>Bet<input id="wheelBet" type="number" min="1" max="1000000" value="100"></label><button id="wheelPlay" class="primary">SPIN WHEEL</button><p id="wheelResult" class="feedback" aria-live="polite"></p></div></section><section class="panel"><h2>🎟️ Private Tickets</h2><p>Create a deposit, withdrawal or support request. Only you and the admins can see your tickets.</p><form id="ticketForm"><label>Request type<select id="kind"><option value="deposit">Deposit</option><option value="withdraw">Withdraw</option><option value="support">Support</option></select></label><label>Amount<input id="amount" type="number" min="0" max="1000000000" value="1000"></label><label>Message<textarea id="message" maxlength="1000" placeholder="Explain your request"></textarea></label><div id="payInfo" class="hint">For deposits, send the chosen amount in DonutSMP using <code id="payCommand">/pay matejicekjepica 1000</code>. An admin must independently verify receipt before approving. Never share passwords.</div><button class="primary">CREATE TICKET</button></form></section></div><section class="panel"><h2>My tickets</h2><div id="tickets"></div></section><section id="admin" class="panel" hidden><h2>🛡️ Admin control center</h2><p>Review payment evidence independently before approving. Approval changes demo balances; it does not verify game transfers automatically.</p><h3>Ticket queue</h3><div id="adminTickets"></div><h3>Players & roles</h3><div id="users"></div></section></div><p class="footer">Independent fan project • Not affiliated with DonutSMP • Demo credits, no cash-out integration</p></main><div id="toast" role="status"></div><script src="/app.js"></script></body></html>
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>DONUT ROYALE | Arcade</title>
+<link rel="stylesheet" href="/style.css">
+</head>
+<body>
+<header class="top">
+  <a class="brand" href="/">🍩 DONUT <b>ROYALE</b></a>
+  <div class="top-right">
+    <span class="balance-pill">🪙 <span id="topBalance">0</span></span>
+    <button class="small" id="cashierTop">🎟️ Tickets</button>
+    <div id="account"></div>
+  </div>
+</header>
+
+<aside class="sidebar">
+  <div class="nav-label">EXPLORE</div>
+  <a href="#home">🏠 Lobby</a>
+  <div class="nav-label">GAMES</div>
+  <a href="#coinflip">🪙 Coinflip</a>
+  <a href="#dice">🎲 Lucky Dice</a>
+  <a href="#slots">🎰 Slots</a>
+  <a href="#wheel">🔴 Color Wheel</a>
+  <div class="nav-label">SUPPORT</div>
+  <a href="#ticketSection">🎟️ Private Tickets</a>
+  <a href="#myTickets">📬 My Tickets</a>
+  <a href="#admin" id="adminNav" hidden>🛡️ Admin Panel</a>
+</aside>
+
+<main id="home">
+  <section class="hero">
+    <div>
+      <div class="eyebrow">MINECRAFT-INSPIRED • INDEPENDENT ARCADE</div>
+      <h1>YOUR ARENA.<br><em>YOUR ROYALE.</em></h1>
+      <p>Flip, roll and spin in your own neon arcade. Player accounts and private support tickets, all in one place.</p>
+      <button id="heroPlay" class="primary">EXPLORE GAMES →</button>
+    </div>
+    <div class="hero-art">
+      <div class="donut">🍩</div>
+      <div class="hero-spark">✦ &nbsp; ✧ &nbsp; ✦</div>
+    </div>
+  </section>
+
+  <section id="auth" class="panel narrow">
+    <h2>Welcome to the arena</h2>
+    <p>Log in or create an account to play.</p>
+    <div class="tabs">
+      <button id="loginTab" class="active">Log in</button>
+      <button id="registerTab">Register</button>
+    </div>
+    <form id="authForm">
+      <label>Minecraft username
+        <input id="username" autocomplete="username" minlength="3" maxlength="16" required placeholder="YourMinecraftName">
+      </label>
+      <label>Password
+        <input id="password" type="password" minlength="8" required placeholder="At least 8 characters">
+      </label>
+      <button class="primary" id="authSubmit">Log in</button>
+    </form>
+  </section>
+
+  <div id="dashboard" hidden>
+    <div class="stats">
+      <div class="panel">
+        <small>YOUR BALANCE</small>
+        <h2>🪙 <span id="balance">0</span></h2>
+        <small>Demo credits</small>
+      </div>
+      <div class="panel">
+        <small>PLAYER PROFILE</small>
+        <h2 id="displayName">—</h2>
+        <small id="role">Player</small>
+      </div>
+      <div class="panel">
+        <small>HELP CENTER</small>
+        <h2>🎟️ Tickets</h2>
+        <button id="ticketJump" class="small">Open a ticket →</button>
+      </div>
+    </div>
+
+    <div class="section-title">
+      <span>⭐ Featured games</span>
+      <small>Choose a game below</small>
+    </div>
+
+    <div class="game-tiles">
+      <a class="tile gold" href="#coinflip">
+        <span>🪙</span><strong>COINFLIP</strong><small>HEADS OR TAILS</small>
+      </a>
+      <a class="tile blue" href="#dice">
+        <span>🎲</span><strong>LUCKY DICE</strong><small>ROLL THE DICE</small>
+      </a>
+      <a class="tile pink" href="#slots">
+        <span>🎰</span><strong>TRIPLE SEVENS</strong><small>SPIN THE REELS</small>
+      </a>
+      <a class="tile red" href="#wheel">
+        <span>🔴</span><strong>COLOR WHEEL</strong><small>RED OR BLACK</small>
+      </a>
+    </div>
+
+    <div class="section-title"><span>🎮 Play now</span></div>
+    <div class="layout">
+      <section id="coinflip" class="panel game">
+        <div class="heading">
+          <h2>🪙 Coinflip</h2>
+          <details>
+            <summary>ⓘ Game odds</summary>
+            <p>Player win chance: 30%; house: 70%. Win pays 2× total stake. Heads/Tails choice does not change the odds.</p>
+          </details>
+        </div>
+        <div class="coin-stage">
+          <div id="coinVisual" class="coin3d">
+            <div class="coin-face coin-front">H</div>
+            <div class="coin-face coin-back">T</div>
+          </div>
+        </div>
+        <div class="choice-label">CHOOSE YOUR SIDE</div>
+        <div class="choice-row">
+          <button type="button" class="side active" data-side="heads">👑 HEADS</button>
+          <button type="button" class="side" data-side="tails">🍩 TAILS</button>
+        </div>
+        <label>Bet amount
+          <input id="bet" type="number" min="1" max="1000000" value="100">
+        </label>
+        <button id="flip" class="primary">FLIP THE COIN ✨</button>
+        <p id="gameResult" class="feedback" aria-live="polite">Choose a side and flip.</p>
+      </section>
+
+      <section class="panel">
+        <h2>More mini games</h2>
+
+        <div id="dice" class="minigame">
+          <div class="mini-head">
+            <div>
+              <h3>🎲 Lucky Dice</h3>
+              <small>Roll a 6 to win 5× · 1 in 6</small>
+            </div>
+            <div id="diceVisual" class="dice-icon">⚄</div>
+          </div>
+          <label>Bet<input id="diceBet" type="number" min="1" max="1000000" value="100"></label>
+          <button id="dicePlay" class="primary">ROLL DICE</button>
+          <p id="diceResult" class="feedback"></p>
+        </div>
+
+        <div id="slots" class="minigame">
+          <h3>🎰 Triple Sevens</h3>
+          <small>Match 3 symbols · 1 in 16 · win 8×</small>
+          <div class="reels" id="slotsVisual">
+            <span>7</span><span>🍒</span><span>💎</span>
+          </div>
+          <label>Bet<input id="slotsBet" type="number" min="1" max="1000000" value="100"></label>
+          <button id="slotsPlay" class="primary">SPIN SLOTS</button>
+          <p id="slotsResult" class="feedback"></p>
+        </div>
+
+        <div id="wheel" class="minigame">
+          <div class="mini-head">
+            <div>
+              <h3>🔴 Color Wheel</h3>
+              <small>Player win chance 40% · win 2×</small>
+            </div>
+            <div id="wheelVisual" class="dice-icon">◉</div>
+          </div>
+          <div class="choice-row">
+            <button type="button" class="wheel-choice active" data-color="red">🔴 RED</button>
+            <button type="button" class="wheel-choice" data-color="black">⚫ BLACK</button>
+          </div>
+          <label>Bet<input id="wheelBet" type="number" min="1" max="1000000" value="100"></label>
+          <button id="wheelPlay" class="primary">SPIN WHEEL</button>
+          <p id="wheelResult" class="feedback"></p>
+        </div>
+      </section>
+
+      <section id="ticketSection" class="panel">
+        <h2>🎟️ Private Tickets</h2>
+        <p>Deposit, withdrawal or support requests stay inside this website. Only you and admins can view them.</p>
+        <form id="ticketForm">
+          <label>Request type
+            <select id="kind">
+              <option value="deposit">Deposit</option>
+              <option value="withdraw">Withdraw</option>
+              <option value="support">Support</option>
+            </select>
+          </label>
+          <label>Amount
+            <input id="amount" type="number" min="0" max="1000000000" value="1000">
+          </label>
+          <label>Message
+            <textarea id="message" maxlength="1000" placeholder="Explain your request"></textarea>
+          </label>
+          <div id="payInfo" class="hint">
+            For deposits, send the chosen amount in DonutSMP with
+            <code id="payCommand">/pay matejicekjepica 1000</code>.
+            An admin must independently verify receipt before approval.
+            Never share passwords.
+          </div>
+          <button class="primary">CREATE TICKET</button>
+        </form>
+      </section>
+    </div>
+
+    <section id="myTickets" class="panel lower">
+      <h2>📬 My Tickets</h2>
+      <div id="tickets"></div>
+    </section>
+
+    <section id="admin" class="panel lower" hidden>
+      <h2>🛡️ Admin control center</h2>
+      <p>Verify transfers independently before approving any request.</p>
+      <h3>Ticket queue</h3>
+      <div id="adminTickets"></div>
+      <h3>Players & roles</h3>
+      <div id="users"></div>
+    </section>
+  </div>
+
+  <footer>Independent fan project • Not affiliated with DonutSMP • Demo credits only</footer>
+</main>
+
+<div id="toast" role="status"></div>
+<script src="/app.js"></script>
+</body>
+</html>
