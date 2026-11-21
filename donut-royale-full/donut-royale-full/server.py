@@ -169,8 +169,8 @@ class Handler(BaseHTTPRequestHandler):
         if path == "/api/register":
             username = str(data.get("username", "")).strip()
             password = str(data.get("password", ""))
-            if not re.fullmatch(r"[A-Za-z0-9_]{3,16}", username):
-                return self.fail(400, "Username must contain 3-16 letters, numbers or underscores")
+            if not re.fullmatch(r"\.?[A-Za-z0-9_]{3,16}", username):
+                return self.fail(400, "Username must contain 3-16 letters, numbers or underscores, optionally starting with a dot for Bedrock")
             if not 8 <= len(password) <= 128:
                 return self.fail(400, "Password must contain 8-128 characters")
             with LOCK, db_open() as db:
