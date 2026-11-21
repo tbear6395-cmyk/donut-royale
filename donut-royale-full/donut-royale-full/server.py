@@ -7,87 +7,98 @@ import secrets
 import sqlite3
 import hashlib
 import threading
-
 from pathlib import Path
+from datetime import datetime, timezone, timedelta
 from http.server import ThreadingHTTPServer, BaseHTTPRequestHandler
 from http.cookies import SimpleCookie
 from urllib.parse import urlparse
 
-
 BASE = Path(__file__).resolve().parent
 DB = BASE / "data.sqlite3"
-
 LOCK = threading.RLock()
-SESSIONS = {}
 
 MAX_BET = 3_000_000_000
 WIN_CHANCE = 10
 PAYOUT = 2
+SESSION_DAYS = 30
 
 
-def connect():
-    db = sqlite3.connect(DB, timeout=20)
+def db_open():
+    db = sqlite3.connect(DB, timeout=30)
     db.row_factory = sqlite3.Row
+    db.execute("PRAGMA busy_timeout=30000")
     return db
 
 
-def hash_password(password, salt):
+def now():
+    return datetime.now(timezone.utc)
+
+
+def hash_pw(password, salt):
     return hashlib.pbkdf2_hmac(
         "sha256",
-        password.encode("utf-8"),
+        password.encode(),
         bytes.fromhex(salt),
         260000
     ).hex()
 
 
 def initialize():
-    with connect() as db:
+    with db_open() as db:
         db.executescript("""
             CREATE TABLE IF NOT EXISTS users (
                 id INTEGER PRIMARY KEY,
                 username TEXT UNIQUE COLLATE NOCASE,
-                salt TEXT,
-                pw TEXT,
-                role TEXT DEFAULT 'player',
-                balance INTEGER DEFAULT 0
+                salt TEXT NOT NULL,
+                pw TEXT NOT NULL,
+                role TEXT NOT NULL DEFAULT 'player',
+                balance INTEGER NOT NULL DEFAULT 0
             );
 
             CREATE TABLE IF NOT EXISTS tickets (
                 id INTEGER PRIMARY KEY,
-                user_id INTEGER,
-                kind TEXT,
-                amount INTEGER,
-                message TEXT,
-                status TEXT DEFAULT 'open',
-                response TEXT DEFAULT '',
+                user_id INTEGER NOT NULL,
+                kind TEXT NOT NULL,
+                amount INTEGER NOT NULL DEFAULT 0,
+                message TEXT NOT NULL DEFAULT '',
+                status TEXT NOT NULL DEFAULT 'open',
+                response TEXT NOT NULL DEFAULT '',
                 created TEXT DEFAULT CURRENT_TIMESTAMP,
                 handled INTEGER DEFAULT 0
             );
+
+            CREATE TABLE IF NOT EXISTS sessions (
+                token_hash TEXT PRIMARY KEY,
+                user_id INTEGER NOT NULL,
+                expires TEXT NOT NULL
+            );
         """)
 
-        columns = [
-            row["name"]
-            for row in db.execute("PRAGMA table_info(users)")
-        ]
+        columns = {
+            r["name"]
+            for r in db.execute("PRAGMA table_info(users)")
+        }
 
         if "approval" not in columns:
             db.execute("""
                 ALTER TABLE users
-                ADD COLUMN approval TEXT NOT NULL DEFAULT 'approved'
+                ADD COLUMN approval TEXT DEFAULT 'approved'
             """)
 
+        # Registration no longer requires owner approval.
         db.execute("""
             UPDATE users
             SET approval='approved'
-            WHERE role IN ('owner', 'admin')
+            WHERE approval IS NULL
+               OR approval != 'approved'
         """)
 
         owner = db.execute("""
             SELECT id FROM users WHERE role='owner'
         """).fetchone()
 
-        if owner is None:
-            username = os.getenv("OWNER_USERNAME", "")
+        if not owner:
+            username = os.getenv("OWNER_USERNAME", "").strip()
             password = os.getenv("OWNER_PASSWORD", "")
 
             if (
@@ -95,45 +106,73 @@ def initialize():
                 and len(password) >= 12
             ):
                 salt = secrets.token_hex(16)
+                existing = db.execute("""
+                    SELECT id FROM users
+                    WHERE username=? COLLATE NOCASE
+                """, (username,)).fetchone()
 
-                db.execute("""
-                    INSERT INTO users
-                    (username, salt, pw, role, balance, approval)
-                    VALUES (?, ?, ?, 'owner', 0, 'approved')
-                """, (
-                    username,
-                    salt,
-                    hash_password(password, salt)
-                ))
+                if existing:
+                    db.execute("""
+                        UPDATE users
+                        SET role='owner',
+                            salt=?,
+                            pw=?,
+                            approval='approved'
+                        WHERE id=?
+                    """, (
+                        salt,
+                        hash_pw(password, salt),
+                        existing["id"]
+                    ))
+                else:
+                    db.execute("""
+                        INSERT INTO users
+                        (username, salt, pw, role, balance, approval)
+                        VALUES (?, ?, ?, 'owner', 0, 'approved')
+                    """, (
+                        username,
+                        salt,
+                        hash_pw(password, salt)
+                    ))
             else:
-                print("Configure OWNER_USERNAME and OWNER_PASSWORD")
+                print("Owner not created: configure OWNER_USERNAME and OWNER_PASSWORD")
+
+        db.execute("""
+            DELETE FROM sessions WHERE expires <= ?
+        """, (now().isoformat(),))
 
 
-def get_user(uid):
-    if uid is None:
+def public_user(row):
+    if row is None:
         return None
+    return {
+        "id": row["id"],
+        "username": row["username"],
+        "role": row["role"],
+        "balance": row["balance"]
+    }
 
-    with connect() as db:
-        row = db.execute("""
-            SELECT id, username, role, balance, approval
-            FROM users
-            WHERE id=?
-        """, (uid,)).fetchone()
 
-    return dict(row) if row else None
+def create_session(db, user_id):
+    token = secrets.token_urlsafe(40)
+    token_hash = hashlib.sha256(token.encode()).hexdigest()
+    expires = (now() + timedelta(days=SESSION_DAYS)).isoformat()
+
+    db.execute("""
+        INSERT INTO sessions (token_hash, user_id, expires)
+        VALUES (?, ?, ?)
+    """, (token_hash, user_id, expires))
+
+    return token
 
 
 class Handler(BaseHTTPRequestHandler):
 
-    def send(self, status, data, cookie=None):
-        payload = json.dumps(data).encode("utf-8")
-
+    def send_json(self, status, data, cookie=None):
+        body = json.dumps(data, ensure_ascii=False).encode("utf-8")
         self.send_response(status)
-        self.send_header(
-            "Content-Type",
-            "application/json; charset=utf-8"
-        )
-        self.send_header("Content-Length", str(len(payload)))
+        self.send_header("Content-Type", "application/json; charset=utf-8")
+        self.send_header("Content-Length", str(len(body)))
         self.send_header("Cache-Control", "no-store")
         self.send_header("X-Content-Type-Options", "nosniff")
 
@@ -141,36 +180,55 @@ class Handler(BaseHTTPRequestHandler):
             self.send_header("Set-Cookie", cookie)
 
         self.end_headers()
-        self.wfile.write(payload)
+        self.wfile.write(body)
+
+    def error(self, status, message):
+        self.send_json(status, {"error": message})
 
     def body(self):
         try:
-            length = int(self.headers.get("Content-Length", "0"))
-
-            if length < 0 or length > 10000:
+            size = int(self.headers.get("Content-Length", "0"))
+            if size < 0 or size > 20000:
                 return {}
-
-            data = json.loads(self.rfile.read(length))
-
-            return data if isinstance(data, dict) else {}
-
+            result = json.loads(self.rfile.read(size))
+            return result if isinstance(result, dict) else {}
         except Exception:
             return {}
 
-    def auth(self):
+    def session_token(self):
         try:
             cookies = SimpleCookie()
             cookies.load(self.headers.get("Cookie", ""))
-
-            session = cookies.get("session")
-
-            if not session:
-                return None
-
-            return get_user(SESSIONS.get(session.value))
-
+            item = cookies.get("session")
+            return item.value if item else None
         except Exception:
             return None
+
+    def current_user(self):
+        token = self.session_token()
+        if not token:
+            return None
+
+        token_hash = hashlib.sha256(token.encode()).hexdigest()
+
+        with db_open() as db:
+            row = db.execute("""
+                SELECT u.*
+                FROM sessions s
+                JOIN users u ON u.id=s.user_id
+                WHERE s.token_hash=? AND s.expires>?
+            """, (token_hash, now().isoformat())).fetchone()
+
+        return public_user(row)
+
+    def session_cookie(self, token):
+        cookie = (
+            f"session={token}; Path=/; HttpOnly; "
+            f"SameSite=Lax; Max-Age={SESSION_DAYS * 86400}"
+        )
+        if os.getenv("RENDER") or os.getenv("COOKIE_SECURE") == "1":
+            cookie += "; Secure"
+        return cookie
 
     def do_GET(self):
         path = urlparse(self.path).path
@@ -178,7 +236,7 @@ class Handler(BaseHTTPRequestHandler):
         if path == "/":
             path = "/index.html"
 
-        static_files = {
+        static = {
             "/index.html": "text/html; charset=utf-8",
             "/style.css": "text/css; charset=utf-8",
             "/app.js": "application/javascript; charset=utf-8",
@@ -186,45 +244,43 @@ class Handler(BaseHTTPRequestHandler):
             "/coin-tails.png": "image/png"
         }
 
-        if path in static_files:
+        if path in static:
             filename = BASE / path.lstrip("/")
 
             if not filename.is_file():
-                return self.send(404, {
-                    "error": "File not found"
-                })
+                return self.error(404, "File not found")
 
-            payload = filename.read_bytes()
-
+            content = filename.read_bytes()
             self.send_response(200)
-            self.send_header("Content-Type", static_files[path])
-            self.send_header("Content-Length", str(len(payload)))
+            self.send_header("Content-Type", static[path])
+            self.send_header("Content-Length", str(len(content)))
+            self.send_header("Cache-Control", "no-cache")
             self.end_headers()
-            self.wfile.write(payload)
+            self.wfile.write(content)
             return
 
-        current = self.auth()
-
         if path == "/api/me":
-            return self.send(200, {"user": current})
+            return self.send_json(200, {
+                "user": self.current_user()
+            })
 
         if path == "/api/rules":
-            return self.send(200, {
+            return self.send_json(200, {
+                "max_bet": MAX_BET,
                 "win_chance_percent": WIN_CHANCE,
-                "loss_chance_percent": 100 - WIN_CHANCE,
+                "loss_chance_percent": 90,
                 "payout_multiplier": PAYOUT,
-                "all_in_always_loses": True,
-                "max_bet": MAX_BET
+                "all_in_always_loses": True
             })
 
-        if current is None:
-            return self.send(401, {
-                "error": "Please log in"
-            })
+        user = self.current_user()
+
+        if not user:
+            return self.error(401, "Please log in")
 
         if path == "/api/tickets":
-            with connect() as db:
-                if current["role"] in ("owner", "admin"):
+            with db_open() as db:
+                if user["role"] in ("owner", "admin"):
                     rows = db.execute("""
                         SELECT t.*, u.username
                         FROM tickets t
@@ -239,205 +295,135 @@ class Handler(BaseHTTPRequestHandler):
                         JOIN users u ON u.id=t.user_id
                         WHERE t.user_id=? AND t.status='open'
                         ORDER BY t.id DESC
-                    """, (current["id"],)).fetchall()
+                    """, (user["id"],)).fetchall()
 
-            return self.send(200, {
-                "tickets": [dict(row) for row in rows]
+            return self.send_json(200, {
+                "tickets": [dict(r) for r in rows]
             })
 
         if path == "/api/users":
-            if current["role"] not in ("owner", "admin"):
-                return self.send(403, {
-                    "error": "Not allowed"
-                })
+            if user["role"] not in ("owner", "admin"):
+                return self.error(403, "Not allowed")
 
-            with connect() as db:
+            with db_open() as db:
                 rows = db.execute("""
-                    SELECT id, username, role, balance, approval
+                    SELECT id, username, role, balance
                     FROM users
-                    ORDER BY
-                        CASE WHEN approval='pending' THEN 0 ELSE 1 END,
-                        id DESC
+                    ORDER BY id DESC
                 """).fetchall()
 
-            return self.send(200, {
-                "users": [dict(row) for row in rows]
+            return self.send_json(200, {
+                "users": [dict(r) for r in rows]
             })
 
-        return self.send(404, {"error": "Not found"})
+        self.error(404, "Not found")
 
     def do_POST(self):
         path = urlparse(self.path).path
         data = self.body()
-        current = self.auth()
 
-        # REGISTER AND LOGIN
-
-        if path in ("/api/register", "/api/login"):
+        # REGISTER: immediate account creation and login.
+        if path == "/api/register":
             username = str(data.get("username", "")).strip()
             password = str(data.get("password", ""))
 
-            if (
-                not re.fullmatch(r"[A-Za-z0-9_]{3,16}", username)
-                or not 8 <= len(password) <= 128
-            ):
-                return self.send(400, {
-                    "error": "Invalid username or password"
-                })
+            if not re.fullmatch(r"[A-Za-z0-9_]{3,16}", username):
+                return self.error(
+                    400,
+                    "Username must be 3-16 letters, numbers or underscores"
+                )
 
-            if path == "/api/register":
+            if not 8 <= len(password) <= 128:
+                return self.error(
+                    400,
+                    "Password must have at least 8 characters"
+                )
+
+            with LOCK, db_open() as db:
                 salt = secrets.token_hex(16)
 
-                with LOCK, connect() as db:
-                    try:
-                        db.execute("""
-                            INSERT INTO users
-                            (username, salt, pw, role, balance, approval)
-                            VALUES (?, ?, ?, 'player', 0, 'pending')
-                        """, (
-                            username,
-                            salt,
-                            hash_password(password, salt)
-                        ))
+                try:
+                    cursor = db.execute("""
+                        INSERT INTO users
+                        (username, salt, pw, role, balance, approval)
+                        VALUES (?, ?, ?, 'player', 0, 'approved')
+                    """, (
+                        username,
+                        salt,
+                        hash_pw(password, salt)
+                    ))
+                except sqlite3.IntegrityError:
+                    return self.error(409, "Username already exists")
 
-                    except sqlite3.IntegrityError:
-                        return self.send(409, {
-                            "error": "Username already registered"
-                        })
+                user_id = cursor.lastrowid
+                token = create_session(db, user_id)
 
-                return self.send(200, {
-                    "ok": True,
-                    "pending": True,
-                    "message": "Wait for owner approval"
-                })
+            return self.send_json(
+                200,
+                {"ok": True, "message": "Account created"},
+                self.session_cookie(token)
+            )
 
-            with connect() as db:
+        # LOGIN
+        if path == "/api/login":
+            username = str(data.get("username", "")).strip()
+            password = str(data.get("password", ""))
+
+            with LOCK, db_open() as db:
                 row = db.execute("""
-                    SELECT *
-                    FROM users
+                    SELECT * FROM users
                     WHERE username=? COLLATE NOCASE
                 """, (username,)).fetchone()
 
-            if (
-                row is None
-                or not hmac.compare_digest(
-                    hash_password(password, row["salt"]),
-                    row["pw"]
-                )
-            ):
-                return self.send(401, {
-                    "error": "Invalid login"
-                })
+                if (
+                    not row
+                    or not hmac.compare_digest(
+                        hash_pw(password, row["salt"]),
+                        row["pw"]
+                    )
+                ):
+                    return self.error(401, "Wrong username or password")
 
-            if row["approval"] == "pending":
-                return self.send(403, {
-                    "error": "Wait for owner approval"
-                })
+                token = create_session(db, row["id"])
 
-            if row["approval"] == "rejected":
-                return self.send(403, {
-                    "error": "Your account was rejected"
-                })
-
-            token = secrets.token_urlsafe(32)
-            SESSIONS[token] = row["id"]
-
-            cookie = (
-                f"session={token}; "
-                "HttpOnly; SameSite=Strict; Path=/"
-            )
-
-            if os.getenv("COOKIE_SECURE") == "1":
-                cookie += "; Secure"
-
-            return self.send(200, {"ok": True}, cookie)
-
-        # LOGOUT
-
-        if path == "/api/logout":
-            try:
-                cookies = SimpleCookie()
-                cookies.load(self.headers.get("Cookie", ""))
-
-                session = cookies.get("session")
-
-                if session:
-                    SESSIONS.pop(session.value, None)
-
-            except Exception:
-                pass
-
-            return self.send(
+            return self.send_json(
                 200,
                 {"ok": True},
-                "session=; HttpOnly; SameSite=Strict; "
-                "Path=/; Max-Age=0"
+                self.session_cookie(token)
             )
 
-        if current is None:
-            return self.send(401, {
-                "error": "Please log in"
-            })
+        # LOGOUT
+        if path == "/api/logout":
+            token = self.session_token()
 
-        # OWNER APPROVES OR REJECTS USERS
+            if token:
+                token_hash = hashlib.sha256(token.encode()).hexdigest()
+                with LOCK, db_open() as db:
+                    db.execute("""
+                        DELETE FROM sessions WHERE token_hash=?
+                    """, (token_hash,))
 
-        if path == "/api/user/approval":
-            if current["role"] != "owner":
-                return self.send(403, {
-                    "error": "Only owner can approve players"
-                })
+            cookie = (
+                "session=; Path=/; HttpOnly; SameSite=Lax; Max-Age=0"
+            )
+            if os.getenv("RENDER") or os.getenv("COOKIE_SECURE") == "1":
+                cookie += "; Secure"
 
-            target_id = data.get("id")
-            approval = data.get("approval")
+            return self.send_json(200, {"ok": True}, cookie)
 
-            if (
-                type(target_id) is not int
-                or approval not in ("approved", "rejected")
-                or target_id == current["id"]
-            ):
-                return self.send(400, {
-                    "error": "Invalid approval request"
-                })
+        user = self.current_user()
 
-            with LOCK, connect() as db:
-                target = db.execute("""
-                    SELECT role FROM users WHERE id=?
-                """, (target_id,)).fetchone()
-
-                if target is None or target["role"] != "player":
-                    return self.send(403, {
-                        "error": "Only players can be reviewed"
-                    })
-
-                db.execute("""
-                    UPDATE users
-                    SET approval=?
-                    WHERE id=?
-                """, (approval, target_id))
-
-            if approval == "rejected":
-                for token, uid in list(SESSIONS.items()):
-                    if uid == target_id:
-                        SESSIONS.pop(token, None)
-
-            return self.send(200, {"ok": True})
-
-        if current["approval"] != "approved":
-            return self.send(403, {
-                "error": "Account not approved"
-            })
+        if not user:
+            return self.error(401, "Please log in")
 
         # CREATE TICKET
-
         if path == "/api/tickets":
             kind = data.get("kind")
-            amount = data.get("amount")
+            amount = data.get("amount", 0)
             message = str(data.get("message", "")).strip()
 
             if kind not in ("deposit", "withdraw", "support"):
-                return self.send(400, {
-                    "error": "Invalid ticket type"
-                })
+                return self.error(400, "Invalid ticket type")
 
             if (
                 type(amount) is not int
@@ -446,123 +432,100 @@ class Handler(BaseHTTPRequestHandler):
                 or (kind != "support" and amount == 0)
                 or len(message) > 1000
             ):
-                return self.send(400, {
-                    "error": "Invalid amount or message"
-                })
+                return self.error(400, "Invalid ticket details")
 
-            with LOCK, connect() as db:
+            with LOCK, db_open() as db:
                 if kind == "withdraw":
-                    row = db.execute("""
+                    balance = db.execute("""
                         SELECT balance FROM users WHERE id=?
-                    """, (current["id"],)).fetchone()
+                    """, (user["id"],)).fetchone()["balance"]
 
-                    if row is None or row["balance"] < amount:
-                        return self.send(400, {
-                            "error": "Not enough balance for withdrawal"
-                        })
+                    if amount > balance:
+                        return self.error(
+                            400,
+                            "Not enough balance for withdrawal"
+                        )
 
                 db.execute("""
                     INSERT INTO tickets
                     (user_id, kind, amount, message)
                     VALUES (?, ?, ?, ?)
-                """, (
-                    current["id"],
-                    kind,
-                    amount,
-                    message
-                ))
+                """, (user["id"], kind, amount, message))
 
-            return self.send(200, {"ok": True})
+            return self.send_json(200, {"ok": True})
 
         # REVIEW TICKET
-        # Handled tickets are deleted from the active list.
-
         if path == "/api/ticket/review":
-            if current["role"] not in ("owner", "admin"):
-                return self.send(403, {
-                    "error": "Not allowed"
-                })
+            if user["role"] not in ("owner", "admin"):
+                return self.error(403, "Not allowed")
 
             ticket_id = data.get("id")
             status = data.get("status")
-            response = str(data.get("response", ""))[:1000]
+            response = str(data.get("response", "")).strip()[:1000]
 
             if (
                 type(ticket_id) is not int
                 or status not in ("approved", "rejected", "closed")
             ):
-                return self.send(400, {
-                    "error": "Invalid request"
-                })
+                return self.error(400, "Invalid review")
 
-            with LOCK, connect() as db:
+            with LOCK, db_open() as db:
                 ticket = db.execute("""
                     SELECT * FROM tickets WHERE id=?
                 """, (ticket_id,)).fetchone()
 
-                if ticket is None or ticket["status"] != "open":
-                    return self.send(409, {
-                        "error": "Ticket already handled"
-                    })
+                if not ticket or ticket["status"] != "open":
+                    return self.error(409, "Ticket already handled")
 
-                if (
-                    status == "approved"
-                    and ticket["kind"] == "support"
-                ):
-                    return self.send(400, {
-                        "error": "Close support tickets instead"
-                    })
+                if status == "approved":
+                    if ticket["kind"] == "deposit":
+                        db.execute("""
+                            UPDATE users
+                            SET balance=balance+?
+                            WHERE id=?
+                        """, (ticket["amount"], ticket["user_id"]))
 
-                if (
-                    status == "approved"
-                    and ticket["kind"] == "withdraw"
-                ):
-                    result = db.execute("""
-                        UPDATE users
-                        SET balance=balance-?
-                        WHERE id=? AND balance>=?
-                    """, (
-                        ticket["amount"],
-                        ticket["user_id"],
-                        ticket["amount"]
-                    ))
+                    elif ticket["kind"] == "withdraw":
+                        result = db.execute("""
+                            UPDATE users
+                            SET balance=balance-?
+                            WHERE id=? AND balance>=?
+                        """, (
+                            ticket["amount"],
+                            ticket["user_id"],
+                            ticket["amount"]
+                        ))
 
-                    if result.rowcount != 1:
-                        return self.send(409, {
-                            "error": "Not enough balance for withdrawal"
-                        })
+                        if result.rowcount != 1:
+                            return self.error(
+                                409,
+                                "Player does not have enough balance"
+                            )
+                    else:
+                        return self.error(
+                            400,
+                            "Close support tickets instead"
+                        )
 
-                if (
-                    status == "approved"
-                    and ticket["kind"] == "deposit"
-                ):
-                    db.execute("""
-                        UPDATE users
-                        SET balance=balance+?
-                        WHERE id=?
-                    """, (
-                        ticket["amount"],
-                        ticket["user_id"]
-                    ))
-
-                # Ticket disappears after approval,
-                # rejection, or closing.
                 db.execute("""
-                    DELETE FROM tickets WHERE id=?
-                """, (ticket_id,))
+                    UPDATE tickets
+                    SET status=?, response=?, handled=?
+                    WHERE id=?
+                """, (
+                    status,
+                    response,
+                    user["id"],
+                    ticket_id
+                ))
 
-            return self.send(200, {
-                "ok": True,
-                "message": "Ticket handled and removed"
-            })
+            # The ticket is retained in the database for records,
+            # but disappears from both active ticket lists.
+            return self.send_json(200, {"ok": True})
 
-        # OWNER CHANGES ROLES
-
+        # CHANGE ROLE
         if path == "/api/role":
-            if current["role"] != "owner":
-                return self.send(403, {
-                    "error": "Only owner can change roles"
-                })
+            if user["role"] != "owner":
+                return self.error(403, "Only owner can change roles")
 
             target_id = data.get("id")
             role = data.get("role")
@@ -570,95 +533,65 @@ class Handler(BaseHTTPRequestHandler):
             if (
                 type(target_id) is not int
                 or role not in ("admin", "player")
-                or target_id == current["id"]
+                or target_id == user["id"]
             ):
-                return self.send(400, {
-                    "error": "Invalid role change"
-                })
+                return self.error(400, "Invalid role change")
 
-            with LOCK, connect() as db:
+            with LOCK, db_open() as db:
                 target = db.execute("""
-                    SELECT role, approval
-                    FROM users
-                    WHERE id=?
+                    SELECT role FROM users WHERE id=?
                 """, (target_id,)).fetchone()
 
-                if (
-                    target is None
-                    or target["role"] == "owner"
-                    or target["approval"] != "approved"
-                ):
-                    return self.send(403, {
-                        "error": "Player must be approved first"
-                    })
+                if not target or target["role"] == "owner":
+                    return self.error(403, "Cannot change owner role")
 
                 db.execute("""
                     UPDATE users SET role=? WHERE id=?
                 """, (role, target_id))
 
-            return self.send(200, {"ok": True})
+            return self.send_json(200, {"ok": True})
 
-        # ALL FOUR MINIGAMES
-
+        # MINIGAMES
         if path == "/api/game":
             game = data.get("game")
             amount = data.get("amount")
             choice = data.get("choice")
 
             if game not in ("coinflip", "dice", "slots", "wheel"):
-                return self.send(400, {
-                    "error": "Invalid game"
-                })
+                return self.error(400, "Invalid game")
 
             if (
                 type(amount) is not int
                 or amount < 1
                 or amount > MAX_BET
             ):
-                return self.send(400, {
-                    "error": "Maximum bet is 3B"
-                })
+                return self.error(400, "Maximum bet is 3B")
 
-            if (
-                game == "coinflip"
-                and choice not in ("heads", "tails")
-            ):
-                return self.send(400, {
-                    "error": "Choose Heads or Tails"
-                })
+            if game == "coinflip" and choice not in ("heads", "tails"):
+                return self.error(400, "Choose Heads or Tails")
 
-            if (
-                game == "wheel"
-                and choice not in ("red", "black")
-            ):
-                return self.send(400, {
-                    "error": "Choose Red or Black"
-                })
+            if game == "wheel" and choice not in ("red", "black"):
+                return self.error(400, "Choose Red or Black")
 
-            with LOCK, connect() as db:
+            with LOCK, db_open() as db:
                 row = db.execute("""
                     SELECT balance FROM users WHERE id=?
-                """, (current["id"],)).fetchone()
+                """, (user["id"],)).fetchone()
 
-                if row is None:
-                    return self.send(404, {
-                        "error": "Player not found"
-                    })
+                if not row:
+                    return self.error(404, "Player not found")
 
                 balance = row["balance"]
 
                 if amount > balance:
-                    return self.send(409, {
-                        "error": "Insufficient balance"
-                    })
+                    return self.error(400, "Not enough balance")
 
                 all_in = amount == balance
 
-                # Rules must be visible before betting.
-                # Regular bet: 10% chance to win.
-                # All-in: automatic loss.
-                # Winning bet: 2x total payout.
-
+                # These rules are displayed on the website:
+                # Regular bets: 10% win chance.
+                # All-in bets: automatic loss.
+                # Winning bets: 2x total return.
                 win = (
                     not all_in
                     and secrets.randbelow(100) < WIN_CHANCE
@@ -666,22 +599,15 @@ class Handler(BaseHTTPRequestHandler):
 
                 if game == "coinflip":
                     result = (
-                        choice
-                        if win
-                        else (
-                            "tails"
-                            if choice == "heads"
-                            else "heads"
-                        )
+                        choice if win
+                        else ("tails" if choice == "heads" else "heads")
                     )
-
                     details = {"result": result}
 
                 elif game == "dice":
                     roll = secrets.choice(
                         [5, 6] if win else [1, 2, 3, 4]
                     )
-
                     details = {"roll": roll}
 
                 elif game == "slots":
@@ -693,7 +619,6 @@ class Handler(BaseHTTPRequestHandler):
                             secrets.choice(symbols)
                             for _ in range(3)
                         ]
-
                         if reels == ["7", "7", "7"]:
                             reels[2] = "⭐"
 
@@ -701,15 +626,9 @@ class Handler(BaseHTTPRequestHandler):
 
                 else:
                     result = (
-                        choice
-                        if win
-                        else (
-                            "black"
-                            if choice == "red"
-                            else "red"
-                        )
+                        choice if win
+                        else ("black" if choice == "red" else "red")
                     )
-
                     details = {"result": result}
 
                 profit = amount if win else -amount
@@ -718,35 +637,26 @@ class Handler(BaseHTTPRequestHandler):
                     UPDATE users
                     SET balance=balance+?
                     WHERE id=?
-                """, (
-                    profit,
-                    current["id"]
-                ))
+                """, (profit, user["id"]))
 
                 new_balance = balance + profit
 
-            return self.send(200, {
+            return self.send_json(200, {
                 "win": win,
                 "profit": profit,
                 "balance": new_balance,
-                "payout_multiplier": PAYOUT,
                 "all_in": all_in,
-                "win_chance_percent": 0 if all_in else WIN_CHANCE,
+                "payout_multiplier": PAYOUT,
                 **details
             })
 
-        return self.send(404, {
-            "error": "Not found"
-        })
+        self.error(404, "Not found")
 
 
 if __name__ == "__main__":
     initialize()
-
     port = int(os.getenv("PORT", "8000"))
-
     print(f"DONUT ROYALE running on port {port}")
-
     ThreadingHTTPServer(
         ("0.0.0.0", port),
         Handler
