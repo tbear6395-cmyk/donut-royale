@@ -10,7 +10,6 @@ DB = Path(os.getenv("DATABASE_PATH", str(BASE / "data.sqlite3")))
 DB.parent.mkdir(parents=True, exist_ok=True)
 LOCK = threading.RLock()
 MAX_BET = 3_000_000_000
-SAFE_RESERVE = 200_000_000
 
 def now():
     return datetime.now(timezone.utc)
@@ -142,7 +141,7 @@ class Handler(BaseHTTPRequestHandler):
         if path == "/api/rules":
             return self.send_json(200, {"max_bet": MAX_BET, "win_chance_percent": 40,
                                         "loss_chance_percent": 60, "payout_multiplier": 2,
-                                        "all_in_always_loses": True, "forced_loss_if_remaining_balance_at_most": SAFE_RESERVE})
+                                        "all_in_always_loses": True})
         user = self.me()
         if not user:
             return self.fail(401, "Please log in")
@@ -272,8 +271,7 @@ class Handler(BaseHTTPRequestHandler):
                 if not row or amount > row["balance"]:
                     return self.fail(400, "Not enough balance")
                 all_in = amount == row["balance"]
-                reserve_loss = row["balance"] - amount <= SAFE_RESERVE
-                win = not reserve_loss and secrets.randbelow(100) < 40
+                win = not all_in and secrets.randbelow(100) < 40
                 if game == "coinflip":
                     result = choice if win else ("tails" if choice == "heads" else "heads")
                     details = {"result": result}
@@ -291,8 +289,7 @@ class Handler(BaseHTTPRequestHandler):
                 db.execute("UPDATE users SET balance=balance+? WHERE id=?", (profit, user["id"]))
                 balance = row["balance"] + profit
             return self.send_json(200, {"win": win, "profit": profit, "balance": balance,
-                                        "all_in": all_in, "reserve_loss": reserve_loss,
-                                        "payout_multiplier": 2, **details})
+                                        "all_in": all_in, "payout_multiplier": 2, **details})
         return self.fail(404, "Not found")
 
 if __name__ == "__main__":
