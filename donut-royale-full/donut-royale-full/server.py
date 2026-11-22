@@ -191,6 +191,14 @@ def auto_credit_deposit(db, event_id, player, amount, raw_message):
     event = db.execute("SELECT created FROM bot_payment_events WHERE event_id=?", (event_id,)).fetchone()
     if not event or _deposit_time(event["created"]) < cutoff:
         return "unverified"
+    # Bound automatic credit risk. Larger events require manual verification.
+    try:
+        limit = int(os.getenv("AUTO_DEPOSIT_MAX_AMOUNT", "1000000"))
+        daily_limit = int(os.getenv("AUTO_DEPOSIT_DAILY_LIMIT", "5000000"))
+    except ValueError:
+        return "needs_review"
+    if limit < 1 or daily_limit < 1 or amount > limit:
+        return "needs_review"
     receipt = re.fullmatch(r"(\.?[A-Za-z0-9_]{3,16}) paid you \$\s*([0-9,]+(?:\.[0-9]+)?)\s*([KMBT])?", raw_message, re.I)
     if not receipt or receipt.group(1).casefold() != player.casefold():
         return "needs_review"
@@ -201,12 +209,12 @@ def auto_credit_deposit(db, event_id, player, amount, raw_message):
             return "needs_review"
     except (InvalidOperation, ValueError):
         return "needs_review"
-    # If the same payer and amount appeared within 10 minutes, manual review
-    # is safer than treating a replay as another payment.
+    # Payment receipts have no server-issued unique transaction ID.
+    # Identical payer/amount within 24 hours stays manual to avoid replay credits.
     others = db.execute(
         "SELECT created FROM bot_payment_events WHERE lower(player)=lower(?) AND amount=? AND event_id!=?",
         (player, amount, event_id)).fetchall()
-    if any(abs((_deposit_time(event["created"]) - _deposit_time(row["created"])).total_seconds()) < 600
+    if any(abs((_deposit_time(event["created"]) - _deposit_time(row["created"])).total_seconds()) < 86400
            for row in others):
         return "needs_review"
     tickets = db.execute(
@@ -217,11 +225,18 @@ def auto_credit_deposit(db, event_id, player, amount, raw_message):
         nick = re.search(r"\[MINECRAFT NICK\]\s+(\.?[A-Za-z0-9_]{3,16})(?![A-Za-z0-9_])",
                          ticket["message"])
         if (nick and nick.group(1).casefold() == player.casefold()
-                and cutoff <= _deposit_time(ticket["created"]) <= _deposit_time(event["created"])):
+                and cutoff <= _deposit_time(ticket["created"]) <= _deposit_time(event["created"])
+                and (_deposit_time(event["created"]) - _deposit_time(ticket["created"])).total_seconds() <= 1800):
             matches.append(ticket)
     if len(matches) != 1:
         return "needs_review"
     ticket = matches[0]
+    previous = db.execute(
+        "SELECT amount,created FROM bot_deposit_credits WHERE user_id=?",
+        (ticket["user_id"],)).fetchall()
+    if amount + sum(p["amount"] for p in previous
+                    if 0 <= (now() - _deposit_time(p["created"])).total_seconds() < 86400) > daily_limit:
+        return "needs_review"
     if db.execute("SELECT event_id FROM bot_deposit_credits WHERE event_id=? OR ticket_id=?",
                   (event_id, ticket["id"])).fetchone():
         return "needs_review"
@@ -307,6 +322,21 @@ class Handler(BaseHTTPRequestHandler):
 
     def do_GET(self):
         path = urlparse(self.path).path
+        if path == "/api/deposits/status":
+            active = (os.getenv("AUTO_DEPOSIT_ENABLED") == "1"
+                      and bool(os.getenv("AUTO_DEPOSIT_START_UTC")))
+            if active:
+                try:
+                    active = _deposit_time(os.environ["AUTO_DEPOSIT_START_UTC"]) <= now()
+                except ValueError:
+                    active = False
+            return self.send_json(200, {
+                "auto_deposit_enabled": bool(active),
+                "max_automatic_amount": int(os.getenv("AUTO_DEPOSIT_MAX_AMOUNT", "1000000")),
+                "max_automatic_amount_per_user_24h": int(os.getenv("AUTO_DEPOSIT_DAILY_LIMIT", "5000000")),
+                "payment_deadline_minutes": 30,
+                "note": "Only fresh unambiguous bot-reported payments are eligible. Minecraft bot must be online; high or ambiguous amounts require review.",
+            })
         if path == "/api/bot/health":
             expected = os.getenv("BOT_API_KEY", "")
             provided = self.headers.get("X-Bot-Api-Key", "")
@@ -515,11 +545,31 @@ class Handler(BaseHTTPRequestHandler):
                 return self.fail(400, "Invalid ticket type")
             if type(amount) is not int or amount < 0 or amount > 1_000_000_000_000 or (kind != "support" and amount == 0) or len(message) > 1000:
                 return self.fail(400, "Invalid ticket amount or message")
+            nick = None
+            if kind == "deposit":
+                # New deposit tickets must contain one canonical nickname and /pay request.
+                marker = re.fullmatch(
+                    r"\[PAYMENT COMMAND\] /pay \.LeXimJames7858 ([0-9]+)\. "
+                    r"\[PLAYER MESSAGE\] \[MINECRAFT NICK\] (\.?[A-Za-z0-9_]{3,16})",
+                    message)
+                if not marker or int(marker.group(1)) != amount:
+                    return self.fail(400, "Invalid deposit request. Use the website deposit form.")
+                nick = marker.group(2).casefold()
             with LOCK, db_open() as db:
+                if USE_POSTGRES:
+                    db.execute("SELECT pg_advisory_xact_lock(2026112207)")
                 if kind == "withdraw":
                     row = db.execute("SELECT balance FROM users WHERE id=?", (user["id"],)).fetchone()
                     if not row or amount > row["balance"]:
                         return self.fail(400, "Not enough balance for withdrawal")
+                if kind == "deposit":
+                    existing = db.execute(
+                        "SELECT id,message FROM tickets WHERE kind='deposit' AND status='open' AND amount=?",
+                        (amount,)).fetchall()
+                    for prior in existing:
+                        oldnick = re.search(r"\[MINECRAFT NICK\]\s+(\.?[A-Za-z0-9_]{3,16})(?![A-Za-z0-9_])", prior["message"])
+                        if oldnick and oldnick.group(1).casefold() == nick:
+                            return self.fail(409, "A deposit for this Minecraft nickname and amount is already pending.")
                 db.execute("INSERT INTO tickets(user_id,kind,amount,message) VALUES(?,?,?,?)",
                            (user["id"], kind, amount, message))
             return self.send_json(200, {"ok": True})

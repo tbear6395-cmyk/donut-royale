@@ -546,9 +546,9 @@ header{position:sticky}
       <input id="amount" value="2M" placeholder="e.g. 2M" inputmode="decimal" autocomplete="off">
       <div class="quick" data-input="amount"><button type="button" data-value="1000000">1M</button><button type="button" data-value="2000000">2M</button><button type="button" data-value="10000000">10M</button><button type="button" data-value="100000000">100M</button></div>
       <div class="wallet-command-box" id="payInfo">
-        <div class="wallet-command-label">STEP 1 · SEND THIS COMMAND ON DONUTSMP.NET</div>
+        <div class="wallet-command-label">PREVIEW · CREATE DEPOSIT REQUEST BEFORE SENDING MONEY</div>
         <code id="payCommand">/pay YOUR_BEDROCK_NICK 2000000</code>
-        <button type="button" id="walletCopy" class="wallet-copy">📋 COPY COMMAND</button>
+        <button type="button" id="walletCopy" class="wallet-copy">CREATE DEPOSIT BEFORE COPYING</button>
         <p id="walletNickWarning">⚠️ Bedrock receiving nickname is not configured yet. Do not send any payment until it is confirmed.</p>
       </div>
       <div class="wallet-withdraw-info" id="walletWithdrawInfo" hidden>⬆ Enter how much you want to withdraw from your DONUT ROYALE balance. Staff will review your request and arrange the DonutSMP payout.</div>
@@ -556,7 +556,7 @@ header{position:sticky}
       <input id="message" type="text" maxlength="17" required pattern="\.?[A-Za-z0-9_]{3,16}" title="Enter your Minecraft nickname (3–16 letters, numbers or underscores; optional Bedrock dot)" placeholder="Enter your Minecraft nickname" autocomplete="off">
       <p class="wallet-nick-help">Required for both Deposit and Withdraw. Bedrock players: include the dot (.) if your name starts with one.</p>
       <button class="primary wallet-submit" id="walletSubmit">CONTINUE TO DEPOSIT</button>
-      <p class="wallet-disclaimer">Requests are reviewed by staff. Deposits are not credited automatically until payment verification is connected.</p>
+      <p class="wallet-disclaimer">Deposits must be requested BEFORE paying. Eligible incoming payments can credit automatically; ambiguous or large deposits need staff review.</p>
     </form>
   </section>
 
@@ -580,7 +580,7 @@ header{position:sticky}
 </footer>
 </main>
 
-<section class="deposit-confirm" id="depositConfirm" hidden role="dialog" aria-modal="true" aria-labelledby="depositTitle"><div class="deposit-box"><div style="font-size:45px">💎</div><h2 id="depositTitle">CONFIRM YOUR DONUTSMP DEPOSIT</h2><p>Send the exact amount to the configured Bedrock account on DonutSMP.net.</p><p id="depositBreakdown"></p><div class="deposit-command" id="depositCommand"></div><p>Only confirm after paying. Staff must independently verify your payment before credits are added.</p><div class="deposit-actions"><button type="button" class="deposit-cancel" id="depositCancel">CANCEL</button><button type="button" class="primary" id="depositAccept">I HAVE PAID — SUBMIT REQUEST</button></div></div></section>
+<section class="deposit-confirm" id="depositConfirm" hidden role="dialog" aria-modal="true" aria-labelledby="depositTitle"><div class="deposit-box"><div style="font-size:45px">💎</div><h2 id="depositTitle">CONFIRM YOUR DONUTSMP DEPOSIT</h2><p>Send the exact amount to the configured Bedrock account on DonutSMP.net.</p><p id="depositBreakdown"></p><div class="deposit-command" id="depositCommand"></div><button type="button" class="wallet-copy" id="depositCopy">📋 COPY PAYMENT COMMAND</button><p>Only confirm after paying. If the bot sees a valid payment within 30 minutes, eligible deposits credit automatically. Keep the bot online; otherwise staff will review.</p><div class="deposit-actions"><button type="button" class="deposit-cancel" id="depositCancel">PAY LATER</button><button type="button" class="primary" id="depositAccept">DONE — I HAVE PAID</button></div></div></section>
 <!-- Auth is outside the blurred app so its inputs remain sharp and clickable. -->
 <section id="auth">
   <div class="auth-modal">
@@ -1381,7 +1381,7 @@ function walletShow(kind){
   $("walletWithdrawTab").classList.toggle("selected",kind==="withdraw");
   $("payInfo").hidden=kind!=="deposit";
   $("walletWithdrawInfo").hidden=kind!=="withdraw";
-  $("walletSubmit").textContent=kind==="deposit"?"CONTINUE TO DEPOSIT":"REQUEST WITHDRAWAL";
+  $("walletSubmit").textContent=kind==="deposit"?"CREATE DEPOSIT REQUEST":"REQUEST WITHDRAWAL";
   updateTicketForm();
 }
 function walletOpen(){
@@ -1398,8 +1398,12 @@ function updateTicketForm(){
   try{amount=String(parseAmount($("amount").value));}catch{}
   $("payCommand").textContent="/pay "+nick+" "+amount;
   $("walletNickWarning").hidden=!!DEPOSIT_BEDROCK_NICK;
-  $("walletCopy").disabled=!DEPOSIT_BEDROCK_NICK||amount==="AMOUNT";
+  $("walletCopy").disabled=true;
 }
+$("depositCopy").onclick=async()=>{
+  try{await navigator.clipboard.writeText($("depositCommand").textContent);toast("Payment command copied!");}
+  catch(e){toast("Select and copy the payment command manually.");}
+};
 $("walletCopy").onclick=async()=>{
   if(!DEPOSIT_BEDROCK_NICK)return toast("Bedrock nickname has not been configured yet.");
   try{await navigator.clipboard.writeText($("payCommand").textContent);toast("Command copied!");}
@@ -1420,24 +1424,29 @@ $("ticketForm").onsubmit=async e=>{
     if(!/^\.?[A-Za-z0-9_]{3,16}$/.test(playerNick))throw Error("Minecraft nickname is required (3–16 characters, optional Bedrock dot).");
     let ticketMessage="[MINECRAFT NICK] "+playerNick;
     if(kind==="deposit"){
-      if(!DEPOSIT_BEDROCK_NICK)throw Error("Deposit receiver is not configured yet. Ask the owner to set their Bedrock nickname.");
-      $("depositBreakdown").textContent="YOUR DEPOSIT: "+fmt(amount)+" ("+amount.toLocaleString("en-US")+" credits)";
+      if(!DEPOSIT_BEDROCK_NICK)throw Error("Deposit receiver is not configured yet.");
+      // Create the ticket BEFORE showing the pay command; the bot may see a payment immediately.
+      ticketMessage=("[PAYMENT COMMAND] /pay "+DEPOSIT_BEDROCK_NICK+" "+amount+". [PLAYER MESSAGE] "+ticketMessage).slice(0,1000);
+      await api("tickets",{kind,amount,message:ticketMessage});
+      await loadTickets();
+      $("depositBreakdown").textContent="DEPOSIT REQUEST CREATED: "+fmt(amount)+" ("+amount.toLocaleString("en-US")+" credits)";
       $("depositCommand").textContent="/pay "+DEPOSIT_BEDROCK_NICK+" "+amount;
       $("depositConfirm").hidden=false;
-      const confirmed=await new Promise(resolve=>{
-        const accept=()=>{cleanup();resolve(true);};
-        const cancel=()=>{cleanup();resolve(false);};
+      await new Promise(resolve=>{
+        const accept=()=>{cleanup();resolve();};
+        const cancel=()=>{cleanup();resolve();};
         const cleanup=()=>{$("depositAccept").removeEventListener("click",accept);$("depositCancel").removeEventListener("click",cancel);};
         $("depositAccept").addEventListener("click",accept);
         $("depositCancel").addEventListener("click",cancel);
       });
       $("depositConfirm").hidden=true;
-      if(!confirmed)return;
-      ticketMessage=("[PAYMENT COMMAND] /pay "+DEPOSIT_BEDROCK_NICK+" "+amount+". [PLAYER MESSAGE] "+ticketMessage).slice(0,1000);
+      $("message").value="";
+      toast("Deposit request created. Pay using the command shown; eligible payments will credit automatically.");
+      return;
     }
     await api("tickets",{kind,amount,message:ticketMessage});
     $("message").value="";
-    toast(kind==="deposit"?"Deposit request submitted for staff verification":"Withdrawal request submitted");
+    toast("Withdrawal request submitted for staff review");
     await loadTickets();
   }catch(err){toast(err.message);}
 };
