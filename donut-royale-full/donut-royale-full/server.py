@@ -140,9 +140,6 @@ def setup_postgres():
             note TEXT NOT NULL, created TIMESTAMP DEFAULT CURRENT_TIMESTAMP)""")
         db.execute("UPDATE users SET approval='approved' WHERE approval IS NULL OR approval!='approved'")
         db.execute("CREATE TABLE IF NOT EXISTS mines_games (user_id BIGINT PRIMARY KEY REFERENCES users(id), bet BIGINT NOT NULL, mines INTEGER NOT NULL, bombs TEXT NOT NULL, revealed TEXT NOT NULL DEFAULT '[]', created TIMESTAMP DEFAULT CURRENT_TIMESTAMP)")
-        # Retired Mines game: return any still-locked stakes once, then clear rounds.
-        db.execute("UPDATE users SET balance=balance+(SELECT COALESCE(SUM(bet),0) FROM mines_games WHERE user_id=users.id) WHERE id IN (SELECT user_id FROM mines_games)")
-        db.execute("DELETE FROM mines_games")
         seed_owner(db)
         seed_extra_admin(db)
         db.execute("DELETE FROM sessions WHERE expires<=?", (now().isoformat(),))
@@ -223,9 +220,6 @@ def setup():
             note TEXT NOT NULL, created TEXT DEFAULT CURRENT_TIMESTAMP);
         """)
         db.execute("CREATE TABLE IF NOT EXISTS mines_games (user_id INTEGER PRIMARY KEY, bet INTEGER NOT NULL, mines INTEGER NOT NULL, bombs TEXT NOT NULL, revealed TEXT NOT NULL DEFAULT '[]', created TEXT DEFAULT CURRENT_TIMESTAMP)")
-        # Retired Mines game: return any still-locked stakes once, then clear rounds.
-        db.execute("UPDATE users SET balance=balance+(SELECT COALESCE(SUM(bet),0) FROM mines_games WHERE user_id=users.id) WHERE id IN (SELECT user_id FROM mines_games)")
-        db.execute("DELETE FROM mines_games")
         cols = {r["name"] for r in db.execute("PRAGMA table_info(users)")}
         if "approval" not in cols:
             db.execute("ALTER TABLE users ADD COLUMN approval TEXT DEFAULT 'approved'")
@@ -487,6 +481,33 @@ def log_game(db, user_id, game, stake, payout, outcome, details=None):
                (user_id, game, stake, payout, payout-stake, outcome,
                 json.dumps(details or {}, ensure_ascii=False)[:1800]))
 
+# Mines uses actual 5x5 probability rather than a flat 30% coin-toss win rate.
+MINES_TILES = 25
+MINES_MAX_PAYOUT = 1_000_000_000_000
+
+def mines_payout(bet, mine_count, opened):
+    if not 1 <= opened <= 25 - mine_count:
+        return 0
+    numerator, denominator = 1, 1
+    for i in range(opened):
+        numerator *= 25 - i
+        denominator *= 25 - mine_count - i
+    payout = bet * 94 * numerator // (100 * denominator)
+    return min(MINES_MAX_PAYOUT, max(bet, payout))
+
+def mines_state(row):
+    if not row:
+        return {"active": False}
+    revealed = json.loads(row["revealed"])
+    payout = mines_payout(row["bet"], row["mines"], len(revealed))
+    return {"active":True, "bet":row["bet"], "mines":row["mines"],
+            "revealed":revealed, "opened":len(revealed), "payout":payout,
+            "multiplier":round(payout/row["bet"],4) if revealed else 1.0}
+
+def mines_log(db, user_id, bet, payout, outcome, mines, safe_picks):
+    log_game(db,user_id,"mines",bet,payout,outcome,
+             {"mines":mines, "safe_picks":safe_picks})
+
 class Handler(BaseHTTPRequestHandler):
     def send_json(self, status, payload, cookie=None):
         data = json.dumps(payload, ensure_ascii=False, default=str).encode("utf-8")
@@ -645,6 +666,13 @@ class Handler(BaseHTTPRequestHandler):
         user = self.me()
         if not user:
             return self.fail(401, "Please log in")
+        if path == "/api/mines/state":
+            with db_open() as db:
+                current = db.execute("SELECT bet,mines,revealed FROM mines_games WHERE user_id=?",
+                                     (user["id"],)).fetchone()
+            return self.send_json(200, {"round":mines_state(current),
+                                        "max_bet":MAX_BET,
+                                        "max_payout":MINES_MAX_PAYOUT, "return_percent":94})
         if path == "/api/admin/bot-auto-deposit-preview":
             if user["role"] not in ("owner", "admin"):
                 return self.fail(403, "Staff only")
@@ -1014,6 +1042,83 @@ class Handler(BaseHTTPRequestHandler):
         user = self.me()
         if not user:
             return self.fail(401, "Please log in")
+        if path in ("/api/mines/start", "/api/mines/pick", "/api/mines/cashout"):
+            with LOCK, db_open() as db:
+                if USE_POSTGRES:
+                    db.execute("SELECT pg_advisory_xact_lock(?)", (20261122008 + int(user["id"]),))
+                wallet = db.execute("SELECT balance FROM users WHERE id=?", (user["id"],)).fetchone()
+                if not wallet:
+                    return self.fail(404, "Player not found")
+                current = db.execute("SELECT bet,mines,bombs,revealed FROM mines_games WHERE user_id=?",
+                                     (user["id"],)).fetchone()
+                if path == "/api/mines/start":
+                    if staff_setting(db, "games_paused") == "1":
+                        return self.fail(409, "Games are temporarily paused")
+                    if current:
+                        return self.fail(409, "Finish or cash out your current Mines round")
+                    bet, count = data.get("amount"), data.get("mines")
+                    if type(bet) is not int or not 1 <= bet <= MAX_BET:
+                        return self.fail(400, "Bet must be from 1 to 3B credits")
+                    if type(count) is not int or not 1 <= count <= 24:
+                        return self.fail(400, "Choose 1 to 24 mines")
+                    if bet > wallet["balance"]:
+                        return self.fail(400, "Not enough credits")
+                    db.execute("UPDATE users SET balance=balance-? WHERE id=?",(bet,user["id"]))
+                    if bet == wallet["balance"]:
+                        mines_log(db,user["id"],bet,0,"lose",count,0)
+                        return self.send_json(200,{"status":"lose","reason":"all_in",
+                                                   "message":"ALL IN always loses",
+                                                   "balance":wallet["balance"]-bet,
+                                                   "bet":bet,"mines":count})
+                    bombs = sorted(secrets.SystemRandom().sample(range(MINES_TILES),count))
+                    db.execute("INSERT INTO mines_games(user_id,bet,mines,bombs,revealed) VALUES(?,?,?,?,?)",
+                               (user["id"],bet,count,json.dumps(bombs),"[]"))
+                    return self.send_json(200,{"status":"active",
+                                               "round":mines_state({"bet":bet,"mines":count,"revealed":"[]"}),
+                                               "balance":wallet["balance"]-bet})
+                if not current:
+                    return self.fail(409, "No active Mines round")
+                bombs = json.loads(current["bombs"])
+                revealed = json.loads(current["revealed"])
+                bet, count = current["bet"], current["mines"]
+                if path == "/api/mines/cashout":
+                    if not revealed:
+                        return self.fail(409, "Reveal a safe tile before cashing out")
+                    payout = mines_payout(bet,count,len(revealed))
+                    db.execute("DELETE FROM mines_games WHERE user_id=?", (user["id"],))
+                    db.execute("UPDATE users SET balance=balance+? WHERE id=?", (payout,user["id"]))
+                    mines_log(db,user["id"],bet,payout,"win",count,len(revealed))
+                    return self.send_json(200,{"status":"cashout","payout":payout,
+                                               "profit":payout-bet,"balance":wallet["balance"]+payout,
+                                               "bet":bet,"bombs":bombs,"revealed":revealed,
+                                               "multiplier":round(payout/bet,4)})
+                tile = data.get("tile")
+                if type(tile) is not int or not 0 <= tile < MINES_TILES:
+                    return self.fail(400, "Invalid Mines tile")
+                if tile in revealed:
+                    return self.fail(409, "Tile was already revealed")
+                if tile in bombs:
+                    db.execute("DELETE FROM mines_games WHERE user_id=?", (user["id"],))
+                    mines_log(db,user["id"],bet,0,"lose",count,len(revealed))
+                    return self.send_json(200,{"status":"lose","payout":0,"bet":bet,
+                                               "balance":wallet["balance"],"bombs":bombs,
+                                               "revealed":revealed,"exploded":tile})
+                revealed.append(tile)
+                if len(revealed) == MINES_TILES - count:
+                    payout = mines_payout(bet,count,len(revealed))
+                    db.execute("DELETE FROM mines_games WHERE user_id=?", (user["id"],))
+                    db.execute("UPDATE users SET balance=balance+? WHERE id=?",(payout,user["id"]))
+                    mines_log(db,user["id"],bet,payout,"win",count,len(revealed))
+                    return self.send_json(200,{"status":"cashout","auto_win":True,
+                                               "payout":payout,"profit":payout-bet,
+                                               "balance":wallet["balance"]+payout,
+                                               "bet":bet,"bombs":bombs,"revealed":revealed,
+                                               "multiplier":round(payout/bet,4)})
+                db.execute("UPDATE mines_games SET revealed=? WHERE user_id=?",
+                           (json.dumps(revealed),user["id"]))
+                return self.send_json(200,{"status":"active","round":mines_state({
+                    "bet":bet,"mines":count,"revealed":json.dumps(revealed)}),
+                    "balance":wallet["balance"]})
         if path in ("/api/staff/suspend","/api/staff/credit","/api/staff/note",
                     "/api/staff/setting","/api/staff/case-price"):
             if user["role"] not in ("admin","owner"):
