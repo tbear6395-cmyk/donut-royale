@@ -1917,6 +1917,33 @@ header>div.header-account:last-child{
 }
 @media(prefers-reduced-motion:reduce){#screen-casebattle .cb-case-card{transition:none}}
 
+
+/* Real pixel-texture loot chest art replaces the lobby's emoji cubes. */
+.game-card.card-casebattle .cb-banner-chest{
+  display:grid;place-items:center;width:124px;height:126px;position:relative;
+  transform:rotate(-11deg);font-size:initial;filter:drop-shadow(1px 16px 10px #000a) drop-shadow(0 0 17px #edb25e96)
+}
+.game-card.card-casebattle .cb-banner-chest-two{transform:rotate(11deg);filter:drop-shadow(0 16px 9px #000a) drop-shadow(0 0 17px #7a81fda6)}
+.game-card.card-casebattle .cb-banner-crate{
+  position:absolute;inset:20px 8px 4px 9px;
+  background:repeating-linear-gradient(90deg,#152d35 0 20px,#213e47 21px 25px);
+  border:8px solid #d5aa55;border-radius:7px;box-shadow:inset 0 0 0 6px #090e15a4,inset 9px 9px 0 #0003,8px 7px 0 #0b141d
+}
+.game-card.card-casebattle .cb-banner-crate::before{
+  content:"";position:absolute;top:-30px;left:-8px;width:calc(100% + 15px);height:25px;
+  background:linear-gradient(130deg,#fae4aa,#9f713b);
+  clip-path:polygon(12% 0,100% 15%,89% 100%,0 83%)
+}
+.game-card.card-casebattle .cb-banner-chest-two .cb-banner-crate{border-color:#9da5e3}
+.game-card.card-casebattle .cb-banner-chest-two .cb-banner-crate::before{background:linear-gradient(130deg,#e0e3fe,#5359a8)}
+.game-card.card-casebattle .cb-banner-chest img{position:relative;z-index:3;display:block;width:61px;height:61px;object-fit:contain;image-rendering:pixelated;filter:drop-shadow(0 3px 3px #000d)}
+@media(max-width:580px){
+ .game-card.card-casebattle .cb-banner-chest{width:82px;height:83px}
+ .game-card.card-casebattle .cb-banner-crate{inset:19px 6px 2px 6px;border-width:5px}
+ .game-card.card-casebattle .cb-banner-crate::before{height:18px;top:-22px}
+ .game-card.card-casebattle .cb-banner-chest img{width:42px;height:42px}
+}
+
 /* Correct the counters baked into the older HD Coinflip/Dice banner art. */
 .game-card.card-coinflip.has-hd-coinflip .game-index,
 .game-card.card-dice.has-hd-dice .game-index{
@@ -2144,9 +2171,9 @@ header>div.header-account:last-child{
       <span class="xmas-game-snow" aria-hidden="true">❄</span>
       <span class="game-live">✦ WINTER GAME</span>
       <span class="cb-banner-art" aria-hidden="true">
-        <span class="cb-banner-chest cb-banner-chest-one">📦<i>💎</i></span>
+        <span class="cb-banner-chest cb-banner-chest-one"><span class="cb-banner-crate"></span><img src="https://project-crafting.github.io/minecraft-auto-updated-textures-api/items/diamond.png" width="64" height="64" alt="" loading="lazy"></span>
         <span class="cb-banner-vs">VS</span>
-        <span class="cb-banner-chest cb-banner-chest-two">📦<i>🌟</i></span>
+        <span class="cb-banner-chest cb-banner-chest-two"><span class="cb-banner-crate"></span><img src="https://project-crafting.github.io/minecraft-auto-updated-textures-api/items/nether_star.png" width="64" height="64" alt="" loading="lazy"></span>
       </span>
       <span class="game-title">CASE BATTLE</span>
       <span class="game-subtitle">OPEN CASES · 1V1 ROYAL BOT</span>
