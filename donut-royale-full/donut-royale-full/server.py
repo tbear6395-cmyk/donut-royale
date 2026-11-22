@@ -910,7 +910,8 @@ class Handler(BaseHTTPRequestHandler):
                     return self.fail(400,"Deal cards first")
                 if action=="hit":hand["player"].append(bj_card())
                 player_score=bj_score(hand["player"])
-                finished=action=="stand" or player_score>=21 or (action=="deal" and player_score==21)
+                # All-in is an immediate, server-enforced loss even when the initial hand is 21.
+                finished=hand["all_in"] or action=="stand" or player_score>=21 or (action=="deal" and player_score==21)
                 outcome="playing"
                 payout=0
                 if finished:
@@ -927,7 +928,7 @@ class Handler(BaseHTTPRequestHandler):
                     if payout:db.execute("UPDATE users SET balance=balance+? WHERE id=?",(payout,uid))
                     del BLACKJACK_HANDS[uid]
                 balance=db.execute("SELECT balance FROM users WHERE id=?",(uid,)).fetchone()["balance"]
-                return self.send_json(200,{"player":hand["player"],"dealer":hand["dealer"] if finished else [hand["dealer"][0], "🂠"],"player_score":player_score,"dealer_score":bj_score(hand["dealer"]) if finished else None,"outcome":outcome,"payout":payout,"amount":hand["amount"],"balance":balance})
+                return self.send_json(200,{"player":hand["player"],"dealer":hand["dealer"] if finished else [hand["dealer"][0], "🂠"],"player_score":player_score,"dealer_score":bj_score(hand["dealer"]) if finished else None,"outcome":outcome,"payout":payout,"amount":hand["amount"],"balance":balance,"all_in":hand["all_in"]})
         if path == "/api/game":
             game, amount, choice = data.get("game"), data.get("amount"), data.get("choice")
             if game not in ("coinflip", "dice", "slots", "wheel"):
