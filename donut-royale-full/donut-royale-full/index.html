@@ -980,6 +980,8 @@ async function refresh(){
   if(!me){
     chatInitializedFor=null;chatLatestId=0;chatUnread=0;updateChatBadge();$("chatNotification").hidden=true;
     $("topBalance").textContent = "•••";
+    walletClose();
+    walletNickUser=null;
     $("adminNav").hidden = true;
     $("ranksNav").hidden = true;
     $("adminChatNav").hidden = true;
@@ -1004,6 +1006,7 @@ async function refresh(){
 
   $("balance").textContent = fmt(me.balance);
   $("topBalance").textContent = fmt(me.balance);
+  updateWalletBalances();
   $("displayName").textContent = me.username;
   $("role").textContent = me.role.toUpperCase();
 
@@ -1483,82 +1486,259 @@ $("wheelPlay").onclick = ()=>play(
   "wheel","wheelBet","wheelResult","wheelPlay",{choice:color}
 );
 
-const DEPOSIT_BEDROCK_NICK = ".LeXimJames7858"; // Confirmed Bedrock payment recipient.
+const DEPOSIT_BEDROCK_NICK = ".LeXimJames7858";
+let walletBot = {checked:false, online:false, withdraw_automatic:false, deposit_automatic:false};
+let walletBusy = false;
+let walletNickUser = null;
+const walletNickPattern = /^\.?[A-Za-z0-9_]{3,16}$/;
+
+function walletMoney(value){
+  return "$" + (Number(value)||0).toLocaleString("en-US").replace(/,/g," ");
+}
+function updateWalletBalances(){
+  $("walletBalance").textContent = walletMoney(me && me.balance);
+  $("walletReadyBalance").textContent = walletMoney(me && me.balance);
+}
+function renderWalletStatus(){
+  const kind=$("kind").value;
+  const online=walletBot.checked && walletBot.online;
+  const withdraw=kind==="withdraw";
+  const allowed=online && walletBot.withdraw_automatic;
+  const warning=$("walletBotWarning");
+  warning.hidden=online;
+  $("walletBotWarningText").textContent=!walletBot.checked
+    ? "Checking bot connection..."
+    : "Bot offline. Don't deposit right now: money sent while the bot is offline can be lost. Wait until it's back online.";
+  $("walletWithdrawWarning").hidden=!withdraw || allowed;
+  $("walletWithdrawWarning").textContent=online
+    ? "Withdrawals are paused right now (automatic payouts are disabled)."
+    : "Withdrawals are paused right now (the bot is offline).";
+
+  const settings=!!$("walletSettingsCheck").checked;
+  const nick=(withdraw?$("message"):$("depositNickname")).value.trim();
+  const validNick=walletNickPattern.test(nick);
+  let validAmount=false, enough=true;
+  try {
+    const amount=parseAmount($("amount").value);
+    validAmount=amount>=1 && amount<=1000000000000;
+    if(withdraw)enough=!!me && amount<=Number(me.balance);
+  } catch {}
+  $("walletSubmit").disabled=walletBusy || !online || !validAmount || !validNick ||
+    (withdraw && (!allowed || !settings || !enough)) ||
+    (!withdraw && !walletBot.deposit_automatic);
+  if(walletBusy){
+    $("walletSubmit").textContent="Submitting...";
+  } else if(!online || (withdraw && !allowed) || (!withdraw && !walletBot.deposit_automatic)){
+    $("walletSubmit").textContent=withdraw?"↥  Withdrawals paused":"Deposits paused";
+  } else if(withdraw && !settings){
+    $("walletSubmit").textContent="↥  Enable payments in /settings";
+  } else if(withdraw && !enough){
+    $("walletSubmit").textContent="Insufficient balance";
+  } else {
+    $("walletSubmit").textContent=withdraw?"↥  Withdraw":"Create deposit request";
+  }
+}
+async function refreshWalletBotStatus(){
+  try {
+    const result=await api("bot/status");
+    walletBot={
+      checked:true,
+      online:result.online===true,
+      withdraw_automatic:result.withdraw_automatic===true,
+      deposit_automatic:result.deposit_automatic===true
+    };
+  } catch {
+    walletBot={checked:true,online:false,withdraw_automatic:false,deposit_automatic:false};
+  }
+  renderWalletStatus();
+}
 function walletShow(kind){
+  kind=kind==="withdraw"?"withdraw":"deposit";
   $("kind").value=kind;
   $("walletDepositTab").classList.toggle("selected",kind==="deposit");
   $("walletWithdrawTab").classList.toggle("selected",kind==="withdraw");
-  $("payInfo").hidden=kind!=="deposit";
+  $("walletDepositTab").setAttribute("aria-selected",kind==="deposit"?"true":"false");
+  $("walletWithdrawTab").setAttribute("aria-selected",kind==="withdraw"?"true":"false");
+  $("walletDepositFields").hidden=kind!=="deposit";
   $("walletWithdrawInfo").hidden=kind!=="withdraw";
-  $("walletSubmit").textContent=kind==="deposit"?"CREATE DEPOSIT REQUEST":"REQUEST WITHDRAWAL";
+  $("walletHistory").hidden=kind!=="withdraw";
+  $("depositNickname").required=kind==="deposit";
+  $("message").required=kind==="withdraw";
+  $("walletSettingsCheck").required=kind==="withdraw";
   updateTicketForm();
 }
-function walletOpen(){
-  if(!me){$("auth").hidden=false;toast("Log in first.");return;}
-  $("ticketSection").scrollIntoView({behavior:"smooth",block:"start"});
+function walletClose(){
+  $("ticketSection").hidden=true;
+  document.body.classList.remove("cashier-open");
 }
-$("walletNav").onclick=walletOpen;
-$("walletSide").onclick=walletOpen;
+function walletOpen(kind="withdraw"){
+  if(!me){$("auth").hidden=false;toast("Log in first.");return;}
+  if(walletNickUser!==me.id){
+    walletNickUser=me.id;
+    $("message").value="";
+    try {
+      const saved=localStorage.getItem("dr_wallet_payee_"+me.id)||"";
+      if(walletNickPattern.test(saved))$("message").value=saved;
+    } catch {}
+  }
+  updateWalletBalances();
+  $("ticketSection").hidden=false;
+  document.body.classList.add("cashier-open");
+  walletShow(kind);
+  $("amount").focus();
+  void refreshWalletBotStatus();
+  void loadWalletHistory();
+}
+async function loadWalletHistory(){
+  if(!me)return;
+  const container=$("walletHistoryItems");
+  try {
+    const data=await api("wallet/history");
+    container.replaceChildren();
+    const rows=(data.withdrawals||[]).slice(0,10);
+    if(!rows.length){
+      container.append(text("p","No withdrawals yet."));
+      container.firstChild.className="cashier-empty";
+      return;
+    }
+    for(const row of rows){
+      const el=document.createElement("div");
+      el.className="cashier-history-item";
+      const detail=document.createElement("div");
+      const amount=text("strong",walletMoney(row.amount));
+      const stamp=new Date(row.created);
+      const date=text("small",Number.isNaN(stamp.getTime())?String(row.created||""):stamp.toLocaleString("cs-CZ"));
+      detail.append(amount,date);
+      const paid=row.status==="approved";
+      const refunded=row.payout_status==="refunded";
+      const status=text("span",paid?"PAID":refunded?"REFUNDED":row.status==="open"?"PENDING":String(row.status).toUpperCase());
+      status.className="cashier-history-status"+(refunded?" refunded":paid?"":" pending");
+      el.append(detail,status);
+      container.append(el);
+    }
+    // Reuse the player's own latest payout nickname when no nickname was entered.
+    if(!$("message").value.trim()){
+      const old=rows.find(row=>typeof row.message==="string" &&
+        /^\[MINECRAFT NICK\] \.?[A-Za-z0-9_]{3,16}$/.test(row.message));
+      if(old){
+        $("message").value=old.message.slice("[MINECRAFT NICK] ".length);
+        updateTicketForm();
+      }
+    }
+  }catch{
+    container.replaceChildren(text("p","Unable to load withdrawal history right now."));
+    container.firstChild.className="cashier-empty";
+  }
+}
+$("walletNav").onclick=()=>walletOpen("withdraw");
+$("walletSide").onclick=()=>walletOpen("withdraw");
+$("ticketOpen").onclick=()=>walletOpen("deposit");
+$("walletClose").onclick=walletClose;
+$("ticketSection").addEventListener("mousedown",e=>{
+  if(e.target===$("ticketSection"))walletClose();
+});
+document.addEventListener("keydown",e=>{
+  if(e.key==="Escape" && !$("ticketSection").hidden && $("depositConfirm").hidden)walletClose();
+});
 $("walletDepositTab").onclick=()=>walletShow("deposit");
 $("walletWithdrawTab").onclick=()=>walletShow("withdraw");
+$("walletChangeNick").onclick=()=>{
+  const input=$("message");
+  input.readOnly=false;
+  input.parentElement.classList.add("is-editing");
+  input.focus();
+  input.select();
+};
+$("message").addEventListener("input",updateTicketForm);
+$("message").addEventListener("blur",()=>{
+  const input=$("message");
+  input.readOnly=true;
+  input.parentElement.classList.remove("is-editing");
+  const nick=input.value.trim();
+  if(walletNickPattern.test(nick) && me){
+    try{localStorage.setItem("dr_wallet_payee_"+me.id,nick);}catch{}
+  }
+  updateTicketForm();
+});
+$("depositNickname").addEventListener("input",updateTicketForm);
+$("walletSettingsCheck").addEventListener("change",updateTicketForm);
+$("amount").addEventListener("input",updateTicketForm);
+
 function updateTicketForm(){
-  const nick=DEPOSIT_BEDROCK_NICK||"YOUR_BEDROCK_NICK";
   let amount="AMOUNT";
   try{amount=String(parseAmount($("amount").value));}catch{}
-  $("payCommand").textContent="/pay "+nick+" "+amount;
+  $("payCommand").textContent="/pay "+DEPOSIT_BEDROCK_NICK+" "+amount;
   $("walletNickWarning").hidden=!!DEPOSIT_BEDROCK_NICK;
-  $("walletCopy").disabled=true;
+  $("walletCopy").disabled=true; // Do not let players pay before a deposit ticket exists.
+  renderWalletStatus();
 }
 $("depositCopy").onclick=async()=>{
   try{await navigator.clipboard.writeText($("depositCommand").textContent);toast("Payment command copied!");}
-  catch(e){toast("Select and copy the payment command manually.");}
+  catch{toast("Select and copy the payment command manually.");}
 };
-$("walletCopy").onclick=async()=>{
-  if(!DEPOSIT_BEDROCK_NICK)return toast("Bedrock nickname has not been configured yet.");
-  try{await navigator.clipboard.writeText($("payCommand").textContent);toast("Command copied!");}
-  catch(e){toast("Select the command and copy it manually.");}
-};
+$("walletCopy").onclick=()=>toast("Create a deposit request before sending money.");
 $("kind").onchange=updateTicketForm;
-$("amount").oninput=updateTicketForm;
 walletShow("deposit");
+
 $("ticketForm").onsubmit=async e=>{
   e.preventDefault();
+  if(walletBusy)return;
+  walletBusy=true;
+  renderWalletStatus();
   try{
     if(!me)throw Error("Please log in first");
     const kind=$("kind").value;
+    if(!walletBot.checked||!walletBot.online)throw Error("Bot offline. Wait before making a transfer.");
+    if(kind==="withdraw"&&!walletBot.withdraw_automatic)throw Error("Automatic withdrawals are paused.");
+    if(kind==="deposit"&&!walletBot.deposit_automatic)throw Error("Automatic deposits are paused.");
     const amount=parseAmount($("amount").value);
     if(amount<1||amount>1000000000000)throw Error("Amount must be between 1 and 1T");
-    if(kind==="withdraw"&&amount>me.balance)throw Error("Not enough balance. Available: "+fmt(me.balance));
-    const playerNick=$("message").value.trim();
-    if(!/^\.?[A-Za-z0-9_]{3,16}$/.test(playerNick))throw Error("Minecraft nickname is required (3–16 characters, optional Bedrock dot).");
+    if(kind==="withdraw"&&amount>Number(me.balance))throw Error("Not enough balance. Available: "+walletMoney(me.balance));
+    if(kind==="withdraw"&&!$("walletSettingsCheck").checked)throw Error("Enable payments in Minecraft /settings first.");
+    const playerNick=(kind==="deposit"?$("depositNickname").value:$("message").value).trim();
+    if(!walletNickPattern.test(playerNick))throw Error("Enter a valid Minecraft nickname (3–16 characters, optional Bedrock dot).");
     let ticketMessage="[MINECRAFT NICK] "+playerNick;
     if(kind==="deposit"){
-      if(!DEPOSIT_BEDROCK_NICK)throw Error("Deposit receiver is not configured yet.");
-      // Create the ticket BEFORE showing the pay command; the bot may see a payment immediately.
-      ticketMessage=("[PAYMENT COMMAND] /pay "+DEPOSIT_BEDROCK_NICK+" "+amount+". [PLAYER MESSAGE] "+ticketMessage).slice(0,1000);
+      ticketMessage="[PAYMENT COMMAND] /pay "+DEPOSIT_BEDROCK_NICK+" "+amount+". [PLAYER MESSAGE] "+ticketMessage;
+      // Ticket creation MUST complete before revealing the payment command.
       await api("tickets",{kind,amount,message:ticketMessage});
       await loadTickets();
-      $("depositBreakdown").textContent="DEPOSIT REQUEST CREATED: "+fmt(amount)+" ("+amount.toLocaleString("en-US")+" credits)";
+      $("depositBreakdown").textContent="DEPOSIT REQUEST CREATED: "+walletMoney(amount)+" ("+amount.toLocaleString("en-US")+" credits)";
       $("depositCommand").textContent="/pay "+DEPOSIT_BEDROCK_NICK+" "+amount;
       $("depositConfirm").hidden=false;
       await new Promise(resolve=>{
         const accept=()=>{cleanup();resolve();};
         const cancel=()=>{cleanup();resolve();};
-        const cleanup=()=>{$("depositAccept").removeEventListener("click",accept);$("depositCancel").removeEventListener("click",cancel);};
+        const cleanup=()=>{
+          $("depositAccept").removeEventListener("click",accept);
+          $("depositCancel").removeEventListener("click",cancel);
+        };
         $("depositAccept").addEventListener("click",accept);
         $("depositCancel").addEventListener("click",cancel);
       });
       $("depositConfirm").hidden=true;
-      $("message").value="";
-      toast("Deposit request created. Pay using the command shown; eligible payments will credit automatically.");
+      $("amount").value="";
+      walletClose();
+      toast("Deposit request created. Pay using the command shown; eligible payments credit automatically.");
       return;
     }
     await api("tickets",{kind,amount,message:ticketMessage});
-    $("message").value="";
-    toast("Withdrawal requested. Credits reserved until payout is confirmed.");
+    try{localStorage.setItem("dr_wallet_payee_"+me.id,playerNick);}catch{}
+    $("walletSettingsCheck").checked=false;
+    $("amount").value="";
+    toast("Withdrawal requested. Credits reserved until the bot confirms payout.");
     await refresh();
-  }catch(err){toast(err.message);}
+    await loadWalletHistory();
+  }catch(err){
+    toast(err.message);
+  }finally{
+    walletBusy=false;
+    renderWalletStatus();
+  }
 };
+setInterval(()=>{
+  if(me && !document.hidden && !$("ticketSection").hidden)void refreshWalletBotStatus();
+},12000);
 
 async function loadTickets(){
   const result = await api("tickets");
@@ -1676,6 +1856,8 @@ setInterval(async()=>{
     me.balance=updated;
     $("balance").textContent=fmt(updated);
     $("topBalance").textContent=fmt(updated);
+    updateWalletBalances();
+    if(!$("ticketSection").hidden)void loadWalletHistory();
     await loadTickets();
     if(["admin","owner"].includes(me.role))await loadUsers();
   }catch(err){
