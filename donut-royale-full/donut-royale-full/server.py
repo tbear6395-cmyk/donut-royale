@@ -569,40 +569,47 @@ class Handler(BaseHTTPRequestHandler):
                     db.execute("INSERT INTO withdraw_attempts(ticket_id,token) VALUES(?,?)", (tid,token))
                     db.execute("UPDATE tickets SET response=? WHERE id=?",
                                ("Bot payout attempt claimed; do not send manually until reconciled.",tid))
+                    # Persist the claim before authorizing an external send.
+                    (db.conn if USE_POSTGRES else db).commit()
                     return self.send_json(200, {"ticket_id":tid,"attempt_token":token,
                                                 "player":nick.group(1),"amount":ticket["amount"]})
                 token = data.get("attempt_token")
-                evidence = data.get("evidence", "")
+                evidence = data.get("evidence", [])
                 if not attempt or not isinstance(token,str) or not hmac.compare_digest(token,attempt["token"]):
                     return self.fail(409, "Invalid payout attempt")
                 if attempt["status"] != "claimed":
                     return self.send_json(200, {"status":attempt["status"]})
-                if not isinstance(evidence,str) or len(evidence)>1000:
+                if not isinstance(evidence,list) or len(evidence)>30 or any(not isinstance(line,str) or len(line)>500 for line in evidence):
                     return self.fail(400, "Invalid evidence")
                 config = withdrawal_config()
                 nick = re.fullmatch(r"\[MINECRAFT NICK\] (\.?[A-Za-z0-9_]{3,16})",ticket["message"])
                 verified = False
+                proof = ""
                 if config and nick and data.get("source") == "system":
-                    match = config[1].fullmatch(evidence)
-                    if match and match.group("player").casefold() == nick.group(1).casefold():
-                        try:
-                            suffix = (match.groupdict().get("suffix") or "").upper()
-                            verified = Decimal(match.group("amount").replace(",","")) * {
-                                "":1,"K":1000,"M":1000000,"B":1000000000,"T":1000000000000
-                            }[suffix] == ticket["amount"]
-                        except (InvalidOperation, ValueError, KeyError):
-                            pass
+                    for line in evidence:
+                        match = config[1].fullmatch(line)
+                        if match and match.group("player").casefold() == nick.group(1).casefold():
+                            try:
+                                suffix = (match.groupdict().get("suffix") or "").upper()
+                                verified = Decimal(match.group("amount").replace(",","")) * {
+                                    "":1,"K":1000,"M":1000000,"B":1000000000,"T":1000000000000
+                                }[suffix] == ticket["amount"]
+                            except (InvalidOperation, ValueError, KeyError):
+                                pass
+                            if verified:
+                                proof = line
+                                break
                 if verified and ticket["status"] == "open" and ticket["reservation_status"] == "reserved":
                     db.execute("UPDATE withdraw_reservations SET status='paid' WHERE ticket_id=?", (tid,))
                     db.execute("UPDATE tickets SET status='approved',response=?,handled=0 WHERE id=?",
-                               ("Bot payout confirmed. "+evidence,tid))
+                               ("Bot payout confirmed. "+proof,tid))
                     status = "paid"
                 else:
                     status = "needs_review"
                     db.execute("UPDATE tickets SET response=? WHERE id=?",
                                ("Payout outcome unclear. Do not retry or refund until game transfer is checked.",tid))
                 db.execute("UPDATE withdraw_attempts SET status=?,evidence=? WHERE ticket_id=?",
-                           (status,evidence,tid))
+                           (status,proof or "\n".join(evidence)[:1000],tid))
             return self.send_json(200, {"status":status})
         if path == "/api/bot/payment-event":
             expected = os.getenv("BOT_API_KEY", "")
@@ -737,7 +744,6 @@ class Handler(BaseHTTPRequestHandler):
                             return self.fail(409, "Bot payout attempt is still in progress")
                         if data.get("payout_reconciled") is not True:
                             return self.fail(409, "Independently reconcile the previous bot payout before handling this ticket")
-                        db.execute("UPDATE withdraw_attempts SET status='reconciled' WHERE ticket_id=?", (tid,))
                 if status == "approved":
                     if ticket["kind"] == "deposit":
                         if type(verified_amount) is not int or not 0 <= verified_amount <= ticket["amount"]:
@@ -775,6 +781,8 @@ class Handler(BaseHTTPRequestHandler):
                         db.execute("UPDATE users SET balance=balance+? WHERE id=?",
                                    (reservation["amount"], reservation["user_id"]))
                         response = ("Reserved credits refunded. " + response)[:1000]
+                if ticket["kind"] == "withdraw" and attempt and attempt["status"] in ("claimed","needs_review"):
+                    db.execute("UPDATE withdraw_attempts SET status='reconciled' WHERE ticket_id=?", (tid,))
                 db.execute("UPDATE tickets SET status=?,response=?,handled=? WHERE id=?",
                            (status, response, user["id"], tid))
             return self.send_json(200, {"ok": True})
