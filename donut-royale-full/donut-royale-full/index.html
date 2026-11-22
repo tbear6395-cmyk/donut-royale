@@ -2852,10 +2852,10 @@ async function refresh(){
 
   $("admin").hidden = !isAdmin;
   $("adminNav").hidden = !isAdmin;
-  $("ranksNav").hidden = me.role!=="owner";
+  $("ranksNav").hidden = !me.can_manage_staff;
   $("adminChatNav").hidden = !isAdmin;
   if(!isAdmin && ["#staff","#addRanks","#adminChat"].includes(location.hash))location.hash="#dashboard";
-  if(isAdmin&&me.role!=="owner"&&location.hash==="#addRanks")location.hash="#staff";
+  if(isAdmin&&!me.can_manage_staff&&location.hash==="#addRanks")location.hash="#staff";
   syncRanksPage();
 
   await loadTickets();
@@ -3076,12 +3076,12 @@ async function staffSelectPlayer(player){
     " · "+(player.suspended?"SUSPENDED":"ACTIVE")+" · Last login "+staffTime(player.last_login);
   $("staffPlayerReason").value="";
   $("staffNoteInput").value="";
-  if(me?.role==="owner")$("staffCreditUser").value=String(player.id);
+  if(me?.can_manage_staff)$("staffCreditUser").value=String(player.id);
   const allowed=player.role!=="owner" && player.id!==me?.id &&
-    (player.role!=="admin"||me?.role==="owner");
+    (player.role!=="admin"||me?.can_manage_staff);
   $("staffSuspendButton").disabled=!allowed||!!player.suspended;
   $("staffUnsuspendButton").disabled=!allowed||!player.suspended;
-  $("staffNoteButton").disabled=player.role==="owner"&&me?.role!=="owner";
+  $("staffNoteButton").disabled=player.role==="owner"&&!me?.can_manage_staff;
   const box=$("staffPlayerNotes");
   box.textContent="Loading staff notes...";
   try{
@@ -3176,7 +3176,7 @@ async function staffLoadCasePrices(){
   });
 }
 async function staffLoadAuditIfOwner(){
-  if(me?.role!=="owner")return;
+  if(!me?.can_manage_staff)return;
   const r=await api("staff/audit");
   $("staffAuditList").replaceChildren(staffTable(
     ["WHEN","ACTOR","ACTION","TARGET","DETAILS"],
@@ -3187,7 +3187,7 @@ async function staffLoadAuditIfOwner(){
   ));
 }
 async function staffLoadOwner(){
-  if(me?.role!=="owner")return;
+  if(!me?.can_manage_staff)return;
   await Promise.all([staffLoadCasePrices(),staffLoadAuditIfOwner()]);
 }
 async function staffRefreshPanel(){
@@ -3199,7 +3199,7 @@ async function staffRefreshPanel(){
     const data=await api("staff/overview");
     staffRenderOverview(data);
     const work=[staffLoadPlayers(0),staffLoadHistory(),staffLoadBot()];
-    if(me.role==="owner")work.push(staffLoadOwner());
+    if(me.can_manage_staff)work.push(staffLoadOwner());
     const results=await Promise.allSettled(work);
     const failed=results.filter(r=>r.status==="rejected");
     if(failed.length)staffStatus("Panel loaded with "+failed.length+" data error(s): "+failed[0].reason.message,true);
@@ -3208,7 +3208,7 @@ async function staffRefreshPanel(){
 }
 function staffSelectTab(tab){
   if(!["overview","players","history","support","bot","owner"].includes(tab))return;
-  if(tab==="owner"&&me?.role!=="owner")return;
+  if(tab==="owner"&&!me?.can_manage_staff)return;
   staffCurrentTab=tab;
   document.querySelectorAll("#staffPage [data-staff-tab]").forEach(button=>{
     const active=button.dataset.staffTab===tab;
@@ -3235,9 +3235,9 @@ $("staffPlayersNext").onclick=()=>void staffLoadPlayers(staffPlayerOffset).catch
 $("staffSuspendButton").onclick=()=>void staffSetSuspended(true);
 $("staffUnsuspendButton").onclick=()=>void staffSetSuspended(false);
 $("staffNoteButton").onclick=()=>void staffSaveNote();
-$("staffOpenRanks").onclick=()=>{if(me?.role==="owner")location.hash="#addRanks";};
+$("staffOpenRanks").onclick=()=>{if(me?.can_manage_staff)location.hash="#addRanks";};
 async function staffAdjustCredits(sign){
-  if(me?.role!=="owner")return;
+  if(!me?.can_manage_staff)return;
   const user_id=Number($("staffCreditUser").value.trim());
   const reason=$("staffCreditReason").value.trim();
   let amount;
@@ -3258,7 +3258,7 @@ async function staffAdjustCredits(sign){
 $("staffCreditAdd").onclick=()=>void staffAdjustCredits(1);
 $("staffCreditRemove").onclick=()=>void staffAdjustCredits(-1);
 async function staffSaveSetting(key,value){
-  if(me?.role!=="owner")return;
+  if(!me?.can_manage_staff)return;
   const textValue=typeof value==="boolean"?(value?"ON":"OFF"):String(value);
   if(!confirm("Change "+key.replaceAll("_"," ")+" to "+textValue+"? This affects live games."))return;
   try{
@@ -3289,7 +3289,7 @@ async function staffRefreshPublicRules(){
 
 function syncRanksPage(){
   const allowed=!!me && ["admin","owner"].includes(me.role);
-  const owner=!!me && me.role==="owner";
+  const owner=!!me && me.can_manage_staff;
   const active=owner && location.hash==="#addRanks";
   const chatActive=allowed && location.hash==="#adminChat";
   const staffActive=allowed && location.hash==="#staff";
@@ -4317,7 +4317,7 @@ async function loadTickets(){
     if(t.status!=="open")return;
 
     // Admins can close support tickets; only the owner handles credit-bearing tickets.
-    if(me.role!=="owner" && t.kind!=="support")return;
+    if(!me.can_manage_staff && t.kind!=="support")return;
     const permittedStatuses=t.kind==="support"?["closed"]:["approved","rejected","closed"];
     permittedStatuses.forEach(status=>{
       d.append(button(status.toUpperCase(),async()=>{
@@ -4363,7 +4363,7 @@ async function loadUsers(){
       text("small","Balance: "+fmt(u.balance))
     );
 
-    if(me.role!=="owner" || u.role==="owner")return;
+    if(!me.can_manage_staff || u.role==="owner")return;
 
     const newRole = u.role==="admin"?"player":"admin";
 
