@@ -532,6 +532,8 @@ class Handler(BaseHTTPRequestHandler):
             if type(tid) is not int or status not in ("approved", "rejected", "closed"):
                 return self.fail(400, "Invalid review")
             with LOCK, db_open() as db:
+                if USE_POSTGRES:
+                    db.execute("SELECT pg_advisory_xact_lock(2026112207)")
                 ticket = db.execute("SELECT * FROM tickets WHERE id=?", (tid,)).fetchone()
                 if not ticket or ticket["status"] != "open":
                     return self.fail(409, "Ticket already handled")
