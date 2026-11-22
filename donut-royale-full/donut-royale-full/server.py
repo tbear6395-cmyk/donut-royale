@@ -359,7 +359,8 @@ def case_battle_drops(case_type, rounds, player_wins):
         if player_score != bot_score:
             break
     if player_score == bot_score:
-        drops[-1] = {"player": pool[-1], "bot": pool[0]}
+        # Guaranteed non-tie fallback; every round uses distinct item values.
+        drops = [{"player": pool[-1], "bot": pool[0]} for _ in range(rounds)]
         player_score = sum(r["player"]["value"] for r in drops)
         bot_score = sum(r["bot"]["value"] for r in drops)
     # House odds are resolved independently of the cosmetic loot reveal.
@@ -988,7 +989,7 @@ class Handler(BaseHTTPRequestHandler):
                 return self.fail(400, "Choose red or black")
             case_type, rounds = data.get("case"), data.get("rounds")
             if game == "casebattle":
-                if case_type not in CASE_BATTLE_POOLS:
+                if not isinstance(case_type, str) or case_type not in CASE_BATTLE_POOLS:
                     return self.fail(400, "Choose a valid case")
                 if type(rounds) is not int or rounds not in (1, 3, 5):
                     return self.fail(400, "Choose 1, 3 or 5 rounds")
