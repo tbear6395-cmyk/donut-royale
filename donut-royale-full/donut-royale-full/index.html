@@ -1620,6 +1620,23 @@ header>div.header-account:last-child{
   box-shadow:0 2px 9px #0009,0 0 12px #cd355052;
 }
 
+/* Non-blocking, persistent ALL IN rule disclosure beside each bet selector. */
+.game-screen .quick .all-in-disclosure{
+  display:block;
+  width:100%;
+  margin:6px auto 8px;
+  font-size:11px;
+  color:#ffc3cc;
+  font-weight:750;
+  line-height:1.35;
+  text-align:center;
+}
+#screen-wheel .roulette-chip-bar .all-in-disclosure{
+  grid-column:1/-1;
+  margin:2px 0 0;
+  font-size:10px;
+}
+
 </style>
 </head>
 
@@ -2008,7 +2025,7 @@ header>div.header-account:last-child{
         <button data-value="10000000">10M</button>
         <button data-value="100000000">100M</button>
       
-        <button type="button" data-all-in="true" title="ALL IN uses your full balance and guarantees a loss (0% chance)." aria-label="ALL IN — full balance, guaranteed loss">ALL IN</button></div>
+        <button type="button" data-all-in="true" title="ALL IN uses your full balance and guarantees a loss (0% chance)." aria-label="ALL IN — full balance, guaranteed loss">ALL IN</button><small class="all-in-disclosure">ALL IN = guaranteed loss · 0% win chance</small></div>
       <button class="primary" id="flip">FLIP COIN</button>
       <p class="result" id="gameResult"></p>
     </section>
@@ -2027,7 +2044,7 @@ header>div.header-account:last-child{
         <button data-value="10000000">10M</button>
         <button data-value="100000000">100M</button>
       
-        <button type="button" data-all-in="true" title="ALL IN uses your full balance and guarantees a loss (0% chance)." aria-label="ALL IN — full balance, guaranteed loss">ALL IN</button></div>
+        <button type="button" data-all-in="true" title="ALL IN uses your full balance and guarantees a loss (0% chance)." aria-label="ALL IN — full balance, guaranteed loss">ALL IN</button><small class="all-in-disclosure">ALL IN = guaranteed loss · 0% win chance</small></div>
       <button class="primary" id="dicePlay">ROLL DICE</button>
       <p class="result" id="diceResult"></p>
     </section>
@@ -2048,7 +2065,7 @@ header>div.header-account:last-child{
         <button data-value="10000000">10M</button>
         <button data-value="100000000">100M</button>
       
-        <button type="button" data-all-in="true" title="ALL IN uses your full balance and guarantees a loss (0% chance)." aria-label="ALL IN — full balance, guaranteed loss">ALL IN</button></div>
+        <button type="button" data-all-in="true" title="ALL IN uses your full balance and guarantees a loss (0% chance)." aria-label="ALL IN — full balance, guaranteed loss">ALL IN</button><small class="all-in-disclosure">ALL IN = guaranteed loss · 0% win chance</small></div>
       <button class="primary" id="slotsPlay">SPIN SLOTS</button>
       <p class="result" id="slotsResult"></p>
     </section>
@@ -2082,7 +2099,7 @@ header>div.header-account:last-child{
             <button type="button" data-value="100000">100K</button>
             <button type="button" data-value="1000000">1M</button>
           
-        <button type="button" data-all-in="true" title="ALL IN uses your full balance and guarantees a loss (0% chance)." aria-label="ALL IN — full balance, guaranteed loss">ALL IN</button></div>
+        <button type="button" data-all-in="true" title="ALL IN uses your full balance and guarantees a loss (0% chance)." aria-label="ALL IN — full balance, guaranteed loss">ALL IN</button><small class="all-in-disclosure">ALL IN = guaranteed loss · 0% win chance</small></div>
           <div class="roulette-odds" aria-label="Roulette game odds">
             <div><span>YOUR WIN CHANCE</span><strong>40%</strong></div>
             <div><span>HOUSE WIN CHANCE</span><strong>60%</strong></div>
@@ -2094,7 +2111,7 @@ header>div.header-account:last-child{
         </div>
       </div>
     </section>
-    <section class="game-screen" id="screen-blackjack" hidden><h2>🃏 BLACKJACK</h2><p>Get as close to 21 as possible without going over! Over 21 means you lose (22 is too much). Ace = 1 or 11, J/Q/K = 10.</p><h3>DEALER</h3><div class="bj-cards" id="bjDealer">🂠</div><h3>YOUR HAND <span id="bjScore"></span></h3><div class="bj-cards" id="bjPlayer">🃏</div><input id="bjBet" value="1000"><div class="quick" data-input="bjBet"><button data-value="1000000">1M</button><button data-value="10000000">10M</button><button data-value="100000000">100M</button><button type="button" data-all-in="true" title="ALL IN uses your full balance and guarantees a loss (0% chance)." aria-label="ALL IN — full balance, guaranteed loss">ALL IN</button></div><div class="choices"><button class="primary" id="bjDeal">DEAL CARDS</button><button id="bjHit" disabled>HIT</button><button id="bjStand" disabled>STAND</button></div><p class="result" id="bjResult"></p></section>
+    <section class="game-screen" id="screen-blackjack" hidden><h2>🃏 BLACKJACK</h2><p>Get as close to 21 as possible without going over! Over 21 means you lose (22 is too much). Ace = 1 or 11, J/Q/K = 10.</p><h3>DEALER</h3><div class="bj-cards" id="bjDealer">🂠</div><h3>YOUR HAND <span id="bjScore"></span></h3><div class="bj-cards" id="bjPlayer">🃏</div><input id="bjBet" value="1000"><div class="quick" data-input="bjBet"><button data-value="1000000">1M</button><button data-value="10000000">10M</button><button data-value="100000000">100M</button><button type="button" data-all-in="true" title="ALL IN uses your full balance and guarantees a loss (0% chance)." aria-label="ALL IN — full balance, guaranteed loss">ALL IN</button><small class="all-in-disclosure">ALL IN = guaranteed loss · 0% win chance</small></div><div class="choices"><button class="primary" id="bjDeal">DEAL CARDS</button><button id="bjHit" disabled>HIT</button><button id="bjStand" disabled>STAND</button></div><p class="result" id="bjResult"></p></section>
   </div>
 </div>
 
@@ -2410,7 +2427,7 @@ async function blackjackAction(action){
   if(action==="deal" && bjActive){toast("Finish the current hand first");return;}
   let amount;
   if(action==="deal"){
-    try{amount=parseAmount($("bjBet").value);if(amount<1||amount>3000000000)throw Error("Bet must be between 1 and 3B");if(!me||amount>me.balance)throw Error("Not enough credits");if(amount===me.balance&&!confirm("All-in bets automatically lose. Continue?"))return;}catch(e){toast(e.message);return;}
+    try{amount=parseAmount($("bjBet").value);if(amount<1||amount>3000000000)throw Error("Bet must be between 1 and 3B");if(!me||amount>me.balance)throw Error("Not enough credits");}catch(e){toast(e.message);return;}
   }
   bjBusy=true;
   try{
@@ -2766,7 +2783,6 @@ async function play(game,inputId,resultId,buttonId,extra={}){
     if(!me || amount>me.balance){
       throw Error("Not enough credits");
     }
-    if(amount===me.balance && !confirm("WARNING: Betting your entire balance (all-in) is guaranteed to LOSE. Continue?"))return;
   }catch(err){
     toast(err.message);
     return;
