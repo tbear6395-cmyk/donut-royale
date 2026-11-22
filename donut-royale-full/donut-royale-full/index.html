@@ -3960,6 +3960,149 @@ $("bjDeal").onclick=()=>blackjackAction("deal");
 $("bjHit").onclick=()=>blackjackAction("hit");
 $("bjStand").onclick=()=>blackjackAction("stand");
 
+
+/* MINES: the server owns the bombs, bets and payouts; tiles are only the UI. */
+let minesRound=null,minesFinished=null,minesBusy=false;
+function minesMult(x){return Number(x||1).toFixed(2)+"×";}
+function minesMessage(message,error=false){
+ const e=$("minesStatus");e.textContent=message;e.style.color=error?"#ffb3c0":"#c4fbe9";
+}
+function minesBalance(amount){
+ if(!me||!Number.isSafeInteger(Number(amount)))return;
+ me.balance=Number(amount);
+ $("balance").textContent=fmt(me.balance);
+ $("topBalance").textContent=fmt(me.balance);
+ if(typeof updateWalletBalances==="function")updateWalletBalances();
+}
+function minesDraw(){
+ const root=$("minesGrid");root.replaceChildren();
+ for(let i=0;i<25;i++){
+  const b=document.createElement("button");
+  b.type="button";b.className="mines-tile";b.dataset.tile=String(i);
+  b.setAttribute("aria-label","Hidden tile "+(i+1));
+  b.onclick=()=>void minesPick(i);
+  root.append(b);
+ }
+}
+function minesRender(){
+ const active=!!minesRound?.active;
+ const done=minesFinished;
+ const mineCount=active?minesRound.mines:done?.mines||Number($("minesCount").value)||3;
+ const revealed=active?minesRound.revealed||[]:done?.revealed||[];
+ const revealedSet=new Set(revealed),bombSet=new Set(done?.bombs||[]);
+ const opened=revealed.length;
+ const payout=active?Number(minesRound.payout||0):done?.status==="cashout"?Number(done.payout||0):0;
+ const mult=active?Number(minesRound.multiplier||1):done?.status==="cashout"?Number(done.multiplier||1):1;
+ $("minesMinesStat").textContent=String(mineCount);
+ $("minesClearedStat").textContent=String(opened);
+ $("minesMultiplierStat").textContent=minesMult(mult);
+ $("minesPayMult").textContent=minesMult(mult);
+ try{$("minesBetStat").textContent=fmt(active?minesRound.bet:done?.bet||parseAmount($("minesBet").value))}
+ catch(_){$("minesBetStat").textContent="—";}
+ $("minesPayoutStat").textContent=(active&&opened||done?.status==="cashout")?fmt(payout):"—";
+ const chance=(25-mineCount-opened)/(25-opened);
+ $("minesSafeChance").textContent=done?"—":Math.max(0,chance*100).toFixed(1)+"%";
+ $("minesStart").disabled=minesBusy||active;
+ $("minesStart").textContent=minesBusy?"✧ PLEASE WAIT":active?"ROUND IN PROGRESS":"✦ START MINES";
+ $("minesCashout").disabled=minesBusy||!active||opened<1;
+ $("minesCashout").textContent=active&&opened?"💰 CASH OUT · "+fmt(payout):"💰 CASH OUT";
+ $("minesAuto").disabled=minesBusy||!active;
+ $("minesCount").disabled=minesBusy||active;
+ $("minesBet").readOnly=minesBusy||active;
+ document.querySelectorAll("#screen-mines .mines-quick button").forEach(b=>b.disabled=minesBusy||active);
+ for(const b of $("minesGrid").querySelectorAll(".mines-tile")){
+  const tile=Number(b.dataset.tile);
+  b.className="mines-tile";
+  if(revealedSet.has(tile))b.classList.add("safe");
+  else if(done&&bombSet.has(tile))b.classList.add("mine");
+  else if(done)b.classList.add("inert");
+  if(done?.exploded===tile)b.classList.add("exploded");
+  b.disabled=minesBusy||!active||revealedSet.has(tile);
+  b.setAttribute("aria-label",revealedSet.has(tile)?"Diamond "+(tile+1):
+   done&&bombSet.has(tile)?"TNT mine "+(tile+1):"Hidden tile "+(tile+1));
+ }
+}
+function minesApply(result){
+ minesBalance(result.balance);
+ if(result.status==="active"){
+  minesRound=result.round;minesFinished=null;
+  const count=minesRound.revealed?.length||0;
+  minesMessage(count?"💎 SAFE! "+count+" DIAMONDS · CASH OUT "+fmt(minesRound.payout)+
+   " OR KEEP GOING":"ROUND STARTED · PICK A TILE OR USE AUTO PICK");
+ }else{
+  minesRound=null;minesFinished=result;
+  if(result.status==="lose")minesMessage(result.reason==="all_in"?
+   "⚠ ALL IN ALWAYS LOSES · STAKE LOST":"💥 HIT A MINE · STAKE LOST",true);
+  else if(result.status==="cashout")minesMessage("🏆 CASHED OUT "+fmt(result.payout)+
+   " · "+minesMult(result.multiplier)+(result.auto_win?" · BOARD CLEARED":""));
+  else minesMessage("Unknown result. Please reload.",true);
+ }
+ minesRender();
+}
+async function minesLoadState(){
+ if(!me)return;
+ minesBusy=true;minesRender();
+ try{
+  const data=await api("mines/state");
+  minesRound=data.round?.active?data.round:null;minesFinished=null;
+  if(minesRound){
+   $("minesBet").value=String(minesRound.bet);
+   $("minesCount").value=String(minesRound.mines);
+   minesMessage("ACTIVE ROUND RESTORED · KEEP PLAYING OR CASH OUT");
+  }else minesMessage("Set your bet and mines, then start a round.");
+  const wallet=await api("me");
+  if(wallet.user)minesBalance(wallet.user.balance);
+ }catch(e){minesMessage("Could not load Mines: "+e.message,true);}
+ finally{minesBusy=false;minesRender();}
+}
+async function minesStart(){
+ if(minesBusy||minesRound?.active)return;
+ let amount, count=Number($("minesCount").value);
+ try{
+  amount=parseAmount($("minesBet").value);
+  if(amount<1||amount>3000000000)throw Error("Bet must be between 1 and 3B");
+  if(!Number.isInteger(count)||count<1||count>24)throw Error("Invalid mine count");
+  if(!me||amount>me.balance)throw Error("Not enough credits");
+  if(amount===me.balance&&!confirm("ALL IN ALWAYS LOSES. You will lose your entire balance. Continue?"))return;
+ }catch(e){minesMessage(e.message,true);toast(e.message);return;}
+ minesBusy=true;minesRender();minesMessage("PREPARING YOUR MINES FIELD...");
+ try{minesApply(await api("mines/start",{amount,mines:count}));}
+ catch(e){minesMessage("Start failed: "+e.message,true);await minesLoadState();}
+ finally{minesBusy=false;minesRender();}
+}
+async function minesPick(tile){
+ if(minesBusy||!minesRound?.active||minesRound.revealed?.includes(tile))return;
+ minesBusy=true;minesRender();
+ try{minesApply(await api("mines/pick",{tile}));}
+ catch(e){minesMessage("Tile reveal failed: "+e.message,true);await minesLoadState();}
+ finally{minesBusy=false;minesRender();}
+}
+async function minesAutoPick(){
+ if(minesBusy||!minesRound?.active)return;
+ const revealed=new Set(minesRound.revealed||[]);
+ const available=Array.from({length:25},(_,i)=>i).filter(i=>!revealed.has(i));
+ if(!available.length)return;
+ let number=Math.floor(Math.random()*available.length);
+ if(window.crypto?.getRandomValues){
+  const v=new Uint32Array(1);window.crypto.getRandomValues(v);
+  number=v[0]%available.length;
+ }
+ await minesPick(available[number]);
+}
+async function minesCashout(){
+ if(minesBusy||!minesRound?.active||!minesRound.revealed?.length)return;
+ minesBusy=true;minesRender();minesMessage("CASHING OUT...");
+ try{minesApply(await api("mines/cashout",{}));}
+ catch(e){minesMessage("Cashout failed: "+e.message,true);await minesLoadState();}
+ finally{minesBusy=false;minesRender();}
+}
+minesDraw();minesRender();
+$("minesStart").onclick=()=>void minesStart();
+$("minesAuto").onclick=()=>void minesAutoPick();
+$("minesCashout").onclick=()=>void minesCashout();
+$("minesCount").addEventListener("change",()=>{if(!minesRound?.active)minesRender();});
+$("minesBet").addEventListener("input",()=>{if(!minesRound?.active)minesRender();});
+
 function openGame(game){
   if(!me){
     $("auth").hidden=false;
@@ -3975,6 +4118,7 @@ function openGame(game){
   $("screen-"+game).hidden = false;
   $("gameOverlay").hidden = false;
   if(game==="casebattle")void cbLoadCatalog().catch(err=>toast(err.message));
+  if(game==="mines")void minesLoadState();
 }
 
 function closeGame(){
