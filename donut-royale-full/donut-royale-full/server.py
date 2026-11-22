@@ -14,7 +14,7 @@ from datetime import datetime, timezone, timedelta
 from decimal import Decimal, InvalidOperation
 from http.server import ThreadingHTTPServer, BaseHTTPRequestHandler
 from http.cookies import SimpleCookie
-from urllib.parse import urlparse
+from urllib.parse import urlparse, parse_qs
 
 BASE = Path(__file__).resolve().parent
 DB = Path(os.getenv("DATABASE_PATH", str(BASE / "data.sqlite3")))
@@ -707,6 +707,97 @@ class Handler(BaseHTTPRequestHandler):
                 rows = db.execute("""SELECT event_id,player,amount,raw_message,status,created
                                      FROM bot_payment_events ORDER BY created DESC, event_id DESC LIMIT 100""").fetchall()
             return self.send_json(200, {"events": [dict(r) for r in rows]})
+        if path == "/api/staff/overview":
+            if user["role"] not in ("admin","owner"):
+                return self.fail(403, "Staff only")
+            with db_open() as db:
+                economy = db.execute("""SELECT COUNT(*) AS user_count,
+                                               COALESCE(SUM(balance),0) AS credits,
+                                               SUM(CASE WHEN role='admin' THEN 1 ELSE 0 END) AS admin_count,
+                                               SUM(CASE WHEN suspended=1 THEN 1 ELSE 0 END) AS suspended_count
+                                        FROM users""").fetchone()
+                tickets = db.execute("""SELECT kind,COUNT(*) AS n,COALESCE(SUM(amount),0) AS amount
+                                        FROM tickets WHERE status='open' GROUP BY kind""").fetchall()
+                games = db.execute("""SELECT game,COUNT(*) AS plays,COALESCE(SUM(stake),0) AS staked,
+                                             COALESCE(SUM(payout),0) AS paid,
+                                             COALESCE(SUM(stake-payout),0) AS house_net
+                                      FROM game_history GROUP BY game ORDER BY game""").fetchall()
+                recent = db.execute("""SELECT h.id,h.game,h.stake,h.payout,h.net,h.outcome,h.created,u.username
+                                       FROM game_history h JOIN users u ON u.id=h.user_id
+                                       ORDER BY h.id DESC LIMIT 10""").fetchall()
+                settings = {"win_chance": staff_win_chance(db),
+                            "games_paused": staff_setting(db,"games_paused")=="1",
+                            "withdrawals_paused": staff_setting(db,"withdrawals_paused")=="1",
+                            "max_bet": MAX_BET}
+            return self.send_json(200, {"economy":dict(economy),
+                                        "tickets":[dict(x) for x in tickets],
+                                        "games":[dict(x) for x in games],
+                                        "recent":[dict(x) for x in recent],
+                                        "settings":settings, "bot_online":time.monotonic()-BOT_POLL_STATE["last_seen"]<50,
+                                        "history_note":"Game history records only rounds completed after this staff panel was installed."})
+        if path == "/api/staff/players":
+            if user["role"] not in ("admin","owner"):
+                return self.fail(403, "Staff only")
+            params=parse_qs(urlparse(self.path).query)
+            query=(params.get("q",[""])[0] or "").strip()[:40]
+            try:
+                offset=max(0,min(10000,int(params.get("offset",["0"])[0])))
+            except (TypeError,ValueError):
+                offset=0
+            with db_open() as db:
+                rows=db.execute("""SELECT id,username,role,balance,suspended,last_login FROM users
+                                   WHERE lower(username) LIKE lower(?)
+                                   ORDER BY id DESC LIMIT 101 OFFSET ?""",
+                                ("%"+query+"%",offset)).fetchall()
+            return self.send_json(200, {"players":[dict(x) for x in rows[:100]],
+                                        "has_more":len(rows)>100,"next_offset":offset+100,
+                                        "query":query})
+        if path == "/api/staff/game-history":
+            if user["role"] not in ("admin","owner"):
+                return self.fail(403, "Staff only")
+            with db_open() as db:
+                rows=db.execute("""SELECT g.id,u.username,g.game,g.stake,g.payout,g.net,
+                                          g.outcome,g.details,g.created
+                                   FROM game_history g JOIN users u ON u.id=g.user_id
+                                   ORDER BY g.id DESC LIMIT 120""").fetchall()
+            return self.send_json(200, {"history":[dict(x) for x in rows]})
+        if path == "/api/staff/notes":
+            if user["role"] not in ("admin","owner"):
+                return self.fail(403, "Staff only")
+            params=parse_qs(urlparse(self.path).query)
+            raw=params.get("user_id",[""])[0]
+            try:
+                target=int(raw)
+            except (ValueError,TypeError):
+                return self.fail(400,"Player ID required")
+            with db_open() as db:
+                rows=db.execute("""SELECT n.id,n.note,n.created,u.username AS author
+                                   FROM staff_notes n JOIN users u ON u.id=n.actor_id
+                                   WHERE n.user_id=? ORDER BY n.id DESC LIMIT 30""",(target,)).fetchall()
+            return self.send_json(200, {"notes":[dict(x) for x in rows]})
+        if path == "/api/staff/audit":
+            if user["role"] != "owner":
+                return self.fail(403, "Owner only")
+            with db_open() as db:
+                rows=db.execute("""SELECT a.id,a.action,a.target_id,a.details,a.created,
+                                          u.username AS actor,t.username AS target
+                                   FROM staff_audit a JOIN users u ON u.id=a.actor_id
+                                   LEFT JOIN users t ON t.id=a.target_id
+                                   ORDER BY a.id DESC LIMIT 130""").fetchall()
+            return self.send_json(200, {"audit":[dict(x) for x in rows]})
+        if path == "/api/staff/bot":
+            if user["role"] not in ("admin","owner"):
+                return self.fail(403, "Staff only")
+            with db_open() as db:
+                queue=db.execute("""SELECT COUNT(*) AS count,COALESCE(SUM(amount),0) AS amount
+                                    FROM withdraw_reservations WHERE status='reserved'""").fetchone()
+                events=db.execute("""SELECT status,COUNT(*) AS count
+                                     FROM bot_payment_events GROUP BY status""").fetchall()
+                paused=staff_setting(db,"withdrawals_paused")=="1"
+            return self.send_json(200, {"online":time.monotonic()-BOT_POLL_STATE["last_seen"]<50,
+                                        "withdrawals_paused":paused,
+                                        "queue":dict(queue), "events":[dict(x) for x in events],
+                                        "automatic_withdrawals_configured":bool(withdrawal_config())})
         if path == "/api/wallet/history":
             # The cashier always shows only this logged-in player's own transfers,
             # including completed payouts (staff ticket queue lists open tickets only).
@@ -903,6 +994,105 @@ class Handler(BaseHTTPRequestHandler):
         user = self.me()
         if not user:
             return self.fail(401, "Please log in")
+        if path in ("/api/staff/suspend","/api/staff/credit","/api/staff/note",
+                    "/api/staff/setting","/api/staff/case-price"):
+            if user["role"] not in ("admin","owner"):
+                return self.fail(403, "Staff only")
+            owner=user["role"]=="owner"
+            if path in ("/api/staff/credit","/api/staff/setting","/api/staff/case-price") and not owner:
+                return self.fail(403, "Owner only")
+            with LOCK, db_open() as db:
+                if path=="/api/staff/setting":
+                    key=data.get("key")
+                    value=data.get("value")
+                    if key=="win_chance":
+                        if type(value) is not int or not 1<=value<=50:
+                            return self.fail(400, "Win chance must be between 1% and 50%")
+                        value=str(value)
+                    elif key in ("games_paused","withdrawals_paused"):
+                        if type(value) is not bool:
+                            return self.fail(400, "Expected true or false")
+                        value="1" if value else "0"
+                    else:
+                        return self.fail(400, "Invalid setting")
+                    before=staff_setting(db,key)
+                    db.execute("""INSERT INTO staff_settings(setting_key,setting_value,changed_by)
+                                  VALUES(?,?,?) ON CONFLICT(setting_key) DO UPDATE SET
+                                  setting_value=excluded.setting_value,changed_by=excluded.changed_by,
+                                  changed_at=CURRENT_TIMESTAMP""",(key,value,user["id"]))
+                    staff_audit(db,user["id"],"setting."+key,None,{"before":before,"after":value})
+                    return self.send_json(200, {"ok":True,"key":key,"value":value})
+                if path=="/api/staff/case-price":
+                    case_id=data.get("case")
+                    price=data.get("price")
+                    if not isinstance(case_id,str) or case_id not in CASE_BATTLE_CASES:
+                        return self.fail(400,"Unknown case")
+                    if type(price) is not int or not 1<=price<=MAX_BET:
+                        return self.fail(400,"Case price must be 1 to 3B")
+                    before=case_price(db,case_id)
+                    db.execute("""INSERT INTO staff_settings(setting_key,setting_value,changed_by)
+                                  VALUES(?,?,?) ON CONFLICT(setting_key) DO UPDATE SET
+                                  setting_value=excluded.setting_value,changed_by=excluded.changed_by,
+                                  changed_at=CURRENT_TIMESTAMP""",
+                               ("case_price_"+case_id,str(price),user["id"]))
+                    staff_audit(db,user["id"],"case.price",None,
+                                {"case":case_id,"before":before,"after":price})
+                    return self.send_json(200,{"ok":True,"case":case_id,"price":price})
+                target_id=data.get("user_id")
+                if type(target_id) is not int or target_id<1:
+                    return self.fail(400, "Valid player required")
+                target=db.execute("SELECT id,username,role,balance,suspended FROM users WHERE id=?",
+                                  (target_id,)).fetchone()
+                if not target:
+                    return self.fail(404,"Player not found")
+                if path=="/api/staff/suspend":
+                    suspended=data.get("suspended")
+                    reason=data.get("reason")
+                    if type(suspended) is not bool or not isinstance(reason,str) or not 5<=len(reason.strip())<=250:
+                        return self.fail(400,"Choose status and give a reason (5-250 characters)")
+                    if target["id"]==user["id"] or target["role"]=="owner" or (target["role"]=="admin" and not owner):
+                        return self.fail(403,"Cannot suspend this staff account")
+                    new_value=1 if suspended else 0
+                    if target["suspended"]==new_value:
+                        return self.send_json(200,{"ok":True,"unchanged":True})
+                    db.execute("UPDATE users SET suspended=? WHERE id=?",(new_value,target_id))
+                    if suspended:
+                        db.execute("DELETE FROM sessions WHERE user_id=?",(target_id,))
+                    staff_audit(db,user["id"],"account.suspend" if suspended else "account.unsuspend",
+                                target_id,{"reason":reason.strip()})
+                    return self.send_json(200,{"ok":True,"username":target["username"],
+                                                "suspended":bool(new_value)})
+                if path=="/api/staff/note":
+                    note=data.get("note")
+                    if not isinstance(note,str) or not 3<=len(note.strip())<=500:
+                        return self.fail(400,"Note must have 3-500 characters")
+                    if target["role"]=="owner" and not owner:
+                        return self.fail(403,"Owner notes are restricted")
+                    db.execute("INSERT INTO staff_notes(user_id,actor_id,note) VALUES(?,?,?)",
+                               (target_id,user["id"],note.strip()))
+                    staff_audit(db,user["id"],"account.note",target_id,{"note":note.strip()[:300]})
+                    return self.send_json(200,{"ok":True})
+                if path=="/api/staff/credit":
+                    delta=data.get("delta")
+                    reason=data.get("reason")
+                    if type(delta) is not int or delta==0 or abs(delta)>1000000000:
+                        return self.fail(400,"Adjust 1 to 1B credits per action")
+                    if not isinstance(reason,str) or not 8<=len(reason.strip())<=250:
+                        return self.fail(400,"Reason must have 8-250 characters")
+                    if target["role"]=="owner" or target_id==user["id"]:
+                        return self.fail(403,"Cannot adjust owner/self credits")
+                    updated_balance=target["balance"]+delta
+                    if not 0<=updated_balance<=10000000000000:
+                        return self.fail(400,"Balance cannot become negative or exceed 10T")
+                    changed=db.execute("UPDATE users SET balance=balance+? WHERE id=?",
+                                       (delta,target_id))
+                    if changed.rowcount!=1:
+                        return self.fail(409,"Player balance changed")
+                    staff_audit(db,user["id"],"credits.adjust",target_id,
+                                {"delta":delta,"before":target["balance"],"after":updated_balance,
+                                 "reason":reason.strip()})
+                    return self.send_json(200,{"ok":True,"username":target["username"],
+                                                "balance":updated_balance})
         if path == "/api/tickets":
             kind = data.get("kind")
             amount = data.get("amount", 0)
