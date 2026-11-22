@@ -2432,6 +2432,48 @@ aside .winter{box-shadow:inset 0 1px #fff2,0 10px 30px #0005,0 0 19px #e1bd7226}
   .game-card .xmas-game-snow{animation:none}
 }
 
+
+/* Support conversations and read-only bot CMD */
+#ticketSection .wallet-tabs.cashier-tabs{grid-template-columns:repeat(3,minmax(0,1fr))}
+#ticketSection .wallet-tabs.cashier-tabs button{min-width:0;padding:13px 5px;font-size:clamp(10px,1.8vw,13px)}
+.wallet-support-section h3{color:#ffe6b7;margin:22px 0 12px}
+.wallet-support-section .cashier-hint{line-height:1.6}
+.support-create-form,.support-reply{display:grid;gap:11px}
+.support-create-form label,.support-reply label{font-size:12px;font-weight:900;color:#b6e5da}
+.support-create-form select,.support-create-form textarea,.support-reply textarea{
+  display:block;width:100%;min-width:0;background:#0c2530;color:#edfdf7;
+  border:1px solid #6c9c91;border-radius:11px;padding:12px 13px;font:inherit;
+}
+.support-create-form textarea,.support-reply textarea{resize:vertical;min-height:85px;line-height:1.5}
+.support-create-form button,.support-reply button{margin-top:4px}
+.wallet-support-tickets{display:grid;gap:9px}
+.support-ticket-row{
+  display:flex;justify-content:space-between;align-items:center;gap:10px;
+  background:#0e3036;border:1px solid #4f8f83;border-radius:12px;padding:12px;
+}
+.support-ticket-row strong{display:block;color:#ffe9bb;font-size:12px}
+.support-ticket-row small{display:block;color:#afd1c8;font-size:10px;margin-top:4px}
+.support-ticket-row button,.support-chat-launch{
+  padding:9px 12px;border:1px solid #d9bf8b;background:#275449;color:#fff2d0;
+  border-radius:9px;font-weight:900;font-size:11px;cursor:pointer
+}
+.support-thread{margin:18px 0;padding:14px;border-radius:14px;background:#0c2029;border:1px solid #b9aa7d9c}
+.support-thread h3,.support-thread h4{margin:5px 0 13px;color:#ffe7b2}
+.support-messages{max-height:280px;overflow:auto;display:grid;gap:10px;margin:10px 0 15px;padding:8px 4px}
+.support-message{max-width:92%;border:1px solid #496b76;border-radius:12px;padding:11px 13px;background:#162f3b;overflow-wrap:anywhere}
+.support-message.is-admin{background:#193e33;border-color:#71b795}
+.support-message strong{display:block;color:#ffdfa2;font-size:11px;margin-bottom:5px}
+.support-message p{white-space:pre-wrap;margin:0;color:#e5f6f0;font-size:12px;line-height:1.6}
+.support-message small{display:block;color:#9ebeb8;font-size:9px;margin-top:7px}
+.staff-support-thread{margin-top:20px}
+.staff-console-bar{display:flex;justify-content:space-between;align-items:center;gap:12px;margin:10px 0 12px;color:#aed9c5;font-size:12px}
+.staff-console-log{
+  margin:0;min-height:175px;max-height:430px;overflow:auto;white-space:pre-wrap;overflow-wrap:anywhere;
+  background:#050c10;color:#b8f0ce;border:1px solid #547e6b;border-radius:13px;padding:17px;
+  font:12px/1.65 Consolas,"Courier New",monospace;box-shadow:inset 0 0 30px #000b;
+}
+@media(max-width:580px){.support-ticket-row{align-items:flex-start}.staff-console-log{font-size:11px;padding:12px}}
+
 </style>
 </head>
 
@@ -2484,7 +2526,7 @@ aside .winter{box-shadow:inset 0 1px #fff2,0 10px 30px #0005,0 0 19px #e1bd7226}
     <button type="button" data-staff-tab="players">♙ Players</button>
     <button type="button" data-staff-tab="history">◷ Game History</button>
     <button type="button" data-staff-tab="support">✉ Support</button>
-    <button type="button" data-staff-tab="bot">▣ Bot & Payouts</button>
+    <button type="button" data-staff-tab="bot">▣ Bot & CMD</button>
     <button type="button" data-staff-tab="owner" id="staffOwnerTab" hidden>♛ Owner Controls</button>
   </nav>
   <div class="staff-view" id="staffViewOverview">
@@ -2515,12 +2557,27 @@ aside .winter{box-shadow:inset 0 1px #fff2,0 10px 30px #0005,0 0 19px #e1bd7226}
     <h2>✉ Support & Transaction Queue</h2>
     <h3>Transaction & Support Queue</h3>
     <div id="adminTickets"></div>
+    <div id="staffSupportThread" class="support-thread staff-support-thread" hidden>
+      <h3 id="staffSupportThreadTitle">Ticket conversation</h3>
+      <div id="staffSupportMessages" class="support-messages" role="log" aria-label="Support conversation"></div>
+      <form id="staffSupportReplyForm" class="support-reply">
+        <label for="staffSupportReply">Reply as Admin</label>
+        <textarea id="staffSupportReply" maxlength="1000" rows="3" placeholder="Write a reply to the player..." required></textarea>
+        <button type="submit" class="staff-btn">SEND REPLY</button>
+      </form>
+    </div>
     <h3>Registered Users & Roles</h3>
     <div id="users"></div>
   </section>
   </div>
   <div class="staff-view" id="staffViewBot" hidden>
     <div class="staff-block"><div class="staff-block-title"><h2>Minecraft Bot Monitor</h2><small>Live service status, pending payouts and deposit processing states.</small></div><div class="staff-bot-grid" id="staffBotStatus">Loading bot status...</div><p class="staff-muted">Pausing automatic payouts prevents new bot claims. It does not cancel an already claimed Minecraft transfer, settle a pending ticket or change credit balances.</p></div>
+    <div class="staff-block">
+      <div class="staff-block-title"><h2>⌘ CMD · BOT CONSOLE</h2><small>Read-only output forwarded by the Minecraft bot. Only Admin and Owner can view it.</small></div>
+      <div class="staff-console-bar"><span id="staffConsoleStatus">Waiting for bot logs...</span><button id="staffConsoleRefresh" type="button" class="staff-btn">↻ REFRESH LOG</button></div>
+      <pre id="staffConsoleLog" class="staff-console-log" role="log" aria-label="Minecraft bot console">No bot output received yet.</pre>
+      <p class="staff-muted">The local CMD window is not accessible to the website automatically. Run the supplied console forwarder on the bot PC to send output. Remote shell commands are disabled.</p>
+    </div>
   </div>
   <div class="staff-view" id="staffViewOwner" hidden>
     <div class="staff-two-columns">
@@ -2780,12 +2837,13 @@ aside .winter{box-shadow:inset 0 1px #fff2,0 10px 30px #0005,0 0 19px #e1bd7226}
       <div class="wallet-tabs cashier-tabs" role="tablist" aria-label="Cashier action">
         <button type="button" id="walletDepositTab" class="selected" role="tab" aria-selected="true">Deposit</button>
         <button type="button" id="walletWithdrawTab" role="tab" aria-selected="false">Withdraw</button>
+        <button type="button" id="walletSupportTab" role="tab" aria-selected="false">💬 Support</button>
       </div>
 
       <div class="cashier-paused" id="walletWithdrawWarning" hidden role="status">Withdrawals are paused right now (the bot is offline).</div>
 
       <form id="ticketForm" class="cashier-form">
-        <select id="kind" hidden><option value="deposit">Deposit</option><option value="withdraw">Withdraw</option></select>
+        <select id="kind" hidden><option value="deposit">Deposit</option><option value="withdraw">Withdraw</option><option value="support">Support</option></select>
         <label class="cashier-label" for="amount">AMOUNT</label>
         <input id="amount" class="cashier-amount" type="text" inputmode="decimal" maxlength="25" placeholder="Enter amount..." autocomplete="off" required aria-describedby="walletAmountHelp">
         <span id="walletAmountHelp" class="cashier-hint">You can also enter amounts like 50K, 2M or 1B.</span>
@@ -2825,6 +2883,33 @@ aside .winter{box-shadow:inset 0 1px #fff2,0 10px 30px #0005,0 0 19px #e1bd7226}
 
         <button class="cashier-submit" id="walletSubmit" type="submit" disabled>Withdrawals paused</button>
       </form>
+      <section id="walletSupportSection" class="wallet-support-section" hidden>
+        <h3>💬 Support tickets</h3>
+        <p class="cashier-hint">Report a complaint, a payment issue or anything else. Staff replies appear only as <strong>Admin</strong>.</p>
+        <form id="walletSupportForm" class="support-create-form">
+          <label for="walletSupportCategory">What happened?</label>
+          <select id="walletSupportCategory" required>
+            <option value="COMPLAINT">Complaint / stížnost</option>
+            <option value="PAYMENT">Deposit or withdrawal problem</option>
+            <option value="GAME">Game bug or result</option>
+            <option value="OTHER">Other issue</option>
+          </select>
+          <label for="walletSupportMessage">Describe your problem</label>
+          <textarea id="walletSupportMessage" rows="4" minlength="10" maxlength="800" placeholder="Explain what went wrong (at least 10 characters)..." required></textarea>
+          <button id="walletSupportCreate" type="submit" class="cashier-submit">✉ CREATE SUPPORT TICKET</button>
+        </form>
+        <h3>Your conversations</h3>
+        <div id="walletSupportTickets" class="wallet-support-tickets">Loading tickets...</div>
+        <div id="walletSupportThread" class="support-thread" hidden>
+          <h4 id="walletSupportThreadTitle">Ticket conversation</h4>
+          <div id="walletSupportMessages" class="support-messages" role="log" aria-label="Your support conversation"></div>
+          <form id="walletSupportReplyForm" class="support-reply">
+            <label for="walletSupportReply">Your reply</label>
+            <textarea id="walletSupportReply" rows="3" maxlength="1000" placeholder="Write a message to Admin..." required></textarea>
+            <button type="submit" class="cashier-submit">SEND MESSAGE</button>
+          </form>
+        </div>
+      </section>
 
       <div id="walletHistory" class="cashier-history" hidden>
         <h3>Recent withdrawals</h3>
@@ -3616,6 +3701,23 @@ async function staffLoadHistory(){
     ])
   ));
 }
+async function staffLoadConsole(){
+  if(!me||!["admin","owner"].includes(me.role))return;
+  const area=$("staffConsoleLog"),status=$("staffConsoleStatus");
+  try{
+    const response=await api("staff/console");
+    const lines=response.lines||[];
+    area.textContent=lines.length?lines.map(x=>"["+String(x.created)+"] "+String(x.level).toUpperCase()+" "+String(x.line)).join("\n"):
+      "No forwarded logs yet. Start the bot console forwarder on the PC running node index.js.";
+    status.textContent=lines.length?lines.length+" recent log entries · READ ONLY":"Waiting for forwarded bot logs";
+    area.scrollTop=area.scrollHeight;
+  }catch(err){status.textContent="Cannot load CMD log: "+err.message;}
+}
+$("staffConsoleRefresh").onclick=()=>void staffLoadConsole();
+setInterval(()=>{
+  if(me&&["admin","owner"].includes(me.role)&&!document.hidden&&!$("staffViewBot").hidden)
+    void staffLoadConsole();
+},8000);
 async function staffLoadBot(){
   const r=await api("staff/bot");
   const box=$("staffBotStatus");box.replaceChildren();
@@ -3630,6 +3732,7 @@ async function staffLoadBot(){
     const el=staffNode("div",null,"staff-bot-item");
     el.append(staffNode("small",name),staffNode("strong",value));box.append(el);
   });
+  await staffLoadConsole();
 }
 async function staffLoadCasePrices(){
   const r=await api("casebattle/catalog");
@@ -4870,6 +4973,12 @@ function renderWalletStatus(){
   badge.title=!walletBot.checked
     ?"Checking Minecraft bot connection"
     :online?"Minecraft bot is connected":"Minecraft bot is disconnected; deposits and withdrawals may be unavailable";
+  if(kind==="support"){
+    $("walletBotWarning").hidden=true;
+    $("walletWithdrawWarning").hidden=true;
+    $("walletSubmit").disabled=true;
+    return;
+  }
   const withdraw=kind==="withdraw";
   const allowed=online && walletBot.withdraw_automatic;
   const warning=$("walletBotWarning");
@@ -4926,19 +5035,24 @@ async function refreshWalletBotStatus(){
   }
 }
 function walletShow(kind){
-  kind=kind==="withdraw"?"withdraw":"deposit";
+  kind=["withdraw","support"].includes(kind)?kind:"deposit";
   $("kind").value=kind;
-  $("walletDepositTab").classList.toggle("selected",kind==="deposit");
-  $("walletWithdrawTab").classList.toggle("selected",kind==="withdraw");
-  $("walletDepositTab").setAttribute("aria-selected",kind==="deposit"?"true":"false");
-  $("walletWithdrawTab").setAttribute("aria-selected",kind==="withdraw"?"true":"false");
+  for(const [name,buttonId] of [["deposit","walletDepositTab"],["withdraw","walletWithdrawTab"],["support","walletSupportTab"]]){
+    const selected=kind===name;
+    $(buttonId).classList.toggle("selected",selected);
+    $(buttonId).setAttribute("aria-selected",String(selected));
+  }
+  $("ticketForm").hidden=kind==="support";
+  $("walletSupportSection").hidden=kind!=="support";
   $("walletDepositFields").hidden=kind!=="deposit";
   $("walletWithdrawInfo").hidden=kind!=="withdraw";
   $("walletHistory").hidden=kind!=="withdraw";
+  $("amount").required=kind!=="support";
   $("depositNickname").required=kind==="deposit";
   $("message").required=kind==="withdraw";
   $("walletSettingsCheck").required=kind==="withdraw";
   updateTicketForm();
+  if(kind==="support")void loadWalletSupportTickets();
 }
 function walletClose(){
   $("ticketSection").hidden=true;
@@ -4958,7 +5072,7 @@ function walletOpen(kind="withdraw"){
   $("ticketSection").hidden=false;
   document.body.classList.add("cashier-open");
   walletShow(kind);
-  $("amount").focus();
+  (kind==="support"?$("walletSupportMessage"):$("amount")).focus();
   void refreshWalletBotStatus();
   void loadWalletHistory();
 }
@@ -5015,6 +5129,7 @@ document.addEventListener("keydown",e=>{
 });
 $("walletDepositTab").onclick=()=>walletShow("deposit");
 $("walletWithdrawTab").onclick=()=>walletShow("withdraw");
+$("walletSupportTab").onclick=()=>walletShow("support");
 $("walletChangeNick").onclick=()=>{
   const input=$("message");
   input.readOnly=false;
@@ -5118,6 +5233,114 @@ document.addEventListener("visibilitychange",()=>{
   if(!document.hidden)void refreshWalletBotStatus();
 });
 
+let supportWalletTicketId=null;
+let supportStaffTicketId=null;
+const supportRefreshBusy={wallet:false,staff:false};
+function supportPrettyDate(value){
+  const d=new Date(value);
+  return Number.isNaN(d.getTime())?String(value||""):d.toLocaleString("cs-CZ");
+}
+function supportChatBubble(name,body,created){
+  const el=document.createElement("article");
+  el.className="support-message"+(name==="Admin"?" is-admin":"");
+  const label=text("strong",name);
+  const message=text("p",body);
+  el.append(label,message);
+  if(created)el.append(text("small",supportPrettyDate(created)));
+  return el;
+}
+async function loadSupportConversation(mode){
+  if(!me)return;
+  const isWallet=mode==="wallet";
+  const id=isWallet?supportWalletTicketId:supportStaffTicketId;
+  const key=isWallet?"wallet":"staff";
+  const prefix=isWallet?"walletSupport":"staffSupport";
+  if(!id||supportRefreshBusy[key])return;
+  supportRefreshBusy[key]=true;
+  try{
+    const data=await api("ticket/messages?id="+encodeURIComponent(id));
+    if(id!==(isWallet?supportWalletTicketId:supportStaffTicketId))return;
+    const thread=$(prefix+"Thread");
+    const messages=$(prefix+"Messages");
+    thread.hidden=false;
+    $(prefix+"ThreadTitle").textContent="Ticket #"+id+" · "+String(data.ticket.status).toUpperCase();
+    messages.replaceChildren(supportChatBubble("Player",data.ticket.message||"",null));
+    (data.messages||[]).forEach(m=>messages.append(supportChatBubble(m.author==="Admin"?"Admin":"Player",m.message,m.created)));
+    if(data.ticket.response)messages.append(supportChatBubble("Admin",data.ticket.response,null));
+    $(prefix+"ReplyForm").hidden=data.ticket.status!=="open";
+    messages.scrollTop=messages.scrollHeight;
+  }catch(e){
+    toast("Cannot load support chat: "+e.message);
+  }finally{supportRefreshBusy[key]=false;}
+}
+async function openSupportConversation(mode,id){
+  if(typeOfTicketId(id)===false)return;
+  if(mode==="wallet")supportWalletTicketId=id;
+  else supportStaffTicketId=id;
+  if(mode==="wallet"&&$("walletSupportSection").hidden)walletOpen("support");
+  await loadSupportConversation(mode);
+}
+function typeOfTicketId(id){return Number.isInteger(Number(id))&&Number(id)>0;}
+async function loadWalletSupportTickets(){
+  if(!me)return;
+  const box=$("walletSupportTickets");
+  try{
+    const result=await api("tickets");
+    const tickets=(result.tickets||[]).filter(t=>t.kind==="support"&&Number(t.user_id)===Number(me.id));
+    box.replaceChildren();
+    if(!tickets.length){box.append(text("p","No support tickets yet. Tell us what happened above."));return;}
+    tickets.forEach(t=>{
+      const row=document.createElement("div");row.className="support-ticket-row";
+      const summary=document.createElement("div");
+      summary.append(text("strong","#"+t.id+" · "+String(t.status).toUpperCase()),text("small",String(t.message||"").slice(0,85)));
+      const btn=text("button","💬 OPEN CHAT");btn.type="button";
+      btn.onclick=()=>void openSupportConversation("wallet",t.id);
+      row.append(summary,btn);box.append(row);
+    });
+  }catch(err){box.textContent="Could not load support tickets: "+err.message;}
+}
+$("walletSupportForm").onsubmit=async e=>{
+  e.preventDefault();
+  const btn=$("walletSupportCreate"),category=$("walletSupportCategory").value;
+  const message=$("walletSupportMessage").value.trim();
+  if(!["COMPLAINT","PAYMENT","GAME","OTHER"].includes(category)||message.length<10)return;
+  btn.disabled=true;
+  try{
+    const result=await api("tickets",{kind:"support",amount:0,message:"["+category+"] "+message});
+    $("walletSupportMessage").value="";
+    await loadWalletSupportTickets();
+    await openSupportConversation("wallet",result.ticket_id);
+    await loadTickets();
+    toast("Support ticket created. An Admin can reply here.");
+  }catch(err){toast(err.message);}
+  finally{btn.disabled=false;}
+};
+for(const mode of ["wallet","staff"]){
+  const form=$(mode==="wallet"?"walletSupportReplyForm":"staffSupportReplyForm");
+  const field=$(mode==="wallet"?"walletSupportReply":"staffSupportReply");
+  form.onsubmit=async e=>{
+    e.preventDefault();
+    const id=mode==="wallet"?supportWalletTicketId:supportStaffTicketId;
+    const body=field.value.trim();
+    if(!id||!body)return;
+    const submit=form.querySelector("button[type=submit]");
+    submit.disabled=true;
+    try{
+      await api("ticket/message",{id,message:body});
+      field.value="";
+      await loadSupportConversation(mode);
+    }catch(err){toast(err.message);}
+    finally{submit.disabled=false;}
+  };
+}
+setInterval(()=>{
+  if(!me||document.hidden)return;
+  if(supportWalletTicketId && !$("ticketSection").hidden && !$("walletSupportThread").hidden)
+    void loadSupportConversation("wallet");
+  if(supportStaffTicketId && !$("staffPage").hidden && !$("staffViewSupport").hidden)
+    void loadSupportConversation("staff");
+},10000);
+
 async function loadTickets(){
   const result = await api("tickets");
   const tickets = result.tickets || [];
@@ -5142,7 +5365,15 @@ async function loadTickets(){
     if(t.response){
       d.append(text("p","Admin: "+t.response));
     }
+    if(t.kind==="support"){
+      const chat=text("button","💬 CHAT WITH ADMIN");
+      chat.type="button";chat.className="support-chat-launch";
+      chat.onclick=()=>void openSupportConversation("wallet",t.id);
+      d.append(chat);
+    }
   });
+  // Keep the Wallet support list in sync with the player's tickets.
+  if(!$("walletSupportSection").hidden)void loadWalletSupportTickets();
 
   if(!["admin","owner"].includes(me.role))return;
 
@@ -5155,6 +5386,12 @@ async function loadTickets(){
       text("p",t.message||"No message")
     );
 
+    if(t.kind==="support"){
+      const chat=text("button","💬 OPEN SUPPORT CHAT");chat.type="button";
+      chat.className="support-chat-launch";
+      chat.onclick=()=>void openSupportConversation("staff",t.id);
+      d.append(chat);
+    }
     if(t.status!=="open")return;
 
     // Admins can close support tickets; only the owner handles credit-bearing tickets.

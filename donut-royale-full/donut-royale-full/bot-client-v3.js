@@ -1,4 +1,6 @@
 'use strict';
+// Forward local console output to the read-only Royal Staff CMD panel when installed.
+require('./bot-console-forwarder.js');
 const bedrock = require('bedrock-protocol');
 const fs = require('fs');
 const crypto = require('crypto');
