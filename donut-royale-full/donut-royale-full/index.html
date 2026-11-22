@@ -1510,7 +1510,7 @@ async function loadTickets(){
 
         try{
           await api("ticket/review",{
-            id:t.id,status,response,...(verified_amount===undefined?{}:{verified_amount}),...(t.kind==="withdraw"&&status==="approved"?{payout_confirmed:true}:{})
+            id:t.id,status,response,...(verified_amount===undefined?{}:{verified_amount}),...(t.kind==="withdraw"&&status==="approved"?{payout_confirmed:true}:{}),...(t.kind==="withdraw"?{payout_reconciled:true}:{})
           });
 
           await refresh();
