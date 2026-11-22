@@ -450,6 +450,69 @@ header{position:sticky}
 .wallet-nick-help{font-size:12px;color:#bdb3d9;line-height:1.5;margin-top:7px}
 .wallet-disclaimer{font-size:12px;color:#a9a3c5;line-height:1.5;text-align:center}
 @media(max-width:750px){header{height:auto;min-height:100px;align-items:flex-start;padding-top:10px}.wallet-nav{top:53px;padding:8px 14px;font-size:12px}.wallet-nav span{font-size:11px}.logo{font-size:19px}header>div:last-child{font-size:12px}}
+
+/* Cashier modal — reference-inspired navy/blue layout; does not alter games. */
+body.cashier-open{overflow:hidden}
+.cashier-overlay{position:fixed;inset:0;z-index:55;display:grid;place-items:center;padding:14px;background:#050b15db;backdrop-filter:blur(5px)}
+.cashier-dialog{width:min(512px,100%);max-height:calc(100dvh - 28px);overflow-y:auto;overscroll-behavior:contain;padding:22px 22px 26px;background:#172230;color:#edf3ff;border:1px solid #2a3b4e;border-radius:13px;box-shadow:0 20px 75px #000a;scrollbar-width:thin;scrollbar-color:#405468 transparent}
+.cashier-head{display:flex;align-items:flex-start;justify-content:space-between;gap:15px;margin-bottom:16px}
+.cashier-head h2{font-size:22px;font-weight:800;letter-spacing:-.5px;margin:1px 0 8px;line-height:1.2;text-align:left;color:#f9fbff}
+.cashier-balance{font-size:13px;color:#8fb4d3}
+.cashier-balance strong{font-weight:900;color:#ffca34}
+.cashier-close{font-size:25px;font-weight:300;line-height:1;background:none;border:0;color:#8ba2bb;padding:0 2px}
+.cashier-close:hover{color:white}
+.cashier-alert{display:flex;gap:10px;align-items:flex-start;padding:12px 13px;margin:0 0 13px;color:#ff8095;border:1px solid #ed3763;border-radius:9px;background:#33232f;font-size:13px;line-height:1.45}
+.cashier-dot{flex:0 0 7px;width:7px;height:7px;margin-top:6px;background:#f65e7b;border-radius:50%}
+.cashier-tabs{display:grid;grid-template-columns:1fr 1fr;gap:0;padding:3px;border-radius:10px;margin:13px 0;background:#0f1a29}
+.cashier-tabs button{margin:0;border:0;border-radius:7px;padding:11px 6px;color:#91b8d9;background:none;font-size:14px;font-weight:750;box-shadow:none}
+.cashier-tabs button.selected{background:#243c56;color:#79c0ff;border:0;box-shadow:none}
+.cashier-tabs button:focus-visible,.cashier-close:focus-visible,.cashier-change:focus-visible{outline:2px solid #67baff;outline-offset:2px}
+.cashier-paused{margin:10px 0 12px;border-radius:8px;background:#302633;color:#ff7890;padding:13px 15px;font-size:13px;font-weight:750;line-height:1.4}
+.cashier-form{padding:17px 16px 16px;border:1px solid #223247;border-radius:12px;background:#111d2b}
+.cashier-label{display:block;margin:0 0 6px;font-size:11px;font-weight:900;letter-spacing:.65px;color:#94badd}
+.cashier-amount,.cashier-form #depositNickname{width:100%;margin:0 0 10px;padding:13px 12px;background:#0b1623;border:1px solid #4887bd;border-radius:9px;color:#e6f0ff;font-size:17px;font-weight:550;outline:none}
+.cashier-amount::placeholder,.cashier-form #depositNickname::placeholder{color:#6784a4}
+.cashier-amount:focus,.cashier-form #depositNickname:focus{outline:2px solid #69bdff;outline-offset:2px;border-color:#6bbdff}
+.cashier-hint{display:block;font-size:11px;line-height:1.5;color:#7498b8;margin:0 0 12px}
+.cashier-cards{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin:10px 0 13px}
+.cashier-info-card{border:1px solid #24334a;background:#0b1725;border-radius:10px;padding:13px 15px;min-height:95px}
+.cashier-ready{background:#14283d;border-color:#275177}
+.cashier-card-label{display:block;font-size:12px;font-weight:800;color:#92c3e8;margin-bottom:8px}
+.cashier-info-card strong{color:#ffc330;font-size:19px;letter-spacing:.2px;white-space:normal;overflow-wrap:anywhere}
+.cashier-payee .cashier-card-label{color:#8da5bc}
+.cashier-payee-edit{border:1px solid transparent;border-radius:6px}
+.cashier-payee-edit.is-editing{border-color:#4baaff;background:#10243a}
+.cashier-payee-edit #message{width:100%;margin:0;padding:0 0 0 1px;border:0;outline:0;background:transparent;color:#eaf0fa;font-weight:850;font-size:16px;text-overflow:ellipsis}
+.cashier-payee-edit.is-editing #message{padding:4px 6px}
+.cashier-payee-edit #message::placeholder{color:#8fa2b8}
+.cashier-change{margin-top:4px;padding:2px 1px;background:none;border:0;color:#86c6ff;font-size:12px;font-weight:750}
+.cashier-change:hover{text-decoration:underline}
+.cashier-settings{display:block;padding:12px;border-radius:9px;border:1px solid #253246;background:#0b1725;margin:0;color:#e6eaf1}
+.cashier-settings-main{display:flex;gap:10px;align-items:center;font-size:12px;line-height:1.35}
+.cashier-settings-main input{appearance:auto;display:inline-block;width:17px;height:17px;flex:0 0 17px;margin:0;accent-color:#66b3f0}
+.cashier-settings-main strong{font-weight:800}
+.cashier-settings em,.cashier-settings b{font-style:normal;color:#59d8aa}
+.cashier-settings small{display:block;padding-left:27px;margin-top:4px;font-size:12px;color:#8299b0;line-height:1.4}
+.cashier-submit{width:100%;min-height:43px;margin:14px 0 0;background:#2969aa;border:0;border-radius:6px;color:#dbeeff;font-size:14px;font-weight:800}
+.cashier-submit:not(:disabled){background:#2d83ce;box-shadow:0 2px 12px #22639d33}
+.cashier-submit:not(:disabled):hover{background:#368fd9}
+.cashier-submit:disabled{opacity:.7;cursor:not-allowed}
+.cashier-history{padding:15px 0 0}
+.cashier-history h3{font-size:14px;color:#e5eefc;margin:0 0 12px;font-weight:800}
+.cashier-history-item{display:flex;align-items:center;justify-content:space-between;gap:8px;background:#0e1a29;border-radius:9px;padding:13px 15px;min-height:63px;margin-bottom:9px}
+.cashier-history-item strong{display:block;font-size:14px;color:#edf1f9}
+.cashier-history-item small{display:block;font-size:10px;margin-top:5px;color:#748aa3}
+.cashier-history-status{flex:0 0 auto;font-size:10px;letter-spacing:.3px;color:#8bbfef;font-weight:850}
+.cashier-history-status.pending{color:#ffd48b}
+.cashier-history-status.refunded{color:#adb5c5}
+.cashier-empty{color:#92a7bb;margin:12px 0;font-size:13px}
+.cashier-dialog #payInfo{margin:11px 0 0;padding:14px;border:1px solid #365d81;border-radius:9px;background:#14283b}
+.cashier-dialog #payInfo code{display:block;margin:11px 0;overflow-wrap:anywhere;color:#e0f7ee;background:#0c1826;padding:12px;border-radius:8px;font-size:14px}
+.cashier-dialog #walletCopy{padding:10px 12px;font-size:12px;background:#1b3953;color:#b7d7ef;border:1px solid #365d81}
+.cashier-dialog .wallet-disclaimer{font-size:11px;color:#91a9bd;margin:12px 0;text-align:left}
+.cashier-open-link{display:inline-block;background:none;border:0;color:#83c3ff;padding:8px 0;font-weight:750}
+@media(max-width:540px){.cashier-overlay{padding:5px}.cashier-dialog{width:100%;max-height:calc(100dvh - 10px);padding:18px 15px 20px;border-radius:11px}.cashier-form{padding:13px 12px}.cashier-info-card{padding:12px 10px}.cashier-info-card strong{font-size:16px}.cashier-card-label{font-size:11px}.cashier-settings-main{font-size:11px}}
+
 </style>
 </head>
 
@@ -520,7 +583,7 @@ header{position:sticky}
     <div class="panel">
       <small>SUPPORT</small>
       <h2>🎟️ Tickets</h2>
-      <a href="#ticketSection">Create ticket →</a>
+      <button type="button" id="ticketOpen" class="cashier-open-link">Open cashier →</button>
     </div>
   </div>
 
@@ -535,29 +598,75 @@ header{position:sticky}
     <button class="game-card card-wheel" data-game="wheel"><span class="game-live">● LIVE</span><span class="game-art art-wheel" aria-hidden="true"><span>🎯</span><span class="thumbnail-wheel"></span></span><span class="game-title">COLOR WHEEL</span><span class="game-subtitle">RED OR BLACK</span><span class="game-play">PLAY NOW ↗</span></button>
   </div>
 
-  <section class="panel wallet-panel" id="ticketSection">
-    <div class="wallet-eyebrow">DONUT ROYALE • PLAYER WALLET</div>
-    <h2>💸 DEPOSIT & WITHDRAW</h2>
-    <p class="wallet-intro">Choose what you want to do with your DonutSMP balance.</p>
-    <div class="wallet-tabs"><button type="button" id="walletDepositTab" class="selected">⬇ DEPOSIT</button><button type="button" id="walletWithdrawTab">⬆ WITHDRAW</button></div>
-    <form id="ticketForm">
-      <select id="kind" hidden><option value="deposit">Deposit</option><option value="withdraw">Withdraw</option></select>
-      <label class="wallet-label" for="amount">AMOUNT (K / M / B)</label>
-      <input id="amount" value="2M" placeholder="e.g. 2M" inputmode="decimal" autocomplete="off">
-      <div class="quick" data-input="amount"><button type="button" data-value="1000000">1M</button><button type="button" data-value="2000000">2M</button><button type="button" data-value="10000000">10M</button><button type="button" data-value="100000000">100M</button></div>
-      <div class="wallet-command-box" id="payInfo">
-        <div class="wallet-command-label">PREVIEW · CREATE DEPOSIT REQUEST BEFORE SENDING MONEY</div>
-        <code id="payCommand">/pay YOUR_BEDROCK_NICK 2000000</code>
-        <button type="button" id="walletCopy" class="wallet-copy">CREATE DEPOSIT BEFORE COPYING</button>
-        <p id="walletNickWarning">⚠️ Bedrock receiving nickname is not configured yet. Do not send any payment until it is confirmed.</p>
+  <section class="cashier-overlay" id="ticketSection" hidden role="dialog" aria-modal="true" aria-labelledby="cashierTitle">
+    <div class="cashier-dialog">
+      <div class="cashier-head">
+        <div>
+          <h2 id="cashierTitle">Cashier</h2>
+          <div class="cashier-balance">Balance <strong id="walletBalance">$0</strong></div>
+        </div>
+        <button type="button" id="walletClose" class="cashier-close" aria-label="Close cashier">×</button>
       </div>
-      <div class="wallet-withdraw-info" id="walletWithdrawInfo" hidden>⬆ Enter how much you want to withdraw from your DONUT ROYALE balance. Credits are reserved immediately. Payouts remain pending until staff verify the actual game transfer.</div>
-      <label class="wallet-label" for="message">MINECRAFT NICKNAME (REQUIRED) *</label>
-      <input id="message" type="text" maxlength="17" required pattern="\.?[A-Za-z0-9_]{3,16}" title="Enter your Minecraft nickname (3–16 letters, numbers or underscores; optional Bedrock dot)" placeholder="Enter your Minecraft nickname" autocomplete="off">
-      <p class="wallet-nick-help">Required for both Deposit and Withdraw. Bedrock players: include the dot (.) if your name starts with one.</p>
-      <button class="primary wallet-submit" id="walletSubmit">CONTINUE TO DEPOSIT</button>
-      <p class="wallet-disclaimer">Deposits must be requested BEFORE paying. Eligible incoming payments can credit automatically; ambiguous or large deposits need staff review.</p>
-    </form>
+
+      <div class="cashier-alert" id="walletBotWarning" hidden role="status">
+        <span class="cashier-dot" aria-hidden="true"></span>
+        <span id="walletBotWarningText">Bot offline. Don't deposit right now: money sent while the bot is offline can be lost. Wait until it's back online.</span>
+      </div>
+
+      <div class="wallet-tabs cashier-tabs" role="tablist" aria-label="Cashier action">
+        <button type="button" id="walletDepositTab" class="selected" role="tab" aria-selected="true">Deposit</button>
+        <button type="button" id="walletWithdrawTab" role="tab" aria-selected="false">Withdraw</button>
+      </div>
+
+      <div class="cashier-paused" id="walletWithdrawWarning" hidden role="status">Withdrawals are paused right now (the bot is offline).</div>
+
+      <form id="ticketForm" class="cashier-form">
+        <select id="kind" hidden><option value="deposit">Deposit</option><option value="withdraw">Withdraw</option></select>
+        <label class="cashier-label" for="amount">AMOUNT</label>
+        <input id="amount" class="cashier-amount" type="text" inputmode="decimal" maxlength="25" placeholder="Enter amount..." autocomplete="off" required aria-describedby="walletAmountHelp">
+        <span id="walletAmountHelp" class="cashier-hint">You can also enter amounts like 50K, 2M or 1B.</span>
+
+        <div id="walletWithdrawInfo" hidden>
+          <div class="cashier-cards">
+            <div class="cashier-info-card cashier-ready">
+              <span class="cashier-card-label">↥ &nbsp;Ready to withdraw</span>
+              <strong id="walletReadyBalance">$0</strong>
+            </div>
+            <div class="cashier-info-card cashier-payee">
+              <span class="cashier-card-label">♙ &nbsp;Paid to</span>
+              <div class="cashier-payee-edit">
+                <input id="message" type="text" maxlength="17" pattern="\.?[A-Za-z0-9_]{3,16}" title="Minecraft nickname (3–16 characters; optional leading dot)" placeholder="Set nickname" autocomplete="off" readonly aria-label="Minecraft payout nickname">
+              </div>
+              <button type="button" id="walletChangeNick" class="cashier-change">Change</button>
+            </div>
+          </div>
+          <label class="cashier-settings">
+            <span class="cashier-settings-main"><input id="walletSettingsCheck" type="checkbox"> <strong>I have enabled payments in <em>/settings</em></strong></span>
+            <small>Open Minecraft chat, type <b>/settings</b>, and turn payments on.</small>
+          </label>
+        </div>
+
+        <div id="walletDepositFields" hidden>
+          <label class="cashier-label" for="depositNickname">YOUR MINECRAFT NICKNAME</label>
+          <input id="depositNickname" type="text" maxlength="17" pattern="\.?[A-Za-z0-9_]{3,16}" placeholder="Enter Minecraft nickname" autocomplete="off">
+          <p class="cashier-hint">Bedrock players: include the dot (.) if your name starts with one.</p>
+          <div class="wallet-command-box" id="payInfo">
+            <div class="wallet-command-label">CREATE DEPOSIT REQUEST BEFORE PAYING</div>
+            <code id="payCommand">/pay .LeXimJames7858 AMOUNT</code>
+            <button type="button" id="walletCopy" class="wallet-copy" disabled>CREATE REQUEST BEFORE COPYING</button>
+            <p id="walletNickWarning" hidden>Receiving account is not configured. Do not send money.</p>
+          </div>
+          <p class="wallet-disclaimer">Create a deposit request before sending money. Incoming game payments can be credited automatically while the bot is connected; ambiguous payments may need review.</p>
+        </div>
+
+        <button class="cashier-submit" id="walletSubmit" type="submit" disabled>Withdrawals paused</button>
+      </form>
+
+      <div id="walletHistory" class="cashier-history" hidden>
+        <h3>Recent withdrawals</h3>
+        <div id="walletHistoryItems"><p class="cashier-empty">Loading withdrawals...</p></div>
+      </div>
+    </div>
   </section>
 
   <section class="panel" id="myTickets">
@@ -871,6 +980,8 @@ async function refresh(){
   if(!me){
     chatInitializedFor=null;chatLatestId=0;chatUnread=0;updateChatBadge();$("chatNotification").hidden=true;
     $("topBalance").textContent = "•••";
+    walletClose();
+    walletNickUser=null;
     $("adminNav").hidden = true;
     $("ranksNav").hidden = true;
     $("adminChatNav").hidden = true;
@@ -895,6 +1006,7 @@ async function refresh(){
 
   $("balance").textContent = fmt(me.balance);
   $("topBalance").textContent = fmt(me.balance);
+  updateWalletBalances();
   $("displayName").textContent = me.username;
   $("role").textContent = me.role.toUpperCase();
 
@@ -1374,82 +1486,259 @@ $("wheelPlay").onclick = ()=>play(
   "wheel","wheelBet","wheelResult","wheelPlay",{choice:color}
 );
 
-const DEPOSIT_BEDROCK_NICK = ".LeXimJames7858"; // Confirmed Bedrock payment recipient.
+const DEPOSIT_BEDROCK_NICK = ".LeXimJames7858";
+let walletBot = {checked:false, online:false, withdraw_automatic:false, deposit_automatic:false};
+let walletBusy = false;
+let walletNickUser = null;
+const walletNickPattern = /^\.?[A-Za-z0-9_]{3,16}$/;
+
+function walletMoney(value){
+  return "$" + (Number(value)||0).toLocaleString("en-US").replace(/,/g," ");
+}
+function updateWalletBalances(){
+  $("walletBalance").textContent = walletMoney(me && me.balance);
+  $("walletReadyBalance").textContent = walletMoney(me && me.balance);
+}
+function renderWalletStatus(){
+  const kind=$("kind").value;
+  const online=walletBot.checked && walletBot.online;
+  const withdraw=kind==="withdraw";
+  const allowed=online && walletBot.withdraw_automatic;
+  const warning=$("walletBotWarning");
+  warning.hidden=online;
+  $("walletBotWarningText").textContent=!walletBot.checked
+    ? "Checking bot connection..."
+    : "Bot offline. Don't deposit right now: money sent while the bot is offline can be lost. Wait until it's back online.";
+  $("walletWithdrawWarning").hidden=!withdraw || allowed;
+  $("walletWithdrawWarning").textContent=online
+    ? "Withdrawals are paused right now (automatic payouts are disabled)."
+    : "Withdrawals are paused right now (the bot is offline).";
+
+  const settings=!!$("walletSettingsCheck").checked;
+  const nick=(withdraw?$("message"):$("depositNickname")).value.trim();
+  const validNick=walletNickPattern.test(nick);
+  let validAmount=false, enough=true;
+  try {
+    const amount=parseAmount($("amount").value);
+    validAmount=amount>=1 && amount<=1000000000000;
+    if(withdraw)enough=!!me && amount<=Number(me.balance);
+  } catch {}
+  $("walletSubmit").disabled=walletBusy || !online || !validAmount || !validNick ||
+    (withdraw && (!allowed || !settings || !enough)) ||
+    (!withdraw && !walletBot.deposit_automatic);
+  if(walletBusy){
+    $("walletSubmit").textContent="Submitting...";
+  } else if(!online || (withdraw && !allowed) || (!withdraw && !walletBot.deposit_automatic)){
+    $("walletSubmit").textContent=withdraw?"↥  Withdrawals paused":"Deposits paused";
+  } else if(withdraw && !settings){
+    $("walletSubmit").textContent="↥  Enable payments in /settings";
+  } else if(withdraw && !enough){
+    $("walletSubmit").textContent="Insufficient balance";
+  } else {
+    $("walletSubmit").textContent=withdraw?"↥  Withdraw":"Create deposit request";
+  }
+}
+async function refreshWalletBotStatus(){
+  try {
+    const result=await api("bot/status");
+    walletBot={
+      checked:true,
+      online:result.online===true,
+      withdraw_automatic:result.withdraw_automatic===true,
+      deposit_automatic:result.deposit_automatic===true
+    };
+  } catch {
+    walletBot={checked:true,online:false,withdraw_automatic:false,deposit_automatic:false};
+  }
+  renderWalletStatus();
+}
 function walletShow(kind){
+  kind=kind==="withdraw"?"withdraw":"deposit";
   $("kind").value=kind;
   $("walletDepositTab").classList.toggle("selected",kind==="deposit");
   $("walletWithdrawTab").classList.toggle("selected",kind==="withdraw");
-  $("payInfo").hidden=kind!=="deposit";
+  $("walletDepositTab").setAttribute("aria-selected",kind==="deposit"?"true":"false");
+  $("walletWithdrawTab").setAttribute("aria-selected",kind==="withdraw"?"true":"false");
+  $("walletDepositFields").hidden=kind!=="deposit";
   $("walletWithdrawInfo").hidden=kind!=="withdraw";
-  $("walletSubmit").textContent=kind==="deposit"?"CREATE DEPOSIT REQUEST":"REQUEST WITHDRAWAL";
+  $("walletHistory").hidden=kind!=="withdraw";
+  $("depositNickname").required=kind==="deposit";
+  $("message").required=kind==="withdraw";
+  $("walletSettingsCheck").required=kind==="withdraw";
   updateTicketForm();
 }
-function walletOpen(){
-  if(!me){$("auth").hidden=false;toast("Log in first.");return;}
-  $("ticketSection").scrollIntoView({behavior:"smooth",block:"start"});
+function walletClose(){
+  $("ticketSection").hidden=true;
+  document.body.classList.remove("cashier-open");
 }
-$("walletNav").onclick=walletOpen;
-$("walletSide").onclick=walletOpen;
+function walletOpen(kind="withdraw"){
+  if(!me){$("auth").hidden=false;toast("Log in first.");return;}
+  if(walletNickUser!==me.id){
+    walletNickUser=me.id;
+    $("message").value="";
+    try {
+      const saved=localStorage.getItem("dr_wallet_payee_"+me.id)||"";
+      if(walletNickPattern.test(saved))$("message").value=saved;
+    } catch {}
+  }
+  updateWalletBalances();
+  $("ticketSection").hidden=false;
+  document.body.classList.add("cashier-open");
+  walletShow(kind);
+  $("amount").focus();
+  void refreshWalletBotStatus();
+  void loadWalletHistory();
+}
+async function loadWalletHistory(){
+  if(!me)return;
+  const container=$("walletHistoryItems");
+  try {
+    const data=await api("wallet/history");
+    container.replaceChildren();
+    const rows=(data.withdrawals||[]).slice(0,10);
+    if(!rows.length){
+      container.append(text("p","No withdrawals yet."));
+      container.firstChild.className="cashier-empty";
+      return;
+    }
+    for(const row of rows){
+      const el=document.createElement("div");
+      el.className="cashier-history-item";
+      const detail=document.createElement("div");
+      const amount=text("strong",walletMoney(row.amount));
+      const stamp=new Date(row.created);
+      const date=text("small",Number.isNaN(stamp.getTime())?String(row.created||""):stamp.toLocaleString("cs-CZ"));
+      detail.append(amount,date);
+      const paid=row.status==="approved";
+      const refunded=row.payout_status==="refunded";
+      const status=text("span",paid?"PAID":refunded?"REFUNDED":row.status==="open"?"PENDING":String(row.status).toUpperCase());
+      status.className="cashier-history-status"+(refunded?" refunded":paid?"":" pending");
+      el.append(detail,status);
+      container.append(el);
+    }
+    // Reuse the player's own latest payout nickname when no nickname was entered.
+    if(!$("message").value.trim()){
+      const old=rows.find(row=>typeof row.message==="string" &&
+        /^\[MINECRAFT NICK\] \.?[A-Za-z0-9_]{3,16}$/.test(row.message));
+      if(old){
+        $("message").value=old.message.slice("[MINECRAFT NICK] ".length);
+        updateTicketForm();
+      }
+    }
+  }catch{
+    container.replaceChildren(text("p","Unable to load withdrawal history right now."));
+    container.firstChild.className="cashier-empty";
+  }
+}
+$("walletNav").onclick=()=>walletOpen("withdraw");
+$("walletSide").onclick=()=>walletOpen("withdraw");
+$("ticketOpen").onclick=()=>walletOpen("deposit");
+$("walletClose").onclick=walletClose;
+$("ticketSection").addEventListener("mousedown",e=>{
+  if(e.target===$("ticketSection"))walletClose();
+});
+document.addEventListener("keydown",e=>{
+  if(e.key==="Escape" && !$("ticketSection").hidden && $("depositConfirm").hidden)walletClose();
+});
 $("walletDepositTab").onclick=()=>walletShow("deposit");
 $("walletWithdrawTab").onclick=()=>walletShow("withdraw");
+$("walletChangeNick").onclick=()=>{
+  const input=$("message");
+  input.readOnly=false;
+  input.parentElement.classList.add("is-editing");
+  input.focus();
+  input.select();
+};
+$("message").addEventListener("input",updateTicketForm);
+$("message").addEventListener("blur",()=>{
+  const input=$("message");
+  input.readOnly=true;
+  input.parentElement.classList.remove("is-editing");
+  const nick=input.value.trim();
+  if(walletNickPattern.test(nick) && me){
+    try{localStorage.setItem("dr_wallet_payee_"+me.id,nick);}catch{}
+  }
+  updateTicketForm();
+});
+$("depositNickname").addEventListener("input",updateTicketForm);
+$("walletSettingsCheck").addEventListener("change",updateTicketForm);
+$("amount").addEventListener("input",updateTicketForm);
+
 function updateTicketForm(){
-  const nick=DEPOSIT_BEDROCK_NICK||"YOUR_BEDROCK_NICK";
   let amount="AMOUNT";
   try{amount=String(parseAmount($("amount").value));}catch{}
-  $("payCommand").textContent="/pay "+nick+" "+amount;
+  $("payCommand").textContent="/pay "+DEPOSIT_BEDROCK_NICK+" "+amount;
   $("walletNickWarning").hidden=!!DEPOSIT_BEDROCK_NICK;
-  $("walletCopy").disabled=true;
+  $("walletCopy").disabled=true; // Do not let players pay before a deposit ticket exists.
+  renderWalletStatus();
 }
 $("depositCopy").onclick=async()=>{
   try{await navigator.clipboard.writeText($("depositCommand").textContent);toast("Payment command copied!");}
-  catch(e){toast("Select and copy the payment command manually.");}
+  catch{toast("Select and copy the payment command manually.");}
 };
-$("walletCopy").onclick=async()=>{
-  if(!DEPOSIT_BEDROCK_NICK)return toast("Bedrock nickname has not been configured yet.");
-  try{await navigator.clipboard.writeText($("payCommand").textContent);toast("Command copied!");}
-  catch(e){toast("Select the command and copy it manually.");}
-};
+$("walletCopy").onclick=()=>toast("Create a deposit request before sending money.");
 $("kind").onchange=updateTicketForm;
-$("amount").oninput=updateTicketForm;
 walletShow("deposit");
+
 $("ticketForm").onsubmit=async e=>{
   e.preventDefault();
+  if(walletBusy)return;
+  walletBusy=true;
+  renderWalletStatus();
   try{
     if(!me)throw Error("Please log in first");
     const kind=$("kind").value;
+    if(!walletBot.checked||!walletBot.online)throw Error("Bot offline. Wait before making a transfer.");
+    if(kind==="withdraw"&&!walletBot.withdraw_automatic)throw Error("Automatic withdrawals are paused.");
+    if(kind==="deposit"&&!walletBot.deposit_automatic)throw Error("Automatic deposits are paused.");
     const amount=parseAmount($("amount").value);
     if(amount<1||amount>1000000000000)throw Error("Amount must be between 1 and 1T");
-    if(kind==="withdraw"&&amount>me.balance)throw Error("Not enough balance. Available: "+fmt(me.balance));
-    const playerNick=$("message").value.trim();
-    if(!/^\.?[A-Za-z0-9_]{3,16}$/.test(playerNick))throw Error("Minecraft nickname is required (3–16 characters, optional Bedrock dot).");
+    if(kind==="withdraw"&&amount>Number(me.balance))throw Error("Not enough balance. Available: "+walletMoney(me.balance));
+    if(kind==="withdraw"&&!$("walletSettingsCheck").checked)throw Error("Enable payments in Minecraft /settings first.");
+    const playerNick=(kind==="deposit"?$("depositNickname").value:$("message").value).trim();
+    if(!walletNickPattern.test(playerNick))throw Error("Enter a valid Minecraft nickname (3–16 characters, optional Bedrock dot).");
     let ticketMessage="[MINECRAFT NICK] "+playerNick;
     if(kind==="deposit"){
-      if(!DEPOSIT_BEDROCK_NICK)throw Error("Deposit receiver is not configured yet.");
-      // Create the ticket BEFORE showing the pay command; the bot may see a payment immediately.
-      ticketMessage=("[PAYMENT COMMAND] /pay "+DEPOSIT_BEDROCK_NICK+" "+amount+". [PLAYER MESSAGE] "+ticketMessage).slice(0,1000);
+      ticketMessage="[PAYMENT COMMAND] /pay "+DEPOSIT_BEDROCK_NICK+" "+amount+". [PLAYER MESSAGE] "+ticketMessage;
+      // Ticket creation MUST complete before revealing the payment command.
       await api("tickets",{kind,amount,message:ticketMessage});
       await loadTickets();
-      $("depositBreakdown").textContent="DEPOSIT REQUEST CREATED: "+fmt(amount)+" ("+amount.toLocaleString("en-US")+" credits)";
+      $("depositBreakdown").textContent="DEPOSIT REQUEST CREATED: "+walletMoney(amount)+" ("+amount.toLocaleString("en-US")+" credits)";
       $("depositCommand").textContent="/pay "+DEPOSIT_BEDROCK_NICK+" "+amount;
       $("depositConfirm").hidden=false;
       await new Promise(resolve=>{
         const accept=()=>{cleanup();resolve();};
         const cancel=()=>{cleanup();resolve();};
-        const cleanup=()=>{$("depositAccept").removeEventListener("click",accept);$("depositCancel").removeEventListener("click",cancel);};
+        const cleanup=()=>{
+          $("depositAccept").removeEventListener("click",accept);
+          $("depositCancel").removeEventListener("click",cancel);
+        };
         $("depositAccept").addEventListener("click",accept);
         $("depositCancel").addEventListener("click",cancel);
       });
       $("depositConfirm").hidden=true;
-      $("message").value="";
-      toast("Deposit request created. Pay using the command shown; eligible payments will credit automatically.");
+      $("amount").value="";
+      walletClose();
+      toast("Deposit request created. Pay using the command shown; eligible payments credit automatically.");
       return;
     }
     await api("tickets",{kind,amount,message:ticketMessage});
-    $("message").value="";
-    toast("Withdrawal requested. Credits reserved until payout is confirmed.");
+    try{localStorage.setItem("dr_wallet_payee_"+me.id,playerNick);}catch{}
+    $("walletSettingsCheck").checked=false;
+    $("amount").value="";
+    toast("Withdrawal requested. Credits reserved until the bot confirms payout.");
     await refresh();
-  }catch(err){toast(err.message);}
+    await loadWalletHistory();
+  }catch(err){
+    toast(err.message);
+  }finally{
+    walletBusy=false;
+    renderWalletStatus();
+  }
 };
+setInterval(()=>{
+  if(me && !document.hidden && !$("ticketSection").hidden)void refreshWalletBotStatus();
+},12000);
 
 async function loadTickets(){
   const result = await api("tickets");
@@ -1567,6 +1856,8 @@ setInterval(async()=>{
     me.balance=updated;
     $("balance").textContent=fmt(updated);
     $("topBalance").textContent=fmt(updated);
+    updateWalletBalances();
+    if(!$("ticketSection").hidden)void loadWalletHistory();
     await loadTickets();
     if(["admin","owner"].includes(me.role))await loadUsers();
   }catch(err){

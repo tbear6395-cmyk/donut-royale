@@ -1,4 +1,4 @@
-import os, re, json, hmac, secrets, sqlite3, hashlib, threading, mimetypes, subprocess, sys
+import os, re, json, hmac, secrets, sqlite3, hashlib, threading, mimetypes, subprocess, sys, time
 try:
     import psycopg
     from psycopg.rows import dict_row
@@ -20,6 +20,8 @@ BASE = Path(__file__).resolve().parent
 DB = Path(os.getenv("DATABASE_PATH", str(BASE / "data.sqlite3")))
 DB.parent.mkdir(parents=True, exist_ok=True)
 LOCK = threading.RLock()
+# The connected Minecraft client polls the withdrawal queue only while online.
+BOT_POLL_STATE = {"last_seen": 0.0}
 USE_POSTGRES = bool(os.getenv('DATABASE_URL'))
 if USE_POSTGRES and psycopg is None:
     raise RuntimeError('PostgreSQL configured but psycopg is not installed')
@@ -373,6 +375,13 @@ class Handler(BaseHTTPRequestHandler):
 
     def do_GET(self):
         path = urlparse(self.path).path
+        if path == "/api/bot/status":
+            online = (time.monotonic() - BOT_POLL_STATE["last_seen"]) < 50
+            return self.send_json(200, {
+                "online": bool(online),
+                "withdraw_automatic": bool(withdrawal_config()),
+                "deposit_automatic": os.getenv("AUTO_DEPOSIT_ENABLED") == "1"
+            })
         if path == "/api/deposits/status":
             active = (os.getenv("AUTO_DEPOSIT_ENABLED") == "1"
                       and bool(os.getenv("AUTO_DEPOSIT_START_UTC")))
@@ -393,6 +402,7 @@ class Handler(BaseHTTPRequestHandler):
             provided = self.headers.get("X-Bot-Api-Key", "")
             if not expected or not hmac.compare_digest(provided, expected):
                 return self.fail(401, "Unauthorized")
+            BOT_POLL_STATE["last_seen"] = time.monotonic()
             with db_open() as db:
                 rows = db.execute(
                     """SELECT t.id,t.amount,t.message,r.status FROM withdraw_reservations r
@@ -523,6 +533,17 @@ class Handler(BaseHTTPRequestHandler):
                 rows = db.execute("""SELECT event_id,player,amount,raw_message,status,created
                                      FROM bot_payment_events ORDER BY created DESC, event_id DESC LIMIT 100""").fetchall()
             return self.send_json(200, {"events": [dict(r) for r in rows]})
+        if path == "/api/wallet/history":
+            # The cashier always shows only this logged-in player's own transfers,
+            # including completed payouts (staff ticket queue lists open tickets only).
+            with db_open() as db:
+                rows = db.execute("""SELECT t.id,t.amount,t.status,t.created,t.message,
+                                            r.status AS payout_status
+                                     FROM tickets t LEFT JOIN withdraw_reservations r
+                                         ON r.ticket_id=t.id
+                                     WHERE t.user_id=? AND t.kind='withdraw'
+                                     ORDER BY t.id DESC LIMIT 20""", (user["id"],)).fetchall()
+            return self.send_json(200, {"withdrawals": [dict(row) for row in rows]})
         if path == "/api/tickets":
             with db_open() as db:
                 if user["role"] in ("owner", "admin"):
