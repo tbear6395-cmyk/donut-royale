@@ -1751,119 +1751,171 @@ header>div.header-account:last-child{
   .game-card.card-dice.has-hd-dice{transition:none!important}
 }
 
-/* CASE BATTLE: responsive full-width arcade card and two-sided case opening arena. */
+/* CASE BATTLE V2 — 3D case catalogue and genuine vertical loot reels. */
 .game-card.card-casebattle{
-  grid-column:span 12;min-height:255px;height:255px;padding:0;
-  --accent:#71efbf;--base:#0e3534;
-  border:2px solid #c6c77e;background:
-    radial-gradient(ellipse at 64% 44%,#1da38372,transparent 45%),
-    radial-gradient(ellipse at 38% 80%,#6f276f74,transparent 52%),
-    repeating-conic-gradient(from 8deg at 58% 55%,#92ffcf08 0deg 8deg,transparent 9deg 22deg),
-    linear-gradient(120deg,#061e24,#17313a 58%,#101b2b);
-  isolation:isolate;
+ grid-column:span 12;--accent:#69f0c1;--base:#103b39;height:263px;min-height:263px;
+ padding:0;border:2px solid #8bdfc3;isolation:isolate;overflow:hidden;
+ background:radial-gradient(ellipse at 58% 42%,#1b9f8870,transparent 48%),linear-gradient(120deg,#09151e,#10363b 55%,#0a1222);
 }
-.game-card.card-casebattle .game-title{font-size:clamp(33px,3.2vw,53px);bottom:70px;left:36px;color:#fff;text-shadow:3px 4px #061721,0 0 22px #000b}
-.game-card.card-casebattle .game-subtitle{bottom:39px;left:38px;color:#dcfdef;letter-spacing:1.4px}
-.game-card.card-casebattle .game-play{right:30px;bottom:33px;font-size:12px;padding:12px 18px;z-index:10}
-.game-card.card-casebattle .game-live{top:21px;left:30px}
-.game-card.card-casebattle .game-index{top:22px;right:30px}
-.game-card.card-casebattle .xmas-game-snow{right:31px;top:73px}
-.game-card.card-casebattle .cb-banner-art{position:absolute;z-index:2;left:46%;right:14%;top:8px;bottom:8px;display:flex;align-items:center;justify-content:space-around;pointer-events:none}
-.game-card.card-casebattle .cb-banner-chest{position:relative;font-size:100px;line-height:1;filter:drop-shadow(0 0 17px #f3d66d85) drop-shadow(0 12px 18px #0009);transform:rotate(-12deg)}
-.game-card.card-casebattle .cb-banner-chest-two{transform:rotate(13deg);filter:drop-shadow(0 0 17px #9e79ff9e) drop-shadow(0 12px 18px #0009)}
-.game-card.card-casebattle .cb-banner-chest i{font-style:normal;font-size:42px;position:absolute;right:-9px;top:-12px;filter:drop-shadow(0 0 10px #fff9)}
-.game-card.card-casebattle .cb-banner-vs{display:grid;place-items:center;width:70px;height:70px;border:2px solid #9af2c2;border-radius:50%;background:#042f2ecf;color:#f3f9da;font:900 28px Impact,Arial,sans-serif;box-shadow:0 0 22px #54ebad88}
-@media(max-width:1100px){.game-card.card-casebattle{grid-column:span 2}.game-card.card-casebattle .cb-banner-art{left:39%;right:19%}}
+.game-card.card-casebattle .game-title{bottom:72px;left:30px;font-size:clamp(32px,3.2vw,52px);z-index:5;color:#fff}
+.game-card.card-casebattle .game-subtitle{bottom:40px;left:32px;z-index:5;color:#c8eee0}
+.game-card.card-casebattle .game-play{bottom:32px;right:27px;z-index:10;font-size:11px;padding:12px 16px}
+.game-card.card-casebattle .game-live{left:29px;top:20px}
+.game-card.card-casebattle .game-index{right:26px;top:23px}
+.game-card.card-casebattle .cb-banner-art{position:absolute;inset:5px 15% 5px 43%;display:flex;align-items:center;justify-content:space-around;pointer-events:none;z-index:2}
+.game-card.card-casebattle .cb-banner-chest{font-size:94px;position:relative;filter:drop-shadow(0 8px 14px #0009) drop-shadow(0 0 14px #eedc8588);transform:rotate(-13deg)}
+.game-card.card-casebattle .cb-banner-chest-two{transform:rotate(10deg);filter:drop-shadow(0 0 14px #ac7bff88) drop-shadow(0 8px 14px #0009)}
+.game-card.card-casebattle .cb-banner-chest i{position:absolute;right:-10px;top:-12px;font-size:36px;font-style:normal}
+.game-card.card-casebattle .cb-banner-vs{background:#0a3431;color:#e8ffe9;border:2px solid #7beec0;border-radius:50%;width:65px;height:65px;display:grid;place-items:center;font:900 27px Impact,sans-serif;box-shadow:0 0 18px #37e9a178}
+@media(max-width:1100px){.game-card.card-casebattle{grid-column:span 2}.game-card.card-casebattle .cb-banner-art{inset:0 12% 0 38%}}
 @media(max-width:580px){
-  .game-card.card-casebattle{grid-column:1;min-height:232px;height:232px}
-  .game-card.card-casebattle .cb-banner-art{left:20%;right:10%;top:12px;bottom:36px;opacity:.82}
-  .game-card.card-casebattle .cb-banner-chest{font-size:65px}
-  .game-card.card-casebattle .cb-banner-chest i{font-size:27px}
-  .game-card.card-casebattle .cb-banner-vs{width:46px;height:46px;font-size:20px}
-  .game-card.card-casebattle .game-title{left:18px;bottom:55px;font-size:33px}
-  .game-card.card-casebattle .game-subtitle{left:18px;bottom:20px;font-size:9px}
-  .game-card.card-casebattle .game-play{right:12px;bottom:16px;padding:9px;font-size:9px}
-  .game-card.card-casebattle .game-live{top:12px;left:14px}
-  .game-card.card-casebattle .game-index{top:15px;right:15px}
+ .game-card.card-casebattle{grid-column:1;height:232px;min-height:232px}
+ .game-card.card-casebattle .cb-banner-art{inset:10px 8% 34px 22%;opacity:.9}
+ .game-card.card-casebattle .cb-banner-chest{font-size:60px}
+ .game-card.card-casebattle .cb-banner-chest i{font-size:23px}
+ .game-card.card-casebattle .cb-banner-vs{width:40px;height:40px;font-size:17px}
+ .game-card.card-casebattle .game-title{left:18px;bottom:55px;font-size:32px}
+ .game-card.card-casebattle .game-subtitle{left:18px;bottom:21px;font-size:9px}
+ .game-card.card-casebattle .game-play{right:13px;bottom:16px;padding:9px;font-size:9px}
 }
-.game-window:has(#screen-casebattle:not([hidden])){width:min(1080px,100%);max-height:calc(100dvh - 24px);overflow-y:auto;padding:clamp(12px,2.1vw,25px)}
-#screen-casebattle{color:#e8f5f0;text-align:left}
-#screen-casebattle .cb-heading{display:flex;justify-content:space-between;align-items:flex-start;gap:10px;margin:11px 0 19px}
-#screen-casebattle .cb-kicker{font-size:10px;letter-spacing:1.8px;color:#92dba9;font-weight:900}
-#screen-casebattle h2{font:900 clamp(30px,4vw,51px) Impact,"Arial Black",sans-serif;letter-spacing:1.3px;color:#f6f7ed;margin:5px 0;text-shadow:3px 3px #040f16}
-#screen-casebattle h2 em{font-style:normal;color:#87e3a9}
-#screen-casebattle .cb-heading p{color:#a7b9b5;font-size:12px;line-height:1.5}
-#screen-casebattle .cb-season{white-space:nowrap;color:#a6dabc;border:1px solid #5b897f;padding:7px 10px;border-radius:7px;font-size:10px;font-weight:900}
-#screen-casebattle .cb-setup{display:grid;grid-template-columns:1.15fr 1fr 1.05fr;gap:11px;margin:12px 0}
-#screen-casebattle .cb-field{display:flex;flex-direction:column;gap:8px;font-size:10px;font-weight:950;letter-spacing:1.5px;color:#b5d8cc}
-#screen-casebattle .cb-field input,#screen-casebattle .cb-field select{display:block;width:100%;height:45px;border-radius:8px;border:1px solid #567b77;background:#111d24;color:#f8fff8;font:800 15px Arial,sans-serif;padding:0 12px;margin:0;max-width:none}
-#screen-casebattle .cb-round-choices{display:flex;height:45px;gap:5px}
-#screen-casebattle .cb-round-choices button{flex:1;min-width:0;border:1px solid #50716e;background:#172b2c;color:#e5f2eb;border-radius:8px;cursor:pointer;font-weight:900}
-#screen-casebattle .cb-round-choices button.selected{background:#2e916c;border-color:#8aefc4;color:#fff;box-shadow:0 0 10px #2ae6a84e}
-#screen-casebattle .cb-quick{display:flex;gap:8px;flex-wrap:wrap;justify-content:flex-start;margin:8px 0 18px}
-#screen-casebattle .cb-quick button{min-width:70px;margin:0;border-radius:7px;font-size:11px;padding:9px 12px}
-#screen-casebattle .cb-progress{background:#121c24;border:1px solid #354d50;border-radius:11px 11px 0 0;padding:13px 17px;display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap;font-size:11px;letter-spacing:.6px}
-#screen-casebattle .cb-progress strong{color:#fff1aa;font-weight:900}
-#screen-casebattle .cb-progress span{color:#b7ded2;font-weight:750}
-#screen-casebattle .cb-progress .cb-progress-odds{font-size:10px;color:#9dafa8}
-#screen-casebattle .cb-arena{display:grid;grid-template-columns:minmax(0,1fr) 64px minmax(0,1fr);background:#0a141b;border:1px solid #34494e;border-top:0;border-radius:0 0 12px 12px;overflow:hidden;min-height:285px}
-#screen-casebattle .cb-side{min-width:0;padding:15px 14px;background:radial-gradient(ellipse at 50% 43%,#17434b59,transparent 75%)}
-#screen-casebattle .cb-house{background:radial-gradient(ellipse at 55% 45%,#43315a61,transparent 75%)}
-#screen-casebattle .cb-persona{display:flex;align-items:center;gap:10px;margin-bottom:13px;min-height:41px}
-#screen-casebattle .cb-avatar{font-size:27px;background:#1a3d3b;border-radius:10px;width:39px;height:39px;display:grid;place-items:center}
-#screen-casebattle .cb-house .cb-avatar{background:#3c2d47}
-#screen-casebattle .cb-persona div{display:grid;gap:4px;min-width:0}
-#screen-casebattle .cb-persona small{font-size:9px;font-weight:850;letter-spacing:1px;color:#a7bcb8}
-#screen-casebattle .cb-persona strong{font-size:13px;font-weight:1000;color:#f2fff6;text-overflow:ellipsis;overflow:hidden;max-width:145px;white-space:nowrap}
-#screen-casebattle .cb-persona b{margin-left:auto;color:#f8da74;font-size:20px}
-#screen-casebattle .cb-reel{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:4px;height:155px;background:linear-gradient(#0d151b,#142527 48%,#0b161e);border:1px solid #344b4f;border-radius:10px;overflow:hidden;position:relative}
-#screen-casebattle .cb-reel::before,#screen-casebattle .cb-reel::after{content:"";position:absolute;z-index:2;left:0;right:0;height:34px;pointer-events:none}
-#screen-casebattle .cb-reel::before{top:0;background:linear-gradient(#0b151b,transparent)}
-#screen-casebattle .cb-reel::after{bottom:0;background:linear-gradient(transparent,#0b151b)}
-#screen-casebattle .cb-idle-box{font-size:57px}
-#screen-casebattle .cb-reel>small{color:#9caaa6;letter-spacing:2px;font-weight:900}
-#screen-casebattle .cb-drop{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:7px;min-width:0;max-width:100%}
-#screen-casebattle .cb-drop-icon{font-size:50px;line-height:1.1;filter:drop-shadow(0 0 13px #89ffe881)}
-#screen-casebattle .cb-house .cb-drop-icon{filter:drop-shadow(0 0 13px #bf9bff90)}
-#screen-casebattle .cb-drop strong{font-size:12px;max-width:100%;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-#screen-casebattle .cb-drop small{font-weight:900;color:#f2da7e;font-size:13px}
-#screen-casebattle .cb-reel.is-rolling .cb-drop-icon{animation:cbBump .12s infinite alternate}
-@keyframes cbBump{from{transform:translateY(-8px) scale(.95);opacity:.7}to{transform:translateY(8px) scale(1.05);opacity:1}}
-#screen-casebattle .cb-duel-mark{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:8px;border-left:1px solid #34484b;border-right:1px solid #34484b;background:#0d1d22}
-#screen-casebattle .cb-duel-mark span{font-size:29px;color:#c6e8c0}
-#screen-casebattle .cb-duel-mark b{border:2px solid #529c82;border-radius:50%;width:46px;height:46px;display:grid;place-items:center;background:#0c302f;color:#bff3cf;font:900 22px Impact,Arial,sans-serif}
-#screen-casebattle .cb-history{display:flex;flex-direction:column;gap:5px;margin-top:10px;max-height:165px;overflow-y:auto}
-#screen-casebattle .cb-history>span{font-size:10px;color:#849d97;text-align:center;padding:8px}
-#screen-casebattle .cb-history-row{display:flex;align-items:center;gap:8px;padding:7px 10px;background:#172b2a;border:1px solid #254748;border-radius:7px;font-size:11px}
-#screen-casebattle .cb-house .cb-history-row{background:#252233;border-color:#4a384e}
-#screen-casebattle .cb-history-row b{margin-left:auto;color:#f0d583}
-#screen-casebattle .cb-bottom{display:flex;flex-direction:column;align-items:center;gap:6px;margin:17px 0 0}
-#screen-casebattle #cbStart{width:100%;max-width:none;padding:16px;font-weight:1000;letter-spacing:1.5px;border-radius:11px;background:linear-gradient(105deg,#1f915c,#49b67d);color:#fafff9;box-shadow:0 4px 18px #13c57e42}
-#screen-casebattle #cbStart:disabled{opacity:.65;cursor:wait}
-#screen-casebattle #cbResult{text-align:center;min-height:24px;margin:7px 0;font-size:15px;color:#e3f7e8;font-weight:850}
-#screen-casebattle .cb-disclaimer{text-align:center;font-size:10px;color:#97aaa6;margin:3px 0;line-height:1.5}
-@media(max-width:580px){
-  #screen-casebattle .cb-heading{margin-top:7px}
-  #screen-casebattle .cb-season{display:none}
-  #screen-casebattle .cb-setup{grid-template-columns:1fr 1fr}
-  #screen-casebattle .cb-field:first-child{grid-column:1/-1}
-  #screen-casebattle .cb-arena{grid-template-columns:minmax(0,1fr) 32px minmax(0,1fr)}
-  #screen-casebattle .cb-side{padding:9px 6px}
-  #screen-casebattle .cb-duel-mark b{width:28px;height:28px;font-size:13px;border-width:1px}
-  #screen-casebattle .cb-duel-mark span{font-size:17px}
-  #screen-casebattle .cb-persona{gap:4px}
-  #screen-casebattle .cb-avatar{width:27px;height:27px;font-size:20px}
-  #screen-casebattle .cb-persona strong{font-size:10px;max-width:80px}
-  #screen-casebattle .cb-persona small{font-size:7px}
-  #screen-casebattle .cb-persona b{font-size:12px}
-  #screen-casebattle .cb-reel{height:146px}
-  #screen-casebattle .cb-drop-icon{font-size:40px}
-  #screen-casebattle .cb-drop strong{font-size:10px}
-  #screen-casebattle .cb-history-row{font-size:9px;padding:6px 5px;gap:4px}
-  #screen-casebattle .cb-progress{padding:9px;font-size:10px}
-  #screen-casebattle .cb-progress-odds{display:none}
-  #screen-casebattle .cb-quick button{min-width:52px;padding:8px;font-size:10px}
+.game-window:has(#screen-casebattle:not([hidden])){width:min(1200px,100%);max-height:calc(100dvh - 16px);overflow-y:auto;padding:clamp(12px,2vw,23px);background:linear-gradient(180deg,#19252e,#0a121b)}
+#screen-casebattle{text-align:left;color:#f3faf5;max-width:100%}
+#screen-casebattle .cb-heading{display:flex;align-items:flex-start;justify-content:space-between;gap:10px;margin:8px 0 17px}
+#screen-casebattle .cb-kicker{font-weight:900;letter-spacing:1.7px;font-size:10px;color:#86e0c0}
+#screen-casebattle h2{font:900 clamp(30px,3.7vw,50px) Impact,"Arial Black",sans-serif;letter-spacing:1px;color:#fff;margin:5px 0}
+#screen-casebattle h2 em{color:#60dcb2;font-style:normal}
+#screen-casebattle .cb-heading p{font-size:12px;color:#adbfba;line-height:1.5;max-width:630px}
+#screen-casebattle .cb-season{color:#94d9b8;border:1px solid #3f7766;background:#122b2b;border-radius:8px;padding:9px 12px;white-space:nowrap;font-size:10px;font-weight:900}
+#screen-casebattle .cb-picker-header{display:flex;align-items:center;justify-content:space-between;gap:8px;margin:12px 0}
+#screen-casebattle .cb-picker-header strong{font-size:12px;letter-spacing:1.4px;color:#f8f7ee}
+#screen-casebattle .cb-picker-header span{font-size:11px;color:#9eafa9}
+#screen-casebattle .cb-catalog{display:grid;grid-template-columns:repeat(6,minmax(0,1fr));gap:10px;max-height:300px;overflow:auto;padding:2px 5px 5px 0}
+#screen-casebattle .cb-case-card{
+ position:relative;min-width:0;min-height:155px;text-align:left;display:flex;flex-direction:column;align-items:flex-start;gap:4px;
+ padding:10px;border:1px solid #324958;border-radius:12px;background:linear-gradient(150deg,#132332,#0e1722);
+ color:#eff8f8;cursor:pointer;transition:border .16s ease,background .16s ease,transform .16s ease;overflow:hidden
 }
+#screen-casebattle .cb-case-card:hover{transform:translateY(-2px);border-color:var(--cb-accent,#69d0c0)}
+#screen-casebattle .cb-case-card.selected{background:linear-gradient(140deg,#1c3036,#102623);border:2px solid var(--cb-accent,#73c9ba);padding:9px;box-shadow:inset 0 0 15px #0ff2ab17,0 0 12px #52b69d35}
+#screen-casebattle .cb-case-card:disabled{cursor:default;opacity:.7;transform:none}
+#screen-casebattle .cb-case-art{position:relative;height:91px;width:100%;display:grid;place-items:center;overflow:visible}
+#screen-casebattle .cb-crate{
+ width:69px;height:65px;position:relative;display:block;margin:8px 0 0;
+ transform:perspective(100px) rotateX(-4deg) rotateY(-8deg);
+ filter:drop-shadow(0 11px 7px #0007)
+}
+#screen-casebattle .cb-crate::before{
+ content:"";position:absolute;inset:6px 5px 1px 9px;border:4px solid color-mix(in srgb,var(--cb-accent),#f5e9cb 25%);
+ border-radius:4px;background:repeating-linear-gradient(90deg,#081c27b8 0 13px,#203f47d0 13px 16px),linear-gradient(140deg,var(--cb-accent),#15222d);
+ box-shadow:inset 0 0 0 5px #f0e1b927,inset 5px 7px 0 #0004,4px 4px 0 #0a131c
+}
+#screen-casebattle .cb-crate::after{
+ content:"";position:absolute;top:-5px;left:8px;width:56px;height:15px;clip-path:polygon(12% 0,100% 9%,88% 100%,0 87%);
+ background:linear-gradient(#e6dbab,var(--cb-accent));border:1px solid #222a25
+}
+#screen-casebattle .cb-crate-preview{position:absolute;width:38px;height:38px;left:27px;top:29px;transform:translate(-3px,-3px);z-index:3;image-rendering:pixelated;filter:drop-shadow(1px 3px 1px #000c)}
+#screen-casebattle .cb-case-lock{position:absolute;left:35px;top:43px;width:13px;height:18px;background:#f9dd81;border:3px solid #aa7c29;z-index:4;border-radius:2px;transform:scale(.76);opacity:.65}
+#screen-casebattle .cb-case-name{font-size:12px;font-weight:950;line-height:1.2;white-space:nowrap;max-width:100%;text-overflow:ellipsis;overflow:hidden}
+#screen-casebattle .cb-case-price{color:#e1ecf5;font-size:13px;font-weight:1000}
+#screen-casebattle .cb-case-top{position:absolute;top:8px;right:7px;color:var(--cb-accent);font-size:8px;font-weight:950}
+#screen-casebattle .cb-controls{display:grid;grid-template-columns:minmax(220px,.9fr) minmax(0,2.1fr);gap:14px;margin:18px 0 12px}
+#screen-casebattle .cb-round-box{display:flex;flex-direction:column;gap:7px}
+#screen-casebattle .cb-round-box>strong{font-size:11px;letter-spacing:1px;color:#d0e9e0}
+#screen-casebattle .cb-round-choices{height:51px;display:flex;gap:7px}
+#screen-casebattle .cb-round-choices button{flex:1;min-width:0;cursor:pointer;border-radius:9px;background:#12252b;color:#dcece8;border:1px solid #426067;font-size:15px;font-weight:950}
+#screen-casebattle .cb-round-choices button.selected{background:linear-gradient(#308e78,#1b6050);border:2px solid #9ae4c0;color:#fff}
+#screen-casebattle .cb-round-choices button:disabled{opacity:.45;cursor:default}
+#screen-casebattle .cb-cost-summary{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:7px}
+#screen-casebattle .cb-cost-summary>span{display:flex;flex-direction:column;justify-content:center;gap:6px;padding:10px 9px;border:1px solid #39515a;border-radius:9px;background:#10232b;min-width:0}
+#screen-casebattle .cb-cost-summary small{color:#a7b7b3;font-size:8px;letter-spacing:.5px;white-space:nowrap}
+#screen-casebattle .cb-cost-summary strong{font-size:18px;font-weight:1000;color:#e6f0ec}
+#screen-casebattle .cb-cost-summary .cb-stake-total{border-color:#d0b866;background:#2b2a21}
+#screen-casebattle .cb-stake-total strong{color:#ffdd74}
+#screen-casebattle .cb-loot-preview{border:1px solid #354850;border-radius:9px;margin:8px 0 17px;background:#0f1c25}
+#screen-casebattle .cb-loot-preview summary{cursor:pointer;list-style:none;padding:12px 14px;font-size:10px;font-weight:950;letter-spacing:1px;color:#d5eae2}
+#screen-casebattle .cb-loot-preview summary::-webkit-details-marker{display:none}
+#screen-casebattle .cb-loot-preview summary::before{content:"▸ ";color:#83efb7}
+#screen-casebattle .cb-loot-preview[open] summary::before{content:"▾ "}
+#screen-casebattle .cb-loot-preview summary span{font-weight:700;float:right;color:#9caead;letter-spacing:0}
+#screen-casebattle .cb-loot-grid{display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:7px;padding:0 12px 12px}
+#screen-casebattle .cb-loot-grid>div{display:flex;align-items:center;flex-direction:column;gap:4px;background:#152632;border:1px solid #34434c;border-radius:7px;padding:9px 4px;text-align:center;min-width:0}
+#screen-casebattle .cb-loot-grid img{width:52px;height:52px;image-rendering:pixelated;object-fit:contain}
+#screen-casebattle .cb-loot-grid small{font-size:10px;color:#e3f3ee;max-width:100%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+#screen-casebattle .cb-loot-grid b{font-size:11px;color:#fbe5a1}
+#screen-casebattle .cb-progress{display:flex;justify-content:space-between;align-items:center;gap:8px;flex-wrap:wrap;padding:13px 14px;border-radius:11px 11px 0 0;border:1px solid #37434c;background:#1e252a}
+#screen-casebattle .cb-progress strong{font-size:12px;color:#f3df9a;letter-spacing:1px}
+#screen-casebattle .cb-progress span{font-size:11px;color:#c8e6d8;font-weight:900}
+#screen-casebattle .cb-progress .cb-progress-odds{font-size:9px;color:#91ada7}
+#screen-casebattle .cb-arena{display:grid;grid-template-columns:minmax(0,1fr) 52px minmax(0,1fr);min-height:535px;border:1px solid #34404b;border-top:0;background:#14181e;border-radius:0 0 12px 12px;overflow:hidden}
+#screen-casebattle .cb-side{min-width:0;padding:15px 13px;background:linear-gradient(160deg,#151c22,#11171b)}
+#screen-casebattle .cb-house{background:linear-gradient(160deg,#1b1d25,#11151b)}
+#screen-casebattle .cb-persona{display:flex;align-items:center;gap:9px;min-height:45px;margin-bottom:13px}
+#screen-casebattle .cb-avatar{width:40px;height:40px;image-rendering:pixelated;border:2px solid #60d7ad;background:#11372c;object-fit:cover}
+#screen-casebattle .cb-house .cb-avatar{border-color:#af9dba}
+#screen-casebattle .cb-persona div{display:flex;flex-direction:column;gap:4px;min-width:0}
+#screen-casebattle .cb-persona small{font-size:9px;color:#a6bbb9;font-weight:850;letter-spacing:1px}
+#screen-casebattle .cb-persona strong{font-size:12px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:160px}
+#screen-casebattle .cb-persona b{margin-left:auto;color:#ffd97e;font-size:18px}
+#screen-casebattle .cb-duel-mark{display:flex;align-items:center;justify-content:flex-start;padding-top:210px;flex-direction:column;gap:7px;border-left:1px solid #32373b;border-right:1px solid #32373b}
+#screen-casebattle .cb-duel-mark b{border:2px solid #53c88e;border-radius:50%;height:44px;width:44px;display:grid;place-items:center;color:#67efb3;background:#0c3029;box-shadow:0 0 16px #2cdc7e5c}
+#screen-casebattle .cb-duel-mark span{font-size:11px;font-weight:950;color:#bbd4c5}
+#screen-casebattle .cb-reel{position:relative;height:352px;overflow:hidden;border:1px solid #2e373d;background:#0c1015;border-radius:10px;isolation:isolate}
+#screen-casebattle .cb-reel::before,#screen-casebattle .cb-reel::after{content:"";position:absolute;left:0;right:0;height:114px;pointer-events:none;z-index:4}
+#screen-casebattle .cb-reel::before{top:0;background:linear-gradient(#0c1015,transparent)}
+#screen-casebattle .cb-reel::after{bottom:0;background:linear-gradient(transparent,#0c1015)}
+#screen-casebattle .cb-reel::marker{content:""}
+#screen-casebattle .cb-reel-placeholder{height:100%;display:grid;place-items:center;color:#91aaa3;font-size:11px;letter-spacing:2px;font-weight:950}
+#screen-casebattle .cb-track{position:absolute;left:0;right:0;top:0;will-change:transform}
+#screen-casebattle .cb-reel-item{box-sizing:border-box;height:96px;display:flex;align-items:center;justify-content:center;flex-direction:column;gap:4px;border-bottom:1px solid #2c3137;color:#d8e3df;background:linear-gradient(90deg,transparent,#1c2227a3,transparent)}
+#screen-casebattle .cb-reel-item img{display:block;width:49px;height:49px;image-rendering:pixelated;object-fit:contain;filter:drop-shadow(0 3px 6px #000b)}
+#screen-casebattle .cb-reel-item strong{font-size:10px;line-height:1.1;max-width:95%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+#screen-casebattle .cb-reel-item b{font-size:12px;color:#f8e2a0}
+#screen-casebattle .cb-target-line{position:absolute;z-index:5;pointer-events:none;top:calc(50% - 48px);left:3px;right:3px;height:96px;border-top:2px solid #5adcab;border-bottom:2px solid #5adcab;background:#7bf6b00c;box-shadow:inset 0 0 17px #36e9a018,0 0 12px #19ff9442}
+#screen-casebattle .cb-house .cb-target-line{border-color:#a48ec7;box-shadow:inset 0 0 17px #b071f41a}
+#screen-casebattle .cb-target-line::before,#screen-casebattle .cb-target-line::after{content:"";position:absolute;top:calc(50% - 6px);width:0;height:0;border-top:7px solid transparent;border-bottom:7px solid transparent}
+#screen-casebattle .cb-target-line::before{left:-2px;border-left:10px solid #53f0a6}
+#screen-casebattle .cb-target-line::after{right:-2px;border-right:10px solid #53f0a6}
+#screen-casebattle .cb-house .cb-target-line::before{border-left-color:#bc9be0}
+#screen-casebattle .cb-house .cb-target-line::after{border-right-color:#bc9be0}
+#screen-casebattle .cb-history{display:flex;flex-direction:column;gap:4px;max-height:245px;overflow:auto;margin-top:12px}
+#screen-casebattle .cb-history>span{font-size:10px;color:#849f9c;padding:9px;text-align:center}
+#screen-casebattle .cb-history-row{display:flex;align-items:center;gap:8px;padding:6px 10px;background:#19242a;border:1px solid #354044;border-radius:6px;min-width:0}
+#screen-casebattle .cb-history-row img{width:29px;height:29px;image-rendering:pixelated;object-fit:contain}
+#screen-casebattle .cb-history-row span{min-width:0;flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-size:11px}
+#screen-casebattle .cb-history-row b{color:#ffda8d;font-size:12px}
+#screen-casebattle .cb-bottom{display:flex;align-items:center;flex-direction:column;gap:5px;margin-top:17px}
+#screen-casebattle #cbStart{width:100%;max-width:none;padding:17px;background:linear-gradient(110deg,#208863,#41b784);font-weight:1000;letter-spacing:1px;font-size:14px;border:1px solid #83e5b6;border-radius:9px;color:#fff;box-shadow:0 0 17px #28d58c4c}
+#screen-casebattle #cbStart:disabled{opacity:.53;cursor:default}
+#screen-casebattle #cbResult{margin:8px 0;text-align:center;font-size:15px;color:#e9f9ef;font-weight:850}
+#screen-casebattle .cb-disclaimer{margin:4px 0;color:#91a9a4;font-size:10px;text-align:center;line-height:1.5}
+@media(max-width:1000px){#screen-casebattle .cb-catalog{grid-template-columns:repeat(4,minmax(0,1fr))}#screen-casebattle .cb-cost-summary strong{font-size:15px}}
+@media(max-width:700px){
+ #screen-casebattle .cb-season{display:none}
+ #screen-casebattle .cb-catalog{grid-template-columns:repeat(3,minmax(0,1fr));max-height:300px}
+ #screen-casebattle .cb-controls{grid-template-columns:1fr}
+ #screen-casebattle .cb-cost-summary strong{font-size:17px}
+ #screen-casebattle .cb-arena{grid-template-columns:minmax(0,1fr) 33px minmax(0,1fr)}
+ #screen-casebattle .cb-side{padding:9px 6px}
+ #screen-casebattle .cb-duel-mark{padding-top:210px}
+ #screen-casebattle .cb-duel-mark b{width:29px;height:29px;font-size:14px}
+ #screen-casebattle .cb-duel-mark span{font-size:9px}
+ #screen-casebattle .cb-persona{gap:5px}
+ #screen-casebattle .cb-avatar{width:30px;height:30px}
+ #screen-casebattle .cb-persona small{font-size:7px}
+ #screen-casebattle .cb-persona strong{font-size:10px;max-width:85px}
+ #screen-casebattle .cb-persona b{font-size:12px}
+ #screen-casebattle .cb-reel-item img{width:44px;height:44px}
+ #screen-casebattle .cb-reel-item strong{font-size:9px}
+ #screen-casebattle .cb-history-row{padding:5px;gap:4px}
+ #screen-casebattle .cb-history-row span{font-size:9px}
+ #screen-casebattle .cb-history-row b{font-size:10px}
+}
+@media(max-width:430px){
+ #screen-casebattle .cb-catalog{grid-template-columns:repeat(2,minmax(0,1fr))}
+ #screen-casebattle .cb-cost-summary{grid-template-columns:repeat(2,minmax(0,1fr))}
+ #screen-casebattle .cb-loot-grid{grid-template-columns:repeat(3,minmax(0,1fr))}
+}
+@media(prefers-reduced-motion:reduce){#screen-casebattle .cb-case-card{transition:none}}
 
 /* Correct the counters baked into the older HD Coinflip/Dice banner art. */
 .game-card.card-coinflip.has-hd-coinflip .game-index,
@@ -2370,53 +2422,49 @@ header>div.header-account:last-child{
 
     <section class="game-screen" id="screen-casebattle" hidden>
       <div class="cb-heading">
-        <div><span class="cb-kicker">✦ DONUT ROYALE · 1V1 BOT DUEL</span><h2>📦 CASE <em>BATTLE</em></h2><p>Open matching cases round by round. Highest total item score wins the battle.</p></div>
+        <div><span class="cb-kicker">✦ DONUT ROYALE · 1V1 CASE OPENING</span><h2>CASE <em>BATTLE</em></h2><p>Choose a case, pick how many times to open it, and battle Royal Bot. The higher loot total wins.</p></div>
         <span class="cb-season">❄ WINTER EVENT</span>
       </div>
-      <div class="cb-setup">
-        <label class="cb-field">CHOOSE CASE
-          <select id="cbCase" aria-label="Choose case">
-            <option value="iron">🩶 IRON RUSH</option>
-            <option value="emerald">💚 EMERALD VAULT</option>
-            <option value="nether">🔥 NETHER TREASURE</option>
-          </select>
-        </label>
-        <div class="cb-field">ROUNDS
-          <div class="cb-round-choices" role="group" aria-label="Case Battle rounds">
-            <button type="button" data-cb-rounds="1" aria-pressed="false">1</button>
-            <button type="button" class="selected" data-cb-rounds="3" aria-pressed="true">3</button>
-            <button type="button" data-cb-rounds="5" aria-pressed="false">5</button>
+      <div class="cb-picker-header"><strong>CHOOSE A CASE</strong><span id="cbCatalogStatus">Loading cases...</span></div>
+      <div class="cb-catalog" id="cbCatalog" role="group" aria-label="Choose Case Battle case"></div>
+      <div class="cb-controls">
+        <div class="cb-round-box"><strong>OPENINGS / ROUNDS</strong>
+          <div class="cb-round-choices" role="group" aria-label="Choose number of case openings">
+            <button type="button" class="selected" data-cb-rounds="1" aria-pressed="true">1×</button>
+            <button type="button" data-cb-rounds="3" aria-pressed="false">3×</button>
+            <button type="button" data-cb-rounds="5" aria-pressed="false">5×</button>
+            <button type="button" data-cb-rounds="10" aria-pressed="false">10×</button>
           </div>
         </div>
-        <label class="cb-field">TOTAL BET
-          <input id="cbBet" value="50000" inputmode="decimal" aria-label="Total Case Battle bet">
-        </label>
+        <div class="cb-cost-summary">
+          <span><small>CASE PRICE</small><strong id="cbUnitPrice">—</strong></span>
+          <span><small>OPENINGS</small><strong id="cbOpenings">× 1</strong></span>
+          <span class="cb-stake-total"><small>TOTAL STAKE</small><strong id="cbTotal">—</strong></span>
+          <span><small>WINNING PAYOUT</small><strong id="cbPayout">—</strong></span>
+        </div>
       </div>
-      <div class="quick cb-quick" data-input="cbBet" aria-label="Quick Case Battle bet amounts">
-        <button type="button" data-value="10000">10K</button>
-        <button type="button" data-value="50000">50K</button>
-        <button type="button" data-value="100000">100K</button>
-        <button type="button" data-value="1000000">1M</button>
-        <button type="button" data-all-in="true" title="Bet your full available balance" aria-label="ALL IN — use full balance">ALL IN</button>
+      <details class="cb-loot-preview" id="cbLootDetails"><summary>VIEW POSSIBLE ITEMS <span id="cbLootTitle">Select a case</span></summary><div class="cb-loot-grid" id="cbLootGrid"></div></details>
+      <div class="cb-progress">
+        <strong id="cbRoundLabel">ROUND 0 / 1</strong><span id="cbStageLabel">NORMAL · 1V1</span>
+        <span class="cb-progress-odds">HIGHEST TOTAL ITEM VALUE WINS</span>
       </div>
-      <div class="cb-progress"><strong id="cbRoundLabel">ROUND 0 / 3</strong><span id="cbStageLabel">READY FOR BATTLE</span><span class="cb-progress-odds">WIN CHANCE 40% · PAYOUT 2×</span></div>
       <div class="cb-arena">
         <div class="cb-side cb-you">
-          <div class="cb-persona"><span class="cb-avatar" aria-hidden="true">👑</span><div><small>CHALLENGER</small><strong id="cbPlayerName">YOU</strong></div><b id="cbPlayerScore">0</b></div>
-          <div class="cb-reel" id="cbPlayerReel"><span class="cb-idle-box">📦</span><small>YOUR CASE</small></div>
-          <div class="cb-history" id="cbPlayerHistory"><span>Case drops appear here</span></div>
+          <div class="cb-persona"><img class="cb-avatar" src="https://mc-heads.net/avatar/Steve/64" alt="" width="43" height="43"><div><small>CHALLENGER</small><strong id="cbPlayerName">YOU</strong></div><b id="cbPlayerScore">0</b></div>
+          <div class="cb-reel" id="cbPlayerReel" aria-label="Your item spinning reel"><div class="cb-reel-placeholder">SELECT A CASE</div></div>
+          <div class="cb-history" id="cbPlayerHistory"><span>Your opened items appear here</span></div>
         </div>
-        <div class="cb-duel-mark" aria-hidden="true"><span>⚔</span><b>VS</b></div>
+        <div class="cb-duel-mark" aria-hidden="true"><b>⚔</b><span>VS</span></div>
         <div class="cb-side cb-house">
-          <div class="cb-persona"><span class="cb-avatar" aria-hidden="true">🤖</span><div><small>OPPONENT · BOT</small><strong>ROYAL BOT</strong></div><b id="cbBotScore">0</b></div>
-          <div class="cb-reel" id="cbBotReel"><span class="cb-idle-box">📦</span><small>BOT CASE</small></div>
-          <div class="cb-history" id="cbBotHistory"><span>Case drops appear here</span></div>
+          <div class="cb-persona"><img class="cb-avatar" src="https://mc-heads.net/avatar/Skeleton/64" alt="" width="43" height="43"><div><small>OPPONENT · BOT</small><strong>ROYAL BOT</strong></div><b id="cbBotScore">0</b></div>
+          <div class="cb-reel" id="cbBotReel" aria-label="Royal Bot item spinning reel"><div class="cb-reel-placeholder">READY TO OPEN</div></div>
+          <div class="cb-history" id="cbBotHistory"><span>Bot's opened items appear here</span></div>
         </div>
       </div>
       <div class="cb-bottom">
-        <button type="button" class="primary" id="cbStart">⚔ START CASE BATTLE</button>
-        <p class="result" id="cbResult" role="status" aria-live="polite">Pick your case, rounds and total bet.</p>
-        <p class="cb-disclaimer">1V1 against a bot · Item drops are virtual round scores, not withdrawable items · Total stake max 3B · 18+</p>
+        <button type="button" class="primary" id="cbStart" disabled>⚔ START CASE BATTLE</button>
+        <p class="result" id="cbResult" role="status" aria-live="polite">Choose a case and number of openings.</p>
+        <p class="cb-disclaimer">One case is opened per player per round · Winner receives 2× the total stake · Loot values are battle scores, not physical items · 18+</p>
       </div>
     </section>
     <section class="game-screen" id="screen-blackjack" hidden><h2>🃏 BLACKJACK</h2><p>Get as close to 21 as possible without going over! Over 21 means you lose (22 is too much). Ace = 1 or 11, J/Q/K = 10.</p><h3>DEALER</h3><div class="bj-cards" id="bjDealer">🂠</div><h3>YOUR HAND <span id="bjScore"></span></h3><div class="bj-cards" id="bjPlayer">🃏</div><input id="bjBet" value="1000"><div class="quick" data-input="bjBet"><button data-value="1000000">1M</button><button data-value="10000000">10M</button><button data-value="100000000">100M</button><button type="button" data-all-in="true" title="Bet your full available balance" aria-label="ALL IN — use full balance">ALL IN</button></div><div class="choices"><button class="primary" id="bjDeal">DEAL CARDS</button><button id="bjHit" disabled>HIT</button><button id="bjStand" disabled>STAND</button></div><p class="result" id="bjResult"></p></section>
