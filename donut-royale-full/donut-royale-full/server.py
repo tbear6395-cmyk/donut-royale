@@ -322,6 +322,21 @@ class Handler(BaseHTTPRequestHandler):
 
     def do_GET(self):
         path = urlparse(self.path).path
+        if path == "/api/deposits/status":
+            active = (os.getenv("AUTO_DEPOSIT_ENABLED") == "1"
+                      and bool(os.getenv("AUTO_DEPOSIT_START_UTC")))
+            if active:
+                try:
+                    active = _deposit_time(os.environ["AUTO_DEPOSIT_START_UTC"]) <= now()
+                except ValueError:
+                    active = False
+            return self.send_json(200, {
+                "auto_deposit_enabled": bool(active),
+                "max_automatic_amount": int(os.getenv("AUTO_DEPOSIT_MAX_AMOUNT", "1000000")),
+                "max_automatic_amount_per_user_24h": int(os.getenv("AUTO_DEPOSIT_DAILY_LIMIT", "5000000")),
+                "payment_deadline_minutes": 30,
+                "note": "Only fresh unambiguous bot-reported payments are eligible. Minecraft bot must be online; high or ambiguous amounts require review.",
+            })
         if path == "/api/bot/health":
             expected = os.getenv("BOT_API_KEY", "")
             provided = self.headers.get("X-Bot-Api-Key", "")
