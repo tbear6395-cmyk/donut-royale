@@ -1441,6 +1441,37 @@ header>div.header-account:last-child{
   header>.wallet-header-tools .bot-header-status{font-size:8px;padding:8px}
 }
 
+
+/* Exact uploaded thumbnails for the four matching real games.
+   The button and its data-game handlers are unchanged; only the visual image changes. */
+.game-card.has-original-thumbnail{
+  isolation:isolate;
+  background:#081320;
+}
+.game-card.has-original-thumbnail::before,
+.game-card.has-original-thumbnail::after{display:none!important}
+.game-card.has-original-thumbnail .game-thumbnail-image{
+  display:block;position:absolute;z-index:1;inset:0;width:100%;height:100%;
+  pointer-events:none;overflow:hidden;
+}
+.game-card.has-original-thumbnail .game-art,
+.game-card.has-original-thumbnail .game-title,
+.game-card.has-original-thumbnail .xmas-game-snow{display:none!important}
+.game-card.has-original-thumbnail .game-live,
+.game-card.has-original-thumbnail .game-index,
+.game-card.has-original-thumbnail .game-play,
+.game-card.has-original-thumbnail .game-subtitle{z-index:9}
+.game-card.has-original-thumbnail .game-subtitle{
+  background:#050e1ab8;border-radius:7px;padding:5px 7px;bottom:15px;left:12px;
+  color:#fff;max-width:58%;font-weight:850;
+}
+.game-card.has-original-thumbnail .game-play{bottom:14px;right:12px}
+.game-card.has-original-thumbnail:hover .game-thumbnail-image{filter:brightness(1.08)}
+.game-card.has-original-thumbnail.card-blackjack .game-title{display:none!important}
+.game-card.has-original-thumbnail.card-blackjack .game-live{top:16px!important;left:16px!important;right:auto!important}
+.game-card.has-original-thumbnail.card-blackjack .game-subtitle{bottom:15px!important;left:12px!important}
+.game-card.has-original-thumbnail.card-blackjack .game-play{bottom:14px!important;right:12px!important}
+
 </style>
 </head>
 
@@ -1602,11 +1633,11 @@ header>div.header-account:last-child{
   <div class="rules-note"><strong>✧ PLAY WITH THE RULES IN MIND</strong><span>Game rules: 40% win chance, 60% loss chance. Winning bets return 2×. Betting your entire balance (all-in) automatically loses. Maximum bet: 3B. 18+ · Play responsibly and take breaks.</span></div>
 
   <div class="game-grid">
-    <button type="button" class="game-card card-coinflip" data-game="coinflip" aria-label="Open Coinflip"><span class="game-index" aria-hidden="true">01 / 05</span><span class="xmas-game-snow" aria-hidden="true">❄</span><span class="game-live">✦ WINTER GAME</span><span class="game-art art-coin" aria-hidden="true"><span>🪙</span><span>⚡</span></span><span class="game-title">COINFLIP</span><span class="game-subtitle">SONIC VS TAILS</span><span class="game-play">PLAY NOW ↗</span></button>
-    <button type="button" class="game-card card-dice" data-game="dice" aria-label="Open Lucky Dice"><span class="game-index" aria-hidden="true">02 / 05</span><span class="xmas-game-snow" aria-hidden="true">❄</span><span class="game-live">✦ WINTER GAME</span><span class="game-art art-dice" aria-hidden="true"><span class="thumbnail-die">⚄</span><span class="thumbnail-die second">⚅</span></span><span class="game-title">LUCKY DICE</span><span class="game-subtitle">ROLL THE DICE</span><span class="game-play">PLAY NOW ↗</span></button>
+    <button type="button" class="game-card card-coinflip has-original-thumbnail" data-game="coinflip" aria-label="Open Coinflip"><svg class="game-thumbnail-image" viewBox="0 0 360 202" preserveAspectRatio="xMidYMid slice" aria-hidden="true" focusable="false"><image href="/game-thumbnails.webp?v=1" x="0" y="0" width="720" height="404" preserveAspectRatio="none"/></svg><span class="game-index" aria-hidden="true">01 / 05</span><span class="xmas-game-snow" aria-hidden="true">❄</span><span class="game-live">✦ WINTER GAME</span><span class="game-art art-coin" aria-hidden="true"><span>🪙</span><span>⚡</span></span><span class="game-title">COINFLIP</span><span class="game-subtitle">SONIC VS TAILS</span><span class="game-play">PLAY NOW ↗</span></button>
+    <button type="button" class="game-card card-dice has-original-thumbnail" data-game="dice" aria-label="Open Lucky Dice"><svg class="game-thumbnail-image" viewBox="0 0 360 202" preserveAspectRatio="xMidYMid slice" aria-hidden="true" focusable="false"><image href="/game-thumbnails.webp?v=1" x="-360" y="0" width="720" height="404" preserveAspectRatio="none"/></svg><span class="game-index" aria-hidden="true">02 / 05</span><span class="xmas-game-snow" aria-hidden="true">❄</span><span class="game-live">✦ WINTER GAME</span><span class="game-art art-dice" aria-hidden="true"><span class="thumbnail-die">⚄</span><span class="thumbnail-die second">⚅</span></span><span class="game-title">LUCKY DICE</span><span class="game-subtitle">ROLL THE DICE</span><span class="game-play">PLAY NOW ↗</span></button>
     <button type="button" class="game-card card-slots" data-game="slots" aria-label="Open Triple Sevens"><span class="game-index" aria-hidden="true">03 / 05</span><span class="xmas-game-snow" aria-hidden="true">❄</span><span class="game-live">✦ WINTER GAME</span><span class="game-art art-slots" aria-hidden="true"><span>7</span><span>7</span><span>7</span></span><span class="game-title">TRIPLE SEVENS</span><span class="game-subtitle">JACKPOT SLOTS</span><span class="game-play">PLAY NOW ↗</span></button>
-    <button type="button" class="game-card card-blackjack" data-game="blackjack" aria-label="Open Blackjack"><span class="game-index" aria-hidden="true">04 / 05</span><span class="xmas-game-snow" aria-hidden="true">❄</span><span class="game-live">✦ WINTER GAME</span><span class="game-art art-blackjack" aria-hidden="true"><img class="minecraft-dealer" src="https://mc-heads.net/body/Technoblade/220" alt=""><span class="dealer-glow"></span><span class="dealer-hand">✊</span><span class="dealer-cards"><span class="playing-card card-j"><small>J<br>♣</small><strong>♣</strong></span><span class="playing-card card-a"><small>A<br>♠</small><strong>♠</strong></span></span></span><span class="game-title">BLACKJACK</span><span class="game-subtitle">GET 21 · HIT / STAND</span><span class="game-play">PLAY NOW ↗</span></button>
-    <button type="button" class="game-card card-wheel" data-game="wheel" aria-label="Open Color Wheel"><span class="game-index" aria-hidden="true">05 / 05</span><span class="xmas-game-snow" aria-hidden="true">❄</span><span class="game-live">✦ WINTER GAME</span><span class="game-art art-wheel" aria-hidden="true"><span>🎯</span><span class="thumbnail-wheel"></span></span><span class="game-title">COLOR WHEEL</span><span class="game-subtitle">RED OR BLACK</span><span class="game-play">PLAY NOW ↗</span></button>
+    <button type="button" class="game-card card-blackjack has-original-thumbnail" data-game="blackjack" aria-label="Open Blackjack"><svg class="game-thumbnail-image" viewBox="0 0 360 202" preserveAspectRatio="xMidYMid slice" aria-hidden="true" focusable="false"><image href="/game-thumbnails.webp?v=1" x="-360" y="-202" width="720" height="404" preserveAspectRatio="none"/></svg><span class="game-index" aria-hidden="true">04 / 05</span><span class="xmas-game-snow" aria-hidden="true">❄</span><span class="game-live">✦ WINTER GAME</span><span class="game-art art-blackjack" aria-hidden="true"><img class="minecraft-dealer" src="https://mc-heads.net/body/Technoblade/220" alt=""><span class="dealer-glow"></span><span class="dealer-hand">✊</span><span class="dealer-cards"><span class="playing-card card-j"><small>J<br>♣</small><strong>♣</strong></span><span class="playing-card card-a"><small>A<br>♠</small><strong>♠</strong></span></span></span><span class="game-title">BLACKJACK</span><span class="game-subtitle">GET 21 · HIT / STAND</span><span class="game-play">PLAY NOW ↗</span></button>
+    <button type="button" class="game-card card-wheel has-original-thumbnail" data-game="wheel" aria-label="Open Color Wheel"><svg class="game-thumbnail-image" viewBox="0 0 360 202" preserveAspectRatio="xMidYMid slice" aria-hidden="true" focusable="false"><image href="/game-thumbnails.webp?v=1" x="0" y="-202" width="720" height="404" preserveAspectRatio="none"/></svg><span class="game-index" aria-hidden="true">05 / 05</span><span class="xmas-game-snow" aria-hidden="true">❄</span><span class="game-live">✦ WINTER GAME</span><span class="game-art art-wheel" aria-hidden="true"><span>🎯</span><span class="thumbnail-wheel"></span></span><span class="game-title">COLOR WHEEL</span><span class="game-subtitle">RED OR BLACK</span><span class="game-play">PLAY NOW ↗</span></button>
   </div>
 
   <section class="royale-guide" aria-labelledby="royaleGuideHeading">
