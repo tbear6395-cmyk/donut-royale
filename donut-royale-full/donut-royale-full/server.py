@@ -483,27 +483,17 @@ def log_game(db, user_id, game, stake, payout, outcome, details=None):
 
 # Mines uses actual 5x5 probability rather than a flat 30% coin-toss win rate.
 MINES_TILES = 25
-MINES_MAX_COUNT = 20  # Leave at least 5 safe tiles; no one-click auto-wins.
+MINES_MAX_COUNT = 20  # Prevent one-click auto-wins.
 MINES_MAX_PAYOUT = 1_000_000_000_000
 MINES_FIRST_PICK_PERCENT = 50
-MINES_SECOND_PICK_PERCENT = 80
+MINES_PICK_STEP_PERCENT = 10
 
 def mines_payout(bet, mine_count, opened):
-    if not 1 <= opened <= 25 - mine_count:
+    if not 1 <= opened <= MINES_TILES - mine_count:
         return 0
-    # Early cashouts must not create easy profits on huge stakes.
-    # 1B bet -> 500M after one safe tile, or 800M after two.
-    if opened == 1:
-        return min(MINES_MAX_PAYOUT, bet * MINES_FIRST_PICK_PERCENT // 100)
-    if opened == 2:
-        return min(MINES_MAX_PAYOUT, bet * MINES_SECOND_PICK_PERCENT // 100)
-    # From the third safe pick onward, use the true board odds at 94% RTP.
-    numerator, denominator = 1, 1
-    for i in range(opened):
-        numerator *= 25 - i
-        denominator *= 25 - mine_count - i
-    payout = bet * 94 * numerator // (100 * denominator)
-    return min(MINES_MAX_PAYOUT, max(bet, payout))
+    # Every safe tile adds 0.10x: first 0.50x, second 0.60x, etc.
+    percent = MINES_FIRST_PICK_PERCENT + (opened - 1) * MINES_PICK_STEP_PERCENT
+    return min(MINES_MAX_PAYOUT, bet * percent // 100)
 
 def mines_state(row):
     if not row:
@@ -682,9 +672,9 @@ class Handler(BaseHTTPRequestHandler):
                                      (user["id"],)).fetchone()
             return self.send_json(200, {"round":mines_state(current),
                                         "max_bet":MAX_BET,
-                                        "max_payout":MINES_MAX_PAYOUT, "return_percent":94,
+                                        "max_payout":MINES_MAX_PAYOUT,
                                         "first_pick_percent":MINES_FIRST_PICK_PERCENT,
-                                        "second_pick_percent":MINES_SECOND_PICK_PERCENT})
+                                        "pick_step_percent":MINES_PICK_STEP_PERCENT})
         if path == "/api/admin/bot-auto-deposit-preview":
             if user["role"] not in ("owner", "admin"):
                 return self.fail(403, "Staff only")
@@ -1076,12 +1066,6 @@ class Handler(BaseHTTPRequestHandler):
                     if bet > wallet["balance"]:
                         return self.fail(400, "Not enough credits")
                     db.execute("UPDATE users SET balance=balance-? WHERE id=?",(bet,user["id"]))
-                    if bet == wallet["balance"]:
-                        mines_log(db,user["id"],bet,0,"lose",count,0)
-                        return self.send_json(200,{"status":"lose","reason":"all_in",
-                                                   "message":"ALL IN always loses",
-                                                   "balance":wallet["balance"]-bet,
-                                                   "bet":bet,"mines":count})
                     bombs = sorted(secrets.SystemRandom().sample(range(MINES_TILES),count))
                     db.execute("INSERT INTO mines_games(user_id,bet,mines,bombs,revealed) VALUES(?,?,?,?,?)",
                                (user["id"],bet,count,json.dumps(bombs),"[]"))

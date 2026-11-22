@@ -3029,8 +3029,8 @@ header>div.header-account:last-child{
           <button class="mines-cashout-btn" type="button" id="minesCashout" disabled>💰 CASH OUT</button>
           <div class="mines-info">
             <strong>HOW IT WORKS</strong>
-            <p>First safe tile: 0.50× payout (you lose half your stake). Second safe tile: 0.80× payout. You can cash out after one diamond, or keep revealing tiles to earn higher multipliers. TNT loses your whole stake.</p>
-            <p>From 3 safe tiles, payouts follow the 94% theoretical return formula before the payout cap. New rounds allow 1–20 mines. ALL IN always loses under the site's current rules. Maximum payout: 1T credits.</p>
+            <p>Every safe tile adds 0.10×: first 0.50×, second 0.60×, third 0.70×, fourth 0.80×, fifth 0.90×, sixth 1.00× and so on. Cash out after any safe tile.</p>
+            <p>Hitting TNT loses your entire stake. Multipliers show total returned credits, not profit. New rounds allow 1–20 mines. Maximum payout: 1T credits.</p>
           </div>
         </div>
       </div>
@@ -4030,8 +4030,7 @@ function minesApply(result){
    " OR KEEP GOING":"ROUND STARTED · PICK A TILE OR USE AUTO PICK");
  }else{
   minesRound=null;minesFinished=result;
-  if(result.status==="lose")minesMessage(result.reason==="all_in"?
-   "⚠ ALL IN ALWAYS LOSES · STAKE LOST":"💥 HIT A MINE · STAKE LOST",true);
+  if(result.status==="lose")minesMessage("💥 HIT A MINE · ENTIRE STAKE LOST",true);
   else if(result.status==="cashout")minesMessage("🏆 CASHED OUT "+fmt(result.payout)+
    " · "+minesMult(result.multiplier)+(result.auto_win?" · BOARD CLEARED":""));
   else minesMessage("Unknown result. Please reload.",true);
@@ -4062,7 +4061,6 @@ async function minesStart(){
   if(amount<1||amount>3000000000)throw Error("Bet must be between 1 and 3B");
   if(!Number.isInteger(count)||count<1||count>20)throw Error("Choose 1 to 20 mines");
   if(!me||amount>me.balance)throw Error("Not enough credits");
-  if(amount===me.balance&&!confirm("ALL IN ALWAYS LOSES. You will lose your entire balance. Continue?"))return;
  }catch(e){minesMessage(e.message,true);toast(e.message);return;}
  minesBusy=true;minesRender();minesMessage("PREPARING YOUR MINES FIELD...");
  try{minesApply(await api("mines/start",{amount,mines:count}));}
