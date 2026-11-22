@@ -275,7 +275,7 @@ class Handler(BaseHTTPRequestHandler):
                 event_data = dict(event)
                 matches = []
                 for ticket in tickets:
-                    nick = re.search(r"\\[MINECRAFT NICK\\]\\s+(\\.?[A-Za-z0-9_]{3,16})(?![A-Za-z0-9_])", ticket["message"])
+                    nick = re.search(r"\[MINECRAFT NICK\]\s+(\.?[A-Za-z0-9_]{3,16})(?![A-Za-z0-9_])", ticket["message"])
                     if (nick and nick.group(1).casefold() == event["player"].casefold()
                             and ticket["amount"] == event["amount"]):
                         matches.append({"ticket_id": ticket["id"], "user_id": ticket["user_id"],
