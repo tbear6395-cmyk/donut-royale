@@ -3611,35 +3611,177 @@ function syncRanksPage(){
 window.addEventListener("hashchange",syncRanksPage);
 
 
+
 let bjActive=false;
 let bjBusy=false;
-function bjRenderCards(id,cards){const el=$(id);el.replaceChildren();cards.forEach(c=>{const card=document.createElement("span");card.className="bj-card"+(c==="🂠"?" back":(/[♥♦]/.test(c)?" red":""));card.textContent=c;el.append(card);});}
+let bjVisual={player:[],dealer:[]};
+const bjReduced=()=>window.matchMedia&&window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+function bjSuit(rank,zone,index){
+  // The server deals ranks only. Suits are a stable visual decoration, not game logic.
+  const suits=["♦","♠","♥","♣"];
+  return suits[(String(rank).charCodeAt(0)+3*index+(zone==="dealer"?1:0))%4];
+}
+function bjFace(rank,zone,index){
+  const suit=bjSuit(rank,zone,index);
+  const face=document.createElement("span");face.className="bj-card-side bj-card-front";
+  if(suit==="♥"||suit==="♦")face.classList.add("bj-red-suit");
+  const top=document.createElement("span");top.className="bj-face-corner";
+  const num=document.createElement("b");num.textContent=rank;
+  const small=document.createElement("small");small.textContent=suit;
+  top.append(num,small);
+  const center=document.createElement("span");center.className="bj-face-pip";center.textContent=suit;
+  const bottom=top.cloneNode(true);bottom.classList.add("bj-face-corner-bottom");
+  face.append(top,center,bottom);
+  return face;
+}
+function bjMakeCard(rank,zone,index){
+  const card=document.createElement("span");card.className="bj-card3d";
+  card.dataset.rank=rank;card.dataset.zone=zone;card.dataset.index=String(index);
+  card.setAttribute("role","img");
+  card.setAttribute("aria-label",rank==="🂠"?"Face-down card":rank+" playing card");
+  const core=document.createElement("span");core.className="bj-card-core";
+  const front=bjFace(rank==="🂠"?"?":rank,zone,index);
+  const back=document.createElement("span");back.className="bj-card-side bj-card-back";
+  const stamp=document.createElement("span");stamp.className="bj-card-insignia";stamp.textContent="✦ DR ✦";
+  back.append(stamp);core.append(front,back);card.append(core);
+  return card;
+}
+function bjFlip(card,rank,zone,index){
+  card.querySelector(".bj-card-front").replaceWith(bjFace(rank,zone,index));
+  card.dataset.rank=rank;
+  card.setAttribute("aria-label",rank+" playing card");
+  card.querySelector(".bj-card-core").classList.add("bj-face-up");
+}
+function bjClearBoard(){
+  $("bjDealer").replaceChildren();
+  $("bjPlayer").replaceChildren();
+  $("bjFlightLayer").replaceChildren();
+  $("bjPayoutPop").classList.remove("bj-payout-visible");
+  bjVisual={player:[],dealer:[]};
+  $("bjScore").textContent="0";$("bjDealerScore").textContent="?";
+}
+async function bjCardFlight(target){
+  if(bjReduced())return;
+  const scene=$("screen-blackjack").querySelector(".bj-casino-scene");
+  const rect=scene.getBoundingClientRect();
+  const shoe=$("bjShoe").getBoundingClientRect();
+  const end=target.getBoundingClientRect();
+  if(!rect.width||!shoe.width||!end.width)return;
+  const startX=shoe.left+shoe.width*.5-rect.left-end.width*.5;
+  const startY=shoe.top+shoe.height*.4-rect.top-end.height*.5;
+  const dx=end.left+end.width*.5-(rect.left+startX+end.width*.5);
+  const dy=end.top+end.height*.5-(rect.top+startY+end.height*.5);
+  const flyer=bjMakeCard("🂠",target.dataset.zone,Number(target.dataset.index));
+  flyer.classList.add("bj-flight-card");flyer.style.left=startX+"px";flyer.style.top=startY+"px";
+  $("bjFlightLayer").append(flyer);
+  try{
+    if(typeof flyer.animate==="function"){
+      const anim=flyer.animate([
+        {transform:"translate3d(0,0,125px) rotateX(64deg) rotateZ(-37deg) scale(.75)",opacity:.9,offset:0},
+        {transform:"translate3d("+(dx*.76)+"px,"+(dy*.77-18)+"px,130px) rotateX(22deg) rotateZ(12deg) scale(1.06)",opacity:1,offset:.72},
+        {transform:"translate3d("+dx+"px,"+dy+"px,0px) rotateX(0deg) rotateZ(-2deg) scale(1)",opacity:1,offset:1}
+      ],{duration:510,easing:"cubic-bezier(.19,.71,.18,1)",fill:"forwards"});
+      await anim.finished.catch(()=>{});
+    }else await sleep(370);
+  }finally{flyer.remove();}
+}
+async function bjDealCard(zone,rank){
+  const index=bjVisual[zone].length;
+  const card=bjMakeCard(rank,zone,index);
+  card.classList.add("bj-card-awaiting");
+  $(zone==="player"?"bjPlayer":"bjDealer").append(card);
+  bjVisual[zone].push(card);
+  await bjCardFlight(card);
+  card.classList.remove("bj-card-awaiting");
+  card.classList.add("bj-card-landed");
+  if(rank!=="🂠"){
+    bjFlip(card,rank,zone,index);
+    if(!bjReduced())await sleep(340);
+  }else if(!bjReduced())await sleep(90);
+}
+async function bjRevealDealer(dealerCards){
+  const hidden=bjVisual.dealer[1];
+  if(hidden&&hidden.dataset.rank==="🂠"&&dealerCards.length>1){
+    bjFlip(hidden,dealerCards[1],"dealer",1);
+    if(!bjReduced())await sleep(420);
+  }
+  for(let i=bjVisual.dealer.length;i<dealerCards.length;i++)await bjDealCard("dealer",dealerCards[i]);
+}
+function bjStaticResult(r){
+  bjClearBoard();
+  for(const zone of ["player","dealer"]){
+    r[zone].forEach((rank,i)=>{
+      const card=bjMakeCard(rank,zone,i);
+      if(rank!=="🂠")bjFlip(card,rank,zone,i);
+      $(zone==="player"?"bjPlayer":"bjDealer").append(card);
+      bjVisual[zone].push(card);
+    });
+  }
+  $("bjScore").textContent=String(r.player_score);
+  $("bjDealerScore").textContent=r.dealer_score==null?"?":String(r.dealer_score);
+}
+async function bjAnimateResponse(action,r){
+  if(action==="deal"){
+    bjClearBoard();
+    $("bjResult").textContent="♠ DEALING CARDS...";
+    if(r.player.length>0)await bjDealCard("player",r.player[0]);
+    if(r.dealer.length>0)await bjDealCard("dealer",r.dealer[0]);
+    if(r.player.length>1)await bjDealCard("player",r.player[1]);
+    if(r.dealer.length>1)await bjDealCard("dealer","🂠");
+  }
+  for(let i=bjVisual.player.length;i<r.player.length;i++){
+    $("bjResult").textContent="♠ DRAWING A CARD...";
+    await bjDealCard("player",r.player[i]);
+  }
+  if(r.outcome!=="playing"){
+    $("bjResult").textContent="♛ DEALER REVEALS...";
+    await bjRevealDealer(r.dealer);
+  }
+  $("bjScore").textContent=String(r.player_score);
+  $("bjDealerScore").textContent=r.dealer_score==null?"?":String(r.dealer_score);
+  if(r.outcome==="win"){
+    const pop=$("bjPayoutPop");pop.classList.remove("bj-payout-visible");
+    void pop.offsetWidth;pop.classList.add("bj-payout-visible");
+  }
+}
+function bjUpdateButtons(){
+  $("bjDeal").disabled=bjBusy||bjActive;
+  $("bjHit").disabled=bjBusy||!bjActive;
+  $("bjStand").disabled=bjBusy||!bjActive;
+  $("bjBet").readOnly=bjBusy||bjActive;
+}
 async function blackjackAction(action){
   if(bjBusy)return;
-  if(action==="deal" && bjActive){toast("Finish the current hand first");return;}
+  if(action==="deal"&&bjActive){toast("Finish your current hand first");return;}
   let amount;
   if(action==="deal"){
-    try{amount=parseAmount($("bjBet").value);if(amount<1||amount>3000000000)throw Error("Bet must be between 1 and 3B");if(!me||amount>me.balance)throw Error("Not enough credits");}catch(e){toast(e.message);return;}
+    try{
+      amount=parseAmount($("bjBet").value);
+      if(amount<1||amount>3000000000)throw Error("Bet must be between 1 and 3B");
+      if(!me||amount>me.balance)throw Error("Not enough credits");
+    }catch(e){toast(e.message);$("bjResult").textContent=e.message;return;}
   }
-  bjBusy=true;
+  bjBusy=true;bjUpdateButtons();
   try{
     const r=await api("blackjack",{action,...(action==="deal"?{amount}:{})});
+    if(!r||!Array.isArray(r.player)||!Array.isArray(r.dealer)||!r.player.length||!r.dealer.length)throw Error("Invalid Blackjack response");
     bjActive=r.outcome==="playing";
-    bjRenderCards("bjPlayer",r.player);bjRenderCards("bjDealer",r.dealer);
-    $("bjScore").textContent=String(r.player_score);
-    $("bjDealerScore").textContent=r.dealer_score===null?"?":String(r.dealer_score);
-    $("bjResult").textContent=r.outcome==="playing"?"Choose HIT or STAND"
-      :r.outcome==="win"?"✨ BLACKJACK WIN! +"+fmt(r.payout-r.amount)
-      :r.outcome==="push"?"🤝 PUSH — bet returned"
-      :"HOUSE WINS · -"+fmt(r.amount);
-    me.balance=r.balance;$("balance").textContent=fmt(r.balance);$("topBalance").textContent=fmt(r.balance);
-  }catch(e){toast(e.message);}
-  finally{bjBusy=false;$("bjDeal").disabled=bjActive;$("bjHit").disabled=!bjActive;$("bjStand").disabled=!bjActive;}
+    try{await bjAnimateResponse(action,r);}
+    catch(err){console.warn("Blackjack animation fallback",err);bjStaticResult(r);}
+    $("bjResult").textContent=r.outcome==="playing"?"YOUR TURN · HIT OR STAND"
+      :r.outcome==="win"?"🏆 YOU WIN · PAYOUT "+fmt(r.payout)+" · +"+fmt(r.payout-r.amount)
+      :r.outcome==="push"?"🤝 PUSH · BET RETURNED"
+      :"DEALER WINS · -"+fmt(r.amount);
+    me.balance=r.balance;
+    $("balance").textContent=fmt(r.balance);
+    $("topBalance").textContent=fmt(r.balance);
+    if(typeof updateWalletBalances==="function")updateWalletBalances();
+  }catch(e){toast(e.message);$("bjResult").textContent=e.message;}
+  finally{bjBusy=false;bjUpdateButtons();}
 }
 $("bjDeal").onclick=()=>blackjackAction("deal");
 $("bjHit").onclick=()=>blackjackAction("hit");
 $("bjStand").onclick=()=>blackjackAction("stand");
-
 
 function openGame(game){
   if(!me){
