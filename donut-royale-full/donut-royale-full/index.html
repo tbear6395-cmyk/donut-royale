@@ -2521,7 +2521,7 @@ document.querySelectorAll(".quick").forEach(group=>{
           return;
         }
         input.value=String(balance);
-        toast("ALL IN selected: "+fmt(balance)+" credits. WARNING: Guaranteed loss (0% win chance).");
+        // Selecting ALL IN only fills the stake input; no popup toast.
       }else{
         input.value=b.textContent.trim();
       }
