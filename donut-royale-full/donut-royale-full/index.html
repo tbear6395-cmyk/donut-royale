@@ -2068,11 +2068,6 @@ header>div.header-account:last-child{
 #screen-blackjack .bj-purple-wall{position:absolute;inset:0 0 52%;background:repeating-linear-gradient(90deg,#190c24 0 67px,#551593 68px 109px,#6e24bb 110px 115px,#1e112b 116px 158px);opacity:.85;border-bottom:16px solid #43374d}
 #screen-blackjack .bj-purple-wall::after{content:"";position:absolute;inset:0;background:repeating-linear-gradient(0deg,transparent 0 28px,#0005 29px 32px);pointer-events:none}
 #screen-blackjack .bj-purple-wall span{display:none}
-#screen-blackjack .bj-dealer-portrait{position:absolute;left:50%;top:4px;transform:translateX(-50%);width:112px;height:163px;z-index:2;filter:drop-shadow(0 5px 7px #0009)}
-#screen-blackjack .bj-dealer-crown{position:absolute;left:35px;top:-3px;color:#f7db7c;font-size:39px;text-shadow:0 2px 1px #694717}
-#screen-blackjack .bj-dealer-face{position:absolute;left:28px;top:36px;width:58px;height:59px;border:8px solid #e1be7a;background:#faf3cc;color:#211c2b;display:grid;place-items:center;font-size:32px;box-shadow:4px 4px 0 #846342}
-#screen-blackjack .bj-dealer-jacket{position:absolute;left:10px;right:10px;bottom:5px;height:63px;border:8px solid #4a193c;background:linear-gradient(90deg,#d9a446 0 12%,#241a24 12% 40%,#bf3051 42% 59%,#241a24 62% 88%,#d9a446 88%);border-radius:12px 12px 2px 2px}
-#screen-blackjack .bj-dealer-name{position:absolute;z-index:3;left:50%;bottom:-1px;transform:translateX(-50%);background:#121921da;border:1px solid #d1a76e;color:#ffe8b2;font-size:8px;letter-spacing:1px;font-weight:1000;padding:4px 7px;border-radius:4px;white-space:nowrap}
 #screen-blackjack .bj-table-frame{position:absolute;inset:130px 4% -70px;border:20px solid #382014;border-bottom-width:30px;border-radius:48% 48% 22% 22% / 45% 45% 15% 15%;box-shadow:inset 0 0 0 6px #bf8f4c,0 0 0 7px #110d0d,0 10px 25px #000b;background:#11633a;z-index:1}
 #screen-blackjack .bj-table-felt{position:absolute;inset:0;border:4px solid #916a3a;border-radius:inherit;background:radial-gradient(ellipse at 48% 55%,#228b53,#0b5b38 76%);overflow:hidden}
 #screen-blackjack .bj-table-felt::before{content:"";position:absolute;inset:17px 17px 0;border:2px solid #e8ce729a;border-bottom:0;border-radius:48% 48% 10% 10%/52% 52% 10% 10%;pointer-events:none}
@@ -2115,7 +2110,6 @@ header>div.header-account:last-child{
 @media(max-width:650px){
  #screen-blackjack .bj-table-badge{display:none}
  #screen-blackjack .bj-casino-scene{height:365px}
- #screen-blackjack .bj-dealer-portrait{transform:translateX(-50%) scale(.82);transform-origin:top center}
  #screen-blackjack .bj-table-frame{inset:115px 2% -65px;border-width:14px 14px 24px}
  #screen-blackjack .bj-table-rules{top:75px}
  #screen-blackjack .bj-player-zone{top:160px}
@@ -2134,37 +2128,115 @@ header>div.header-account:last-child{
 
 /* 3D BLACKJACK - Minecraft-style casino stage and animated card visuals. */
 .game-window:has(#screen-blackjack:not([hidden])){width:min(1100px,100%);perspective:1100px}
-#screen-blackjack .bj-casino-scene{height:490px;perspective:1000px;isolation:isolate;overflow:hidden;
- background:linear-gradient(180deg,#151024,#230b3a 35%,#665572 36%,#373042 49%,#0e171c 100%);box-shadow:inset 0 0 40px #0c0518}
-#screen-blackjack .bj-purple-wall{inset:0 0 45%;opacity:.94;
- background:repeating-linear-gradient(0deg,transparent 0 24px,#160a2a65 25px 29px),
- repeating-linear-gradient(90deg,#20142b 0 37px,#8c33cc 38px 87px,#160e28 88px 121px)}
-#screen-blackjack .bj-purple-wall::before{content:"";position:absolute;inset:57% 0 0;
- background:repeating-linear-gradient(0deg,#595260 0 29px,#342b3b 30px 34px);
- border-top:9px solid #422e53}
-#screen-blackjack .bj-scene-sign{position:absolute;left:0;right:0;top:12px;z-index:4;text-align:center;
- color:#ff86fd;font:900 clamp(12px,2vw,17px) "Arial Black",sans-serif;letter-spacing:1px;text-shadow:0 0 12px #e300fd,2px 3px #1b0d25}
-#screen-blackjack .bj-scene-plant{position:absolute;top:113px;width:42px;height:70px;z-index:2}
-#screen-blackjack .bj-plant-left{left:14%}#screen-blackjack .bj-plant-right{right:14%}
-#screen-blackjack .bj-scene-plant::before{content:"";display:block;height:42px;width:36px;
- background:repeating-conic-gradient(#257049 0 25%,#43985c 0 50%) 0 0/15px 15px;border:3px solid #244c30}
-#screen-blackjack .bj-scene-plant i{display:block;margin:0 8px;width:27px;height:25px;border:4px solid #ba784e;background:#743d32}
-#screen-blackjack .bj-dealer-portrait{top:27px;width:123px;height:172px;z-index:5;transform:translateX(-50%) perspective(260px) rotateX(3deg)}
-#screen-blackjack .bj-dealer-crown{left:41px;top:-6px;z-index:3}
-#screen-blackjack .bj-dealer-face{top:30px;left:29px;width:72px;height:73px;border:7px solid #b99b5b;border-radius:3px;
- background:linear-gradient(135deg,#fef5d4,#c3c1ad);box-shadow:inset 0 0 0 3px #806b46,7px 5px 0 #6f4b31;transform:rotateY(-13deg)}
-#screen-blackjack .bj-clock-dial{display:block;position:relative;width:42px;height:42px;border:5px solid #3c4248;border-radius:50%;background:#e9e9dd;box-shadow:inset 2px 2px #b6b6aa}
-#screen-blackjack .bj-clock-dial::before{content:"";position:absolute;left:16px;top:6px;width:4px;height:15px;background:#262d33;transform:rotate(10deg);transform-origin:bottom}
-#screen-blackjack .bj-clock-dial::after{content:"";position:absolute;left:17px;top:18px;width:15px;height:4px;background:#262d33;transform:rotate(-25deg);transform-origin:left}
-#screen-blackjack .bj-dealer-jacket{height:76px;bottom:5px;left:10px;right:10px;border-radius:2px;border:7px solid #2c1c24;
- background:linear-gradient(90deg,#a57932 0 9%,#301b25 10% 30%,#b61e3c 31% 42%,#ddb760 43% 55%,#271e25 55% 77%,#bc2547 78% 86%,#a57932 87%)}
-#screen-blackjack .bj-dealer-name{bottom:-10px;background:#25152c;border-color:#b462d6;color:#ffd7ff}
-#screen-blackjack .bj-table-frame{inset:158px 3% -105px;border-width:24px 24px 42px;
+#screen-blackjack .bj-casino-scene{
+ height:490px;perspective:1000px;
+ background:radial-gradient(ellipse at 50% 12%,#583550 0,transparent 55%),linear-gradient(#17111e 54%,#090d14);
+ box-shadow:inset 0 0 36px #08060e;
+}
+#screen-blackjack .bj-purple-wall{
+ inset:0 0 48%;opacity:1;border-bottom:8px solid #2e2030;
+ background:radial-gradient(ellipse at 50% 6%,#e69c573f,transparent 55%),
+  repeating-linear-gradient(90deg,#171220 0 4px,#322339 4px 6px,transparent 6px 86px);
+}
+#screen-blackjack .bj-purple-wall::after{
+ inset:24px 8% 19px;border:1px solid #bd895348;border-radius:90px 90px 0 0;
+ background:linear-gradient(90deg,transparent,#e5a77322,transparent) center top/100% 1px no-repeat;
+}
+#screen-blackjack .bj-sconce{
+ position:absolute;top:56px;width:5px;height:47px;border-radius:3px;background:#ffe4ae;
+ box-shadow:0 0 9px 2px #ffa26e,0 0 39px 13px #d85a554d;
+}
+#screen-blackjack .bj-sconce:first-child{left:22%}
+#screen-blackjack .bj-sconce:last-child{right:22%}
+
+#screen-blackjack .bj-dealer-portrait{
+ position:absolute;z-index:2;left:50%;top:18px;width:192px;height:142px;
+ perspective:420px;transform:translateX(-50%) scale(var(--dealer-scale,1));
+ transform-origin:top center;pointer-events:none;
+}
+#screen-blackjack .bj-dealer-rig{
+ position:absolute;inset:0;transform-style:preserve-3d;transform:rotateX(-8deg) rotateY(-14deg);
+}
+#screen-blackjack .bj-dealer-block{
+ position:absolute;background:var(--front);transform-style:preserve-3d;
+}
+#screen-blackjack .bj-dealer-block::before,#screen-blackjack .bj-dealer-block::after{
+ content:"";position:absolute;
+}
+#screen-blackjack .bj-dealer-block::before{
+ width:var(--depth);height:100%;left:100%;top:0;transform:rotateY(90deg);
+ transform-origin:left;background:var(--side);
+}
+#screen-blackjack .bj-dealer-block::after{
+ height:var(--depth);width:100%;left:0;bottom:100%;transform:rotateX(90deg);
+ transform-origin:bottom;background:var(--top);
+}
+#screen-blackjack .bj-dealer-head{
+ --depth:36px;--front:linear-gradient(135deg,#f0bc8a,#c98764);
+ --side:linear-gradient(#503143 0 26%,#965b4d 26%);--top:#654052;
+ left:63px;top:13px;width:66px;height:63px;transform:translateZ(12px);
+}
+#screen-blackjack .bj-dealer-hair{
+ position:absolute;inset:0;background:linear-gradient(145deg,#533143,#251825);
+ clip-path:polygon(0 0,100% 0,100% 42%,86% 42%,86% 27%,58% 27%,58% 20%,29% 20%,29% 33%,13% 33%,13% 56%,0 56%);
+}
+#screen-blackjack .bj-dealer-eyes{
+ position:absolute;top:30px;left:15px;width:12px;height:7px;
+ background:linear-gradient(90deg,#ffebce 40%,#382234 40%);
+ box-shadow:24px 0 #372434,0 -5px 0 -1px #593345,24px -5px 0 -1px #593345;
+}
+#screen-blackjack .bj-dealer-monocle{
+ position:absolute;top:25px;left:36px;width:19px;height:17px;border:2px solid #fbe2a0;
+ box-shadow:inset 1px 1px #fff6d26e,1px 1px #865237;
+}
+#screen-blackjack .bj-dealer-monocle::after{
+ content:"";position:absolute;top:100%;right:0;width:2px;height:11px;background:#e4b368;
+}
+#screen-blackjack .bj-dealer-mouth{
+ position:absolute;left:26px;top:49px;width:19px;height:4px;
+ border-right:3px solid #704038;border-bottom:3px solid #704038;
+}
+#screen-blackjack .bj-dealer-torso{
+ --depth:30px;--front:linear-gradient(135deg,#704864,#301e35 66%);
+ --side:#2a192d;--top:#805467;
+ left:53px;top:76px;width:86px;height:74px;
+}
+#screen-blackjack .bj-dealer-shirt{
+ position:absolute;inset:0;background:#fff0d4;clip-path:polygon(25% 0,75% 0,50% 66%);
+}
+#screen-blackjack .bj-dealer-bow{
+ position:absolute;top:9px;left:29px;width:28px;height:16px;background:#7e2948;
+ clip-path:polygon(0 0,50% 32%,100% 0,100% 100%,50% 68%,0 100%);
+}
+#screen-blackjack .bj-dealer-pin{
+ position:absolute;top:29px;right:13px;width:8px;height:8px;background:#f4c177;
+ transform:rotate(45deg);box-shadow:0 0 8px #ffbb5e6e;
+}
+#screen-blackjack .bj-dealer-arm{
+ --depth:23px;--front:linear-gradient(#594057 0 67%,#f8e3c3 67% 75%,#da9a72 75%);
+ --side:linear-gradient(#301e35 0 67%,#c3a893 67% 75%,#a86751 75%);--top:#795367;
+ top:79px;width:24px;height:68px;transform-origin:center 10px;
+}
+#screen-blackjack .bj-dealer-arm-left{left:30px;transform:rotateZ(17deg) rotateX(-14deg)}
+#screen-blackjack .bj-dealer-arm-right{right:30px;transform:rotateZ(-17deg) rotateX(-14deg)}
+@media(prefers-reduced-motion:no-preference){
+ #screen-blackjack .bj-dealer-arm-right{transition:transform .22s ease-out}
+ #screen-blackjack .bj-casino-scene:has(.bj-flight-card) .bj-dealer-arm-right{
+  transform:rotateZ(-41deg) rotateX(-42deg);
+ }
+}
+
+#screen-blackjack .bj-table-frame{z-index:3;inset:158px 3% -105px;border-width:24px 24px 42px;
  border-radius:49% 49% 18% 18% / 44% 44% 12% 12%;transform:perspective(980px) rotateX(8deg);
  transform-origin:center 80%;box-shadow:inset 0 0 0 7px #bd9559,0 0 0 7px #1a110f,0 25px 35px #000b,0 13px 0 8px #513421}
 #screen-blackjack .bj-table-frame::after{content:"";position:absolute;left:-17px;right:-17px;bottom:9px;height:25px;
  border-top:4px solid #a97540;background:repeating-linear-gradient(90deg,#522f1f 0 17px,#351c13 17px 34px);border-radius:0 0 15px 15px}
-#screen-blackjack .bj-table-felt{background:radial-gradient(ellipse at 48% 47%,#258750,#075c3b 71%,#084731);box-shadow:inset 0 0 37px #063b26}
+#screen-blackjack .bj-table-felt{
+ background:radial-gradient(ellipse at 50% 0,#d3f5a728,transparent 63%),
+  repeating-linear-gradient(122deg,transparent 0 2px,#001b141e 2px 3px),
+  radial-gradient(ellipse at 48% 47%,#1e6f56,#0c473c 71%,#082d2a);
+ box-shadow:inset 0 8px 28px #062c259c,inset 0 0 2px 1px #ebc78f;
+}
 #screen-blackjack .bj-table-rules{top:108px;color:#f5dd9b99}
 #screen-blackjack .bj-dealer-zone{top:7px}
 #screen-blackjack .bj-player-zone{top:170px}
@@ -2214,11 +2286,10 @@ header>div.header-account:last-child{
 #screen-blackjack .bj-action-area .choices button:disabled{opacity:.5}
 @media(max-width:700px){
  #screen-blackjack .bj-casino-scene{height:390px}
- #screen-blackjack .bj-dealer-portrait{top:18px;transform:translateX(-50%) scale(.8);transform-origin:top center}
+ #screen-blackjack .bj-dealer-portrait{top:14px;--dealer-scale:.80}
  #screen-blackjack .bj-table-frame{inset:127px 1% -78px;border-width:14px 13px 26px}
  #screen-blackjack .bj-deck-shoe{top:135px;right:5%;scale:.75;transform-origin:top right}
  #screen-blackjack .bj-chip-rack{top:163px;left:3%;scale:.77;transform-origin:top left}
- #screen-blackjack .bj-scene-plant{top:95px;scale:.7}
  #screen-blackjack .bj-table-rules{top:91px}
  #screen-blackjack .bj-player-zone{top:149px}
  #screen-blackjack .bj-table-center{top:137px}
@@ -2232,7 +2303,7 @@ header>div.header-account:last-child{
 @media(max-width:430px){
  #screen-blackjack .bj-casino-scene{height:353px}
  #screen-blackjack .bj-table-frame{inset:116px 0 -67px;border-width:11px 8px 21px}
- #screen-blackjack .bj-dealer-portrait{top:12px;transform:translateX(-50%) scale(.7)}
+ #screen-blackjack .bj-dealer-portrait{top:13px;--dealer-scale:.72}
  #screen-blackjack .bj-player-zone{top:129px}
  #screen-blackjack .bj-table-center{top:120px}
  #screen-blackjack .bj-table-rules{top:75px}
@@ -3201,13 +3272,23 @@ aside .winter{box-shadow:inset 0 1px #fff2,0 10px 30px #0005,0 0 19px #e1bd7226}
     <div class="bj-table-badge">♠ CLASSIC 1V1 <span>◆ WIN PAYS 2×</span></div>
   </div>
   <div class="bj-casino-scene">
-    <div class="bj-purple-wall" aria-hidden="true"><span></span><span></span><span></span><span></span><span></span><span></span></div>
-    <div class="bj-scene-sign" aria-hidden="true">✦ DONUT ROYALE DEALER ✦</div>
-    <div class="bj-scene-plant bj-plant-left" aria-hidden="true"><i></i></div><div class="bj-scene-plant bj-plant-right" aria-hidden="true"><i></i></div>
+    <div class="bj-purple-wall" aria-hidden="true"><i class="bj-sconce"></i><i class="bj-sconce"></i></div>
     <div class="bj-deck-shoe" id="bjShoe" aria-hidden="true"><span class="bj-deck-stack bj-stack-bottom"></span><span class="bj-deck-stack bj-stack-middle"></span><span class="bj-deck-stack bj-stack-top"><i>♠</i></span></div>
     <div class="bj-flight-layer" id="bjFlightLayer" aria-hidden="true"></div>
     <div class="bj-payout-pop" id="bjPayoutPop" aria-hidden="true"><strong>2.00×</strong><small>WINNING PAYOUT</small></div>
-    <div class="bj-dealer-portrait" aria-hidden="true"><div class="bj-dealer-crown">♛</div><div class="bj-dealer-face"><span class="bj-clock-dial"></span></div><div class="bj-dealer-jacket"></div><div class="bj-dealer-name">ROYAL DEALER</div></div>
+    <div class="bj-dealer-portrait" aria-hidden="true">
+      <div class="bj-dealer-rig">
+        <div class="bj-dealer-block bj-dealer-torso">
+          <span class="bj-dealer-shirt"></span><span class="bj-dealer-bow"></span><span class="bj-dealer-pin"></span>
+        </div>
+        <div class="bj-dealer-block bj-dealer-arm bj-dealer-arm-left"></div>
+        <div class="bj-dealer-block bj-dealer-arm bj-dealer-arm-right"></div>
+        <div class="bj-dealer-block bj-dealer-head">
+          <span class="bj-dealer-hair"></span><span class="bj-dealer-eyes"></span>
+          <span class="bj-dealer-monocle"></span><span class="bj-dealer-mouth"></span>
+        </div>
+      </div>
+    </div>
     <div class="bj-table-frame">
       <div class="bj-table-felt">
         <div class="bj-table-rules" aria-hidden="true"><strong>BLACKJACK PAYS 2 TO 1</strong><span>DEALER DRAWS BELOW 17 · TIES RETURN YOUR BET</span></div>
