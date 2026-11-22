@@ -1367,7 +1367,7 @@ header>.wallet-header-tools{
   width:max-content;
   max-width:100%;
   z-index:20;
-  pointer-events:none;
+  pointer-events:auto;
 }
 header>.wallet-header-tools #walletNav.wallet-nav{
   position:relative;
@@ -1424,10 +1424,10 @@ header>div.header-account:last-child{
   header>.wallet-header-tools .bot-header-status{
     min-height:34px;padding:9px 10px;font-size:9px;
   }
-  aside{top:auto}
+  aside{top:115px}
 }
 @media(max-width:780px){
-  aside{padding-top:10px;}
+  aside{top:auto;padding-top:10px;}
 }
 @media(max-width:580px){
   header{height:111px;min-height:111px;grid-template-rows:44px 44px;padding:7px 9px 8px}
