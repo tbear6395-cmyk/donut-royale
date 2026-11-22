@@ -2128,6 +2128,10 @@ header>div.header-account:last-child{
 }
 @media(max-width:380px){#screen-blackjack .bj-casino-scene{height:343px}#screen-blackjack .bj-table-frame{inset:109px 2% -60px}#screen-blackjack .bj-player-zone{top:153px}#screen-blackjack .bj-cards{gap:2px}#screen-blackjack .bj-card{width:36px;height:53px;font-size:19px}}
 
+#staffCreditFeedback.staff-credit-feedback{display:block;border:1px solid #5b967e;background:#103a2f;color:#c9ffe1;padding:12px 14px;border-radius:9px;font-size:12px;line-height:1.5;font-weight:800;margin:8px 0 3px}
+#staffCreditFeedback.staff-credit-feedback.error{background:#441e2d;border-color:#bd6173;color:#ffe2e3}
+#staffCreditPlayerHint{display:block;line-height:1.45;color:#a9d6c2;margin:6px 0 10px}
+
 </style>
 </head>
 
@@ -2221,10 +2225,14 @@ header>div.header-account:last-child{
     <div class="staff-two-columns">
       <div class="staff-block">
         <div class="staff-block-title"><h2>Credit Manager</h2><small>Owner / delegated admin · All changes recorded in Audit Log</small></div>
-        <label class="staff-label" for="staffCreditUser">PLAYER NICKNAME OR ACCOUNT ID</label><input id="staffCreditUser" type="text" maxlength="32" autocomplete="off" placeholder="e.g. Steve123 or 42"><small class="staff-muted">Enter the registered nickname, or select a player from Player Management.</small>
+        <label class="staff-label" for="staffCreditUser">PLAYER NICKNAME OR ACCOUNT ID</label>
+<input id="staffCreditUser" type="text" maxlength="32" autocomplete="off" list="staffCreditSuggestions" placeholder="Start typing player nickname..." aria-describedby="staffCreditPlayerHint">
+<datalist id="staffCreditSuggestions"></datalist>
+<small id="staffCreditPlayerHint" class="staff-muted">Type a registered nickname or account ID. Suggestions appear as you type.</small>
         <label class="staff-label" for="staffCreditAmount">AMOUNT (1 to 1B)</label><input id="staffCreditAmount" inputmode="numeric" placeholder="e.g. 100K or 1M">
         <label class="staff-label" for="staffCreditReason">REASON (REQUIRED)</label><textarea id="staffCreditReason" maxlength="250" placeholder="Why are credits being adjusted?"></textarea>
         <div class="staff-toolbar"><button id="staffCreditAdd" class="staff-btn" type="button">+ ADD CREDITS</button><button id="staffCreditRemove" class="staff-btn staff-danger" type="button">− REMOVE CREDITS</button></div>
+<p id="staffCreditFeedback" role="status" aria-live="polite" class="staff-credit-feedback">Enter recipient, amount and reason, then choose ADD or REMOVE.</p>
       </div>
       <div class="staff-block">
         <div class="staff-block-title"><h2>Game & Bot Settings</h2><small>Live settings; server enforces every change.</small></div>
@@ -3176,7 +3184,10 @@ async function staffSelectPlayer(player){
     " · "+(player.suspended?"SUSPENDED":"ACTIVE")+" · Last login "+staffTime(player.last_login);
   $("staffPlayerReason").value="";
   $("staffNoteInput").value="";
-  if(me?.can_manage_staff)$("staffCreditUser").value=player.username;
+  if(me?.can_manage_staff){
+    $("staffCreditUser").value=player.username;
+    staffCreditFeedback("Selected player: "+player.username+" · current balance "+staffMoney(player.balance));
+  }
   const allowed=player.role!=="owner" && player.id!==me?.id &&
     (player.role!=="admin"||me?.can_manage_staff);
   $("staffSuspendButton").disabled=!allowed||!!player.suspended;
@@ -3336,44 +3347,81 @@ $("staffSuspendButton").onclick=()=>void staffSetSuspended(true);
 $("staffUnsuspendButton").onclick=()=>void staffSetSuspended(false);
 $("staffNoteButton").onclick=()=>void staffSaveNote();
 $("staffOpenRanks").onclick=()=>{if(me?.can_manage_staff)location.hash="#addRanks";};
+/* Credit Manager: inline errors, registered-player suggestions and safe server settlement. */
+function staffCreditFeedback(message,isError=false){
+  const el=$("staffCreditFeedback");
+  el.textContent=message;
+  el.classList.toggle("error",isError);
+  if(isError)staffStatus(message,true);
+}
+let staffCreditLookupSeq=0;
+async function staffLookupCredits(){
+  const raw=$("staffCreditUser").value.trim();
+  const seq=++staffCreditLookupSeq;
+  $("staffCreditSuggestions").replaceChildren();
+  if(raw.length<2){$("staffCreditPlayerHint").textContent="Type at least two letters to find a player.";return;}
+  if(/^[1-9]\d*$/.test(raw)){$("staffCreditPlayerHint").textContent="Account ID #"+raw+" — you can use it directly.";return;}
+  $("staffCreditPlayerHint").textContent="Searching registered players...";
+  try{
+    const data=await api("staff/players?q="+encodeURIComponent(raw)+"&offset=0");
+    if(seq!==staffCreditLookupSeq)return;
+    const players=data.players||[];
+    players.forEach(u=>{
+      const option=document.createElement("option");
+      option.value=u.username;
+      option.label=u.username+" · "+staffMoney(u.balance)+" · "+u.role;
+      $("staffCreditSuggestions").append(option);
+    });
+    $("staffCreditPlayerHint").textContent=players.length?
+      players.length+" matching account(s). Select a nickname or type it exactly.":
+      "No registered player matches. Check the username.";
+  }catch(err){if(seq===staffCreditLookupSeq)$("staffCreditPlayerHint").textContent="Could not search players: "+err.message;}
+}
+$("staffCreditUser").addEventListener("input",()=>{void staffLookupCredits();});
+$("staffCreditUser").addEventListener("focus",()=>{if($("staffCreditUser").value.trim().length>1)void staffLookupCredits();});
 async function staffAdjustCredits(sign){
-  if(!me?.can_manage_staff){staffStatus("You don't have credit management permissions.",true);return;}
+  if(!me?.can_manage_staff){staffCreditFeedback("Your account does not have permission to adjust credits.",true);return;}
   const recipient=$("staffCreditUser").value.trim();
   const reason=$("staffCreditReason").value.trim();
   let amount;
   try{
     const raw=$("staffCreditAmount").value.trim();
-    // Allow 100K, 1.5M, 1000000 and 1 000 000 / 1,000,000 for common formats.
     const normalized=/^\d{1,3}(?:[ ,]\d{3})+$/.test(raw)?raw.replace(/[ ,]/g,""):raw;
     amount=parseAmount(normalized);
-  }catch(err){staffStatus("Invalid amount. Examples: 100K, 1M, 1000000.",true);return;}
+  }catch(err){staffCreditFeedback("Invalid amount. Enter 100K, 1M, 1000000 or 1 000 000.",true);return;}
   const validId=/^[1-9]\d*$/.test(recipient);
   const validName=/^\.?[A-Za-z0-9_]{3,16}$/.test(recipient);
   if(!recipient||(validId&&!Number.isSafeInteger(Number(recipient)))||(!validId&&!validName)){
-    staffStatus("Enter a registered player nickname or numeric account ID.",true);return;
+    staffCreditFeedback("Enter a valid registered player nickname or numeric account ID.",true);
+    $("staffCreditUser").focus();return;
   }
   if(!Number.isSafeInteger(amount)||amount<1||amount>1000000000){
-    staffStatus("Amount per adjustment must be between 1 and 1B.",true);return;
+    staffCreditFeedback("You can adjust 1 to 1B credits per action.",true);
+    $("staffCreditAmount").focus();return;
   }
   if(reason.length<8||reason.length>250){
-    staffStatus("Enter a reason of at least 8 characters.",true);return;
+    staffCreditFeedback("Enter a reason of at least 8 characters (e.g. Event reward).",true);
+    $("staffCreditReason").focus();return;
   }
   const delta=amount*sign;
   const recipientLabel=validId?"player #"+recipient:recipient;
   if(!confirm((sign>0?"ADD ":"REMOVE ")+staffMoney(amount)+" credits for "+recipientLabel+
-              "?\\nReason: "+reason+"\\nThis is recorded in the audit log."))return;
+    "?\nReason: "+reason+"\nThis action is recorded in the audit log."))return;
   const buttons=[$("staffCreditAdd"),$("staffCreditRemove")];
   buttons.forEach(b=>b.disabled=true);
-  staffStatus("Updating "+recipientLabel+"'s balance...");
+  staffCreditFeedback("Updating "+recipientLabel+"'s balance...");
   try{
     const target=validId?{user_id:Number(recipient)}:{username:recipient};
     const r=await api("staff/credit",{...target,delta,reason});
-    $("staffCreditAmount").value="";$("staffCreditReason").value="";
-    await Promise.allSettled([staffRefreshPanel(),staffLoadAuditIfOwner(),staffLoadPlayers(0)]);
-    staffStatus("✓ SUCCESS: "+r.username+" now has "+staffMoney(r.balance)+" credits.");
+    staffCreditFeedback("✓ SUCCESS: "+r.username+" now has "+staffMoney(r.balance)+" credits.");
+    $("staffCreditAmount").value="";
+    $("staffCreditReason").value="";
     toast("Credits updated for "+r.username);
+    const res=await Promise.allSettled([staffLoadPlayers(0),staffLoadAuditIfOwner(),staffRefreshPanel()]);
+    const failed=res.filter(x=>x.status==="rejected");
+    if(failed.length)staffCreditFeedback("✓ Balance updated for "+r.username+". Dashboard refresh encountered an issue.");
   }catch(err){
-    staffStatus("Credit adjustment failed: "+err.message,true);
+    staffCreditFeedback("Credit adjustment failed: "+err.message,true);
     toast(err.message);
   }finally{
     buttons.forEach(b=>b.disabled=false);
