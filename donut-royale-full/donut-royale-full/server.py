@@ -263,17 +263,27 @@ class Handler(BaseHTTPRequestHandler):
             if user["role"] not in ("owner", "admin"):
                 return self.fail(403, "Staff only")
             with db_open() as db:
-                rows = db.execute("""SELECT e.event_id,e.player,e.amount,e.status,e.created,
-                                            t.id AS ticket_id,t.user_id,u.username AS account_username
-                                     FROM bot_payment_events e
-                                     LEFT JOIN users u ON lower(u.username)=lower(e.player)
-                                     LEFT JOIN tickets t ON t.user_id=u.id
-                                          AND t.kind='deposit' AND t.status='open' AND t.amount=e.amount
-                                     WHERE e.status='unverified'
-                                     ORDER BY e.created DESC, e.event_id DESC, t.id DESC
-                                     LIMIT 100""").fetchall()
-            return self.send_json(200, {"candidates": [dict(r) for r in rows],
-                                        "warning": "Candidate match only; no payment or account ownership verification"})
+                events = db.execute("""SELECT event_id,player,amount,status,created FROM bot_payment_events
+                                       WHERE status='unverified' ORDER BY created DESC, event_id DESC
+                                       LIMIT 100""").fetchall()
+                tickets = db.execute("""SELECT t.id,t.user_id,t.amount,t.message,u.username AS account_username
+                                        FROM tickets t JOIN users u ON u.id=t.user_id
+                                        WHERE t.kind='deposit' AND t.status='open'
+                                        ORDER BY t.id DESC LIMIT 1000""").fetchall()
+            candidates = []
+            for event in events:
+                event_data = dict(event)
+                matches = []
+                for ticket in tickets:
+                    nick = re.search(r"\\[MINECRAFT NICK\\]\\s+(\\.?[A-Za-z0-9_]{3,16})(?![A-Za-z0-9_])", ticket["message"])
+                    if (nick and nick.group(1).casefold() == event["player"].casefold()
+                            and ticket["amount"] == event["amount"]):
+                        matches.append({"ticket_id": ticket["id"], "user_id": ticket["user_id"],
+                                        "account_username": ticket["account_username"]})
+                event_data["matching_tickets"] = matches
+                candidates.append(event_data)
+            return self.send_json(200, {"candidates": candidates,
+                                        "warning": "Nickname/amount matches are not proof of payment or ownership"})
         if path == "/api/admin/bot-payment-events":
             if user["role"] not in ("owner", "admin"):
                 return self.fail(403, "Staff only")
