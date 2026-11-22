@@ -68,13 +68,13 @@ async function poll() {
     const jobs=Array.isArray(q.withdrawals)?q.withdrawals:[];
     if(!q.auto_payout_enabled||!jobs.length||!(AUTO||test)||!online)return;
     const job=jobs[0];
-    if(test&&(job.ticket_id!==13||job.amount!==100)){log('DIAGNOSTIKA: Neocekavany pozadavek; nic neposilam');return;}
+    if(test&&(jobs.length!==1||!Number.isSafeInteger(job.amount)||job.amount<1||job.amount>100)){log('DIAGNOSTIKA: Neocekavany pozadavek; nic neposilam');return;}
     const claim=await api('/api/bot/withdrawals/claim',{ticket_id:job.ticket_id});
     const lines=[];
     capture={lines,uuid:null};
     try {
       if(!online||!/^\.?[A-Za-z0-9_]{3,16}$/.test(claim.player)||!Number.isSafeInteger(claim.amount)||claim.amount<=0)throw Error('Neplatny nebo odpojeny vyber');
-      if(test&&(claim.ticket_id!==13||claim.amount!==100||claim.player.toLowerCase()!=='polarbearking4'))throw Error('Nesouhlasi diagnosticky vyber');
+      if(claim.ticket_id!==job.ticket_id||claim.amount!==job.amount||claim.player.toLowerCase()!==job.player.toLowerCase())throw Error('Nesouhlasi prevzaty vyber');
       log('WITHDRAW POKUS:',claim.ticket_id,claim.player,claim.amount);
       capture.uuid=command('/pay '+claim.player+' '+claim.amount);
       await sleep(20000);
