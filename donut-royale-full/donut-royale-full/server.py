@@ -530,11 +530,31 @@ class Handler(BaseHTTPRequestHandler):
                 return self.fail(400, "Invalid ticket type")
             if type(amount) is not int or amount < 0 or amount > 1_000_000_000_000 or (kind != "support" and amount == 0) or len(message) > 1000:
                 return self.fail(400, "Invalid ticket amount or message")
+            nick = None
+            if kind == "deposit":
+                # New deposit tickets must contain one canonical nickname and /pay request.
+                marker = re.fullmatch(
+                    r"\[PAYMENT COMMAND\] /pay \.LeXimJames7858 ([0-9]+)\. "
+                    r"\[PLAYER MESSAGE\] \[MINECRAFT NICK\] (\.?[A-Za-z0-9_]{3,16})",
+                    message)
+                if not marker or int(marker.group(1)) != amount:
+                    return self.fail(400, "Invalid deposit request. Use the website deposit form.")
+                nick = marker.group(2).casefold()
             with LOCK, db_open() as db:
+                if USE_POSTGRES:
+                    db.execute("SELECT pg_advisory_xact_lock(2026112207)")
                 if kind == "withdraw":
                     row = db.execute("SELECT balance FROM users WHERE id=?", (user["id"],)).fetchone()
                     if not row or amount > row["balance"]:
                         return self.fail(400, "Not enough balance for withdrawal")
+                if kind == "deposit":
+                    existing = db.execute(
+                        "SELECT id,message FROM tickets WHERE kind='deposit' AND status='open' AND amount=?",
+                        (amount,)).fetchall()
+                    for prior in existing:
+                        oldnick = re.search(r"\[MINECRAFT NICK\]\s+(\.?[A-Za-z0-9_]{3,16})(?![A-Za-z0-9_])", prior["message"])
+                        if oldnick and oldnick.group(1).casefold() == nick:
+                            return self.fail(409, "A deposit for this Minecraft nickname and amount is already pending.")
                 db.execute("INSERT INTO tickets(user_id,kind,amount,message) VALUES(?,?,?,?)",
                            (user["id"], kind, amount, message))
             return self.send_json(200, {"ok": True})
