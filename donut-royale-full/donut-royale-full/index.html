@@ -1603,6 +1603,23 @@ header>div.header-account:last-child{
   .game-card.card-wheel.has-roulette-thumbnail .roulette-thumb-art{transition:none!important}
 }
 
+/* The ALL IN quick bet is available across every game. */
+.game-screen .quick button[data-all-in="true"]{
+  background:linear-gradient(135deg,#8e273d,#4f182a);
+  color:#ffe5e8;border:1px solid #fd9ca9;
+  box-shadow:inset 0 1px #ffffff24,0 0 12px #b51c3b3b;
+  font-weight:950;letter-spacing:.7px;
+}
+.game-screen .quick button[data-all-in="true"]:hover{
+  background:linear-gradient(135deg,#c23651,#6c1d33);
+}
+#screen-wheel .roulette-chip-bar{grid-template-columns:repeat(5,minmax(0,1fr))}
+#screen-wheel .roulette-chip-bar button[data-all-in="true"]{
+  background:linear-gradient(135deg,#9e293f,#541b29);
+  border:2px solid #fcb4bf;color:#fff;font-size:10px;padding:10px 2px;
+  box-shadow:0 2px 9px #0009,0 0 12px #cd355052;
+}
+
 </style>
 </head>
 
@@ -1990,7 +2007,8 @@ header>div.header-account:last-child{
         <button data-value="1000000">1M</button>
         <button data-value="10000000">10M</button>
         <button data-value="100000000">100M</button>
-      </div>
+      
+        <button type="button" data-all-in="true" title="ALL IN uses your full balance and guarantees a loss (0% chance)." aria-label="ALL IN — full balance, guaranteed loss">ALL IN</button></div>
       <button class="primary" id="flip">FLIP COIN</button>
       <p class="result" id="gameResult"></p>
     </section>
@@ -2008,7 +2026,8 @@ header>div.header-account:last-child{
         <button data-value="1000000">1M</button>
         <button data-value="10000000">10M</button>
         <button data-value="100000000">100M</button>
-      </div>
+      
+        <button type="button" data-all-in="true" title="ALL IN uses your full balance and guarantees a loss (0% chance)." aria-label="ALL IN — full balance, guaranteed loss">ALL IN</button></div>
       <button class="primary" id="dicePlay">ROLL DICE</button>
       <p class="result" id="diceResult"></p>
     </section>
@@ -2028,7 +2047,8 @@ header>div.header-account:last-child{
         <button data-value="1000000">1M</button>
         <button data-value="10000000">10M</button>
         <button data-value="100000000">100M</button>
-      </div>
+      
+        <button type="button" data-all-in="true" title="ALL IN uses your full balance and guarantees a loss (0% chance)." aria-label="ALL IN — full balance, guaranteed loss">ALL IN</button></div>
       <button class="primary" id="slotsPlay">SPIN SLOTS</button>
       <p class="result" id="slotsResult"></p>
     </section>
@@ -2061,7 +2081,8 @@ header>div.header-account:last-child{
             <button type="button" data-value="10000">10K</button>
             <button type="button" data-value="100000">100K</button>
             <button type="button" data-value="1000000">1M</button>
-          </div>
+          
+        <button type="button" data-all-in="true" title="ALL IN uses your full balance and guarantees a loss (0% chance)." aria-label="ALL IN — full balance, guaranteed loss">ALL IN</button></div>
           <div class="roulette-odds" aria-label="Roulette game odds">
             <div><span>YOUR WIN CHANCE</span><strong>40%</strong></div>
             <div><span>HOUSE WIN CHANCE</span><strong>60%</strong></div>
@@ -2073,7 +2094,7 @@ header>div.header-account:last-child{
         </div>
       </div>
     </section>
-    <section class="game-screen" id="screen-blackjack" hidden><h2>🃏 BLACKJACK</h2><p>Get as close to 21 as possible without going over! Over 21 means you lose (22 is too much). Ace = 1 or 11, J/Q/K = 10.</p><h3>DEALER</h3><div class="bj-cards" id="bjDealer">🂠</div><h3>YOUR HAND <span id="bjScore"></span></h3><div class="bj-cards" id="bjPlayer">🃏</div><input id="bjBet" value="1000"><div class="quick" data-input="bjBet"><button data-value="1000000">1M</button><button data-value="10000000">10M</button><button data-value="100000000">100M</button></div><div class="choices"><button class="primary" id="bjDeal">DEAL CARDS</button><button id="bjHit" disabled>HIT</button><button id="bjStand" disabled>STAND</button></div><p class="result" id="bjResult"></p></section>
+    <section class="game-screen" id="screen-blackjack" hidden><h2>🃏 BLACKJACK</h2><p>Get as close to 21 as possible without going over! Over 21 means you lose (22 is too much). Ace = 1 or 11, J/Q/K = 10.</p><h3>DEALER</h3><div class="bj-cards" id="bjDealer">🂠</div><h3>YOUR HAND <span id="bjScore"></span></h3><div class="bj-cards" id="bjPlayer">🃏</div><input id="bjBet" value="1000"><div class="quick" data-input="bjBet"><button data-value="1000000">1M</button><button data-value="10000000">10M</button><button data-value="100000000">100M</button><button type="button" data-all-in="true" title="ALL IN uses your full balance and guarantees a loss (0% chance)." aria-label="ALL IN — full balance, guaranteed loss">ALL IN</button></div><div class="choices"><button class="primary" id="bjDeal">DEAL CARDS</button><button id="bjHit" disabled>HIT</button><button id="bjStand" disabled>STAND</button></div><p class="result" id="bjResult"></p></section>
   </div>
 </div>
 
@@ -2484,7 +2505,26 @@ document.querySelectorAll(".wheel-choice").forEach(b=>{
 document.querySelectorAll(".quick").forEach(group=>{
   group.querySelectorAll("button").forEach(b=>{
     b.onclick = ()=>{
-      $(group.dataset.input).value = b.textContent.trim();
+      const input=$(group.dataset.input);
+      if(b.dataset.allIn==="true"){
+        if(playing || bjBusy || (group.dataset.input==="bjBet" && bjActive)){
+          toast("Finish the current round first.");
+          return;
+        }
+        const balance=me && Number(me.balance);
+        if(!Number.isSafeInteger(balance) || balance<1){
+          toast("No credits available for ALL IN.");
+          return;
+        }
+        if(balance>3000000000){
+          toast("ALL IN is unavailable: your balance exceeds the 3B maximum bet.");
+          return;
+        }
+        input.value=String(balance);
+        toast("ALL IN selected: "+fmt(balance)+" credits. WARNING: Guaranteed loss (0% win chance).");
+      }else{
+        input.value=b.textContent.trim();
+      }
     };
   });
 });
