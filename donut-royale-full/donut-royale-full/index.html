@@ -2220,8 +2220,8 @@ header>div.header-account:last-child{
   <div class="staff-view" id="staffViewOwner" hidden>
     <div class="staff-two-columns">
       <div class="staff-block">
-        <div class="staff-block-title"><h2>Credit Manager</h2><small>Owner only · All adjustments are recorded in Audit Log</small></div>
-        <label class="staff-label" for="staffCreditUser">PLAYER ACCOUNT ID</label><input id="staffCreditUser" inputmode="numeric" placeholder="Select a player in Player Management">
+        <div class="staff-block-title"><h2>Credit Manager</h2><small>Owner / delegated admin · All changes recorded in Audit Log</small></div>
+        <label class="staff-label" for="staffCreditUser">PLAYER NICKNAME OR ACCOUNT ID</label><input id="staffCreditUser" type="text" maxlength="32" autocomplete="off" placeholder="e.g. Steve123 or 42"><small class="staff-muted">Enter the registered nickname, or select a player from Player Management.</small>
         <label class="staff-label" for="staffCreditAmount">AMOUNT (1 to 1B)</label><input id="staffCreditAmount" inputmode="numeric" placeholder="e.g. 100K or 1M">
         <label class="staff-label" for="staffCreditReason">REASON (REQUIRED)</label><textarea id="staffCreditReason" maxlength="250" placeholder="Why are credits being adjusted?"></textarea>
         <div class="staff-toolbar"><button id="staffCreditAdd" class="staff-btn" type="button">+ ADD CREDITS</button><button id="staffCreditRemove" class="staff-btn staff-danger" type="button">− REMOVE CREDITS</button></div>
@@ -3176,7 +3176,7 @@ async function staffSelectPlayer(player){
     " · "+(player.suspended?"SUSPENDED":"ACTIVE")+" · Last login "+staffTime(player.last_login);
   $("staffPlayerReason").value="";
   $("staffNoteInput").value="";
-  if(me?.can_manage_staff)$("staffCreditUser").value=String(player.id);
+  if(me?.can_manage_staff)$("staffCreditUser").value=player.username;
   const allowed=player.role!=="owner" && player.id!==me?.id &&
     (player.role!=="admin"||me?.can_manage_staff);
   $("staffSuspendButton").disabled=!allowed||!!player.suspended;
@@ -3337,23 +3337,47 @@ $("staffUnsuspendButton").onclick=()=>void staffSetSuspended(false);
 $("staffNoteButton").onclick=()=>void staffSaveNote();
 $("staffOpenRanks").onclick=()=>{if(me?.can_manage_staff)location.hash="#addRanks";};
 async function staffAdjustCredits(sign){
-  if(!me?.can_manage_staff)return;
-  const user_id=Number($("staffCreditUser").value.trim());
+  if(!me?.can_manage_staff){staffStatus("You don't have credit management permissions.",true);return;}
+  const recipient=$("staffCreditUser").value.trim();
   const reason=$("staffCreditReason").value.trim();
   let amount;
-  try{amount=parseAmount($("staffCreditAmount").value);}
-  catch(err){staffStatus(err.message,true);return;}
-  if(!Number.isSafeInteger(user_id)||user_id<1||amount<1||amount>1000000000||
-     reason.length<8){staffStatus("Enter a valid user ID, amount (1–1B) and reason (8+ characters).",true);return;}
-  const delta=amount*sign;
-  if(!confirm((sign>0?"ADD ":"REMOVE ")+staffMoney(amount)+" credits for player #"+user_id+
-              "?\nReason: "+reason+"\nThis is recorded in the audit log."))return;
   try{
-    const r=await api("staff/credit",{user_id,delta,reason});
+    const raw=$("staffCreditAmount").value.trim();
+    // Allow 100K, 1.5M, 1000000 and 1 000 000 / 1,000,000 for common formats.
+    const normalized=/^\\d{1,3}(?:[ ,]\\d{3})+$/.test(raw)?raw.replace(/[ ,]/g,""):raw;
+    amount=parseAmount(normalized);
+  }catch(err){staffStatus("Invalid amount. Examples: 100K, 1M, 1000000.",true);return;}
+  const validId=/^[1-9]\\d*$/.test(recipient);
+  const validName=/^\\.?[A-Za-z0-9_]{3,16}$/.test(recipient);
+  if(!recipient||(validId&&!Number.isSafeInteger(Number(recipient)))||(!validId&&!validName)){
+    staffStatus("Enter a registered player nickname or numeric account ID.",true);return;
+  }
+  if(!Number.isSafeInteger(amount)||amount<1||amount>1000000000){
+    staffStatus("Amount per adjustment must be between 1 and 1B.",true);return;
+  }
+  if(reason.length<8||reason.length>250){
+    staffStatus("Enter a reason of at least 8 characters.",true);return;
+  }
+  const delta=amount*sign;
+  const recipientLabel=validId?"player #"+recipient:recipient;
+  if(!confirm((sign>0?"ADD ":"REMOVE ")+staffMoney(amount)+" credits for "+recipientLabel+
+              "?\\nReason: "+reason+"\\nThis is recorded in the audit log."))return;
+  const buttons=[$("staffCreditAdd"),$("staffCreditRemove")];
+  buttons.forEach(b=>b.disabled=true);
+  staffStatus("Updating "+recipientLabel+"'s balance...");
+  try{
+    const target=validId?{user_id:Number(recipient)}:{username:recipient};
+    const r=await api("staff/credit",{...target,delta,reason});
     $("staffCreditAmount").value="";$("staffCreditReason").value="";
-    staffStatus("Saved: "+r.username+" now has "+staffMoney(r.balance)+" credits.");
-    await Promise.all([staffRefreshPanel(),staffLoadAuditIfOwner()]);
-  }catch(err){staffStatus(err.message,true);toast(err.message);}
+    await Promise.allSettled([staffRefreshPanel(),staffLoadAuditIfOwner(),staffLoadPlayers(0)]);
+    staffStatus("✓ SUCCESS: "+r.username+" now has "+staffMoney(r.balance)+" credits.");
+    toast("Credits updated for "+r.username);
+  }catch(err){
+    staffStatus("Credit adjustment failed: "+err.message,true);
+    toast(err.message);
+  }finally{
+    buttons.forEach(b=>b.disabled=false);
+  }
 }
 $("staffCreditAdd").onclick=()=>void staffAdjustCredits(1);
 $("staffCreditRemove").onclick=()=>void staffAdjustCredits(-1);
