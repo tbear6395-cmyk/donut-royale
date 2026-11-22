@@ -200,6 +200,12 @@ def _deposit_time(value):
     return dt.replace(tzinfo=timezone.utc) if dt.tzinfo is None else dt.astimezone(timezone.utc)
 
 
+def withdrawal_test_ticket():
+    # Explicit operator opt-in for one small diagnostic transfer.
+    value = os.getenv("AUTO_WITHDRAW_TEST_TICKET", "")
+    return int(value) if re.fullmatch(r"[1-9][0-9]{0,17}", value) else None
+
+
 def withdrawal_config():
     # Do not send any payment until an actual outgoing receipt format is verified.
     try:
@@ -389,6 +395,11 @@ class Handler(BaseHTTPRequestHandler):
                 if nick:
                     items.append({"ticket_id": row["id"], "amount": row["amount"],
                                   "player": nick.group(1), "status": row["status"]})
+            test_ticket = withdrawal_test_ticket()
+            if test_ticket:
+                items = [item for item in items if item["ticket_id"] == test_ticket and 1 <= item["amount"] <= 100]
+                return self.send_json(200, {"withdrawals": items, "mode": "diagnostic_one_shot",
+                                            "auto_payout_enabled": True})
             return self.send_json(200, {"withdrawals": items, "mode": "automatic" if withdrawal_config() else "preview_only",
                                         "auto_payout_enabled": bool(withdrawal_config())})
         if path == "/api/bot/health":
@@ -546,14 +557,20 @@ class Handler(BaseHTTPRequestHandler):
                     return self.fail(404, "No reserved withdrawal")
                 attempt = db.execute("SELECT * FROM withdraw_attempts WHERE ticket_id=?", (tid,)).fetchone()
                 if path.endswith("/claim"):
+                    test_ticket = withdrawal_test_ticket()
                     config = withdrawal_config()
-                    if not config:
-                        return self.fail(409, "Automatic withdrawals are disabled")
-                    cutoff, _, cap, daily = config
                     if attempt or ticket["status"] != "open" or ticket["reservation_status"] != "reserved":
                         return self.fail(409, "Withdrawal unavailable or already attempted")
-                    if _deposit_time(ticket["created"]) < cutoff or not 1 <= ticket["amount"] <= cap:
-                        return self.fail(409, "Withdrawal outside automatic limits")
+                    if test_ticket:
+                        if tid != test_ticket or not 1 <= ticket["amount"] <= 100:
+                            return self.fail(409, "Only the selected diagnostic payout is authorized")
+                        cap = daily = 100
+                    else:
+                        if not config:
+                            return self.fail(409, "Automatic withdrawals are disabled")
+                        cutoff, _, cap, daily = config
+                        if _deposit_time(ticket["created"]) < cutoff or not 1 <= ticket["amount"] <= cap:
+                            return self.fail(409, "Withdrawal outside automatic limits")
                     # A single unresolved send blocks further automatic transfers until reconciliation.
                     if db.execute("SELECT ticket_id FROM withdraw_attempts WHERE status IN ('claimed','needs_review') LIMIT 1").fetchone():
                         return self.fail(409, "An earlier payout needs reconciliation")
@@ -585,7 +602,7 @@ class Handler(BaseHTTPRequestHandler):
                 nick = re.fullmatch(r"\[MINECRAFT NICK\] (\.?[A-Za-z0-9_]{3,16})",ticket["message"])
                 verified = False
                 proof = ""
-                if config and nick and data.get("source") == "system":
+                if not withdrawal_test_ticket() and config and nick and data.get("source") == "system":
                     for line in evidence:
                         match = config[1].fullmatch(line)
                         if match and match.group("player").casefold() == nick.group(1).casefold():
