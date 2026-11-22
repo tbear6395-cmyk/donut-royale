@@ -92,6 +92,12 @@ def setup_postgres():
             ticket_id BIGINT NOT NULL UNIQUE REFERENCES tickets(id),
             user_id BIGINT NOT NULL REFERENCES users(id),
             amount BIGINT NOT NULL, created TIMESTAMP DEFAULT CURRENT_TIMESTAMP)""")
+        db.execute("""CREATE TABLE IF NOT EXISTS withdraw_reservations (
+            ticket_id BIGINT PRIMARY KEY REFERENCES tickets(id),
+            user_id BIGINT NOT NULL REFERENCES users(id),
+            amount BIGINT NOT NULL CHECK (amount>0),
+            status TEXT NOT NULL DEFAULT 'reserved',
+            created TIMESTAMP DEFAULT CURRENT_TIMESTAMP)""")
         db.execute("UPDATE users SET approval='approved' WHERE approval IS NULL OR approval!='approved'")
         db.execute("CREATE TABLE IF NOT EXISTS mines_games (user_id BIGINT PRIMARY KEY REFERENCES users(id), bet BIGINT NOT NULL, mines INTEGER NOT NULL, bombs TEXT NOT NULL, revealed TEXT NOT NULL DEFAULT '[]', created TIMESTAMP DEFAULT CURRENT_TIMESTAMP)")
         # Retired Mines game: return any still-locked stakes once, then clear rounds.
@@ -141,6 +147,13 @@ def setup():
         CREATE TABLE IF NOT EXISTS bot_deposit_credits (
             event_id TEXT PRIMARY KEY, ticket_id INTEGER NOT NULL UNIQUE,
             user_id INTEGER NOT NULL, amount INTEGER NOT NULL,
+            created TEXT DEFAULT CURRENT_TIMESTAMP
+        );
+        CREATE TABLE IF NOT EXISTS withdraw_reservations (
+            ticket_id INTEGER PRIMARY KEY REFERENCES tickets(id),
+            user_id INTEGER NOT NULL REFERENCES users(id),
+            amount INTEGER NOT NULL CHECK (amount>0),
+            status TEXT NOT NULL DEFAULT 'reserved',
             created TEXT DEFAULT CURRENT_TIMESTAMP
         );
         CREATE TABLE IF NOT EXISTS sessions (
@@ -331,6 +344,25 @@ class Handler(BaseHTTPRequestHandler):
                 "payment_deadline_minutes": 30,
                 "note": "Only fresh unambiguous bot-reported payments are eligible. Minecraft bot must be online; high or ambiguous amounts require review.",
             })
+        if path == "/api/bot/withdrawals/pending":
+            expected = os.getenv("BOT_API_KEY", "")
+            provided = self.headers.get("X-Bot-Api-Key", "")
+            if not expected or not hmac.compare_digest(provided, expected):
+                return self.fail(401, "Unauthorized")
+            with db_open() as db:
+                rows = db.execute(
+                    """SELECT t.id,t.amount,t.message,r.status FROM withdraw_reservations r
+                       JOIN tickets t ON t.id=r.ticket_id
+                       WHERE r.status='reserved' AND t.status='open'
+                       ORDER BY t.id LIMIT 50""").fetchall()
+            items = []
+            for row in rows:
+                nick = re.fullmatch(r"\[MINECRAFT NICK\] (\.?[A-Za-z0-9_]{3,16})", row["message"])
+                if nick:
+                    items.append({"ticket_id": row["id"], "amount": row["amount"],
+                                  "player": nick.group(1), "status": row["status"]})
+            return self.send_json(200, {"withdrawals": items, "mode": "preview_only",
+                                        "auto_payout_enabled": False})
         if path == "/api/bot/health":
             expected = os.getenv("BOT_API_KEY", "")
             provided = self.headers.get("X-Bot-Api-Key", "")
@@ -540,6 +572,9 @@ class Handler(BaseHTTPRequestHandler):
             if type(amount) is not int or amount < 0 or amount > 1_000_000_000_000 or (kind != "support" and amount == 0) or len(message) > 1000:
                 return self.fail(400, "Invalid ticket amount or message")
             nick = None
+            if kind == "withdraw":
+                if not re.fullmatch(r"\[MINECRAFT NICK\] \.?[A-Za-z0-9_]{3,16}", message):
+                    return self.fail(400, "Invalid Minecraft nickname")
             if kind == "deposit":
                 # New deposit tickets must contain one canonical nickname and /pay request.
                 marker = re.fullmatch(
@@ -553,8 +588,9 @@ class Handler(BaseHTTPRequestHandler):
                 if USE_POSTGRES:
                     db.execute("SELECT pg_advisory_xact_lock(2026112207)")
                 if kind == "withdraw":
-                    row = db.execute("SELECT balance FROM users WHERE id=?", (user["id"],)).fetchone()
-                    if not row or amount > row["balance"]:
+                    changed = db.execute("UPDATE users SET balance=balance-? WHERE id=? AND balance>=?",
+                                         (amount, user["id"], amount))
+                    if changed.rowcount != 1:
                         return self.fail(400, "Not enough balance for withdrawal")
                 if kind == "deposit":
                     existing = db.execute(
@@ -564,9 +600,17 @@ class Handler(BaseHTTPRequestHandler):
                         oldnick = re.search(r"\[MINECRAFT NICK\]\s+(\.?[A-Za-z0-9_]{3,16})(?![A-Za-z0-9_])", prior["message"])
                         if oldnick and oldnick.group(1).casefold() == nick:
                             return self.fail(409, "A deposit for this Minecraft nickname and amount is already pending.")
-                db.execute("INSERT INTO tickets(user_id,kind,amount,message) VALUES(?,?,?,?)",
-                           (user["id"], kind, amount, message))
-            return self.send_json(200, {"ok": True})
+                cursor = db.execute("INSERT INTO tickets(user_id,kind,amount,message) VALUES(?,?,?,?)"
+                                    + (" RETURNING id" if USE_POSTGRES else ""),
+                                    (user["id"], kind, amount, message))
+                ticket_id = cursor.fetchone()["id"] if USE_POSTGRES else cursor.lastrowid
+                if kind == "withdraw":
+                    db.execute("INSERT INTO withdraw_reservations(ticket_id,user_id,amount) VALUES(?,?,?)",
+                               (ticket_id, user["id"], amount))
+                    db.execute("UPDATE tickets SET response=? WHERE id=?",
+                               ("Credits reserved. Pending manual DonutSMP payout verification.", ticket_id))
+            return self.send_json(200, {"ok": True, "ticket_id": ticket_id,
+                                        "reserved": kind == "withdraw"})
         if path == "/api/ticket/review":
             if user["role"] not in ("owner", "admin"):
                 return self.fail(403, "Not allowed")
@@ -589,13 +633,35 @@ class Handler(BaseHTTPRequestHandler):
                                    (verified_amount, ticket["user_id"]))
                         response = ("Verified deposit credited: " + str(verified_amount) + ". " + response)[:1000]
                     elif ticket["kind"] == "withdraw":
-                        changed = db.execute("""UPDATE users SET balance=balance-?
-                                                WHERE id=? AND balance>=?""",
-                                             (ticket["amount"], ticket["user_id"], ticket["amount"]))
-                        if changed.rowcount != 1:
-                            return self.fail(409, "Player does not have enough balance")
+                        if data.get("payout_confirmed") is not True:
+                            return self.fail(400, "Confirm the actual DonutSMP payout before approving")
+                        reservation = db.execute("SELECT * FROM withdraw_reservations WHERE ticket_id=?",
+                                                 (tid,)).fetchone()
+                        if reservation:
+                            changed = db.execute("UPDATE withdraw_reservations SET status='paid' WHERE ticket_id=? AND status='reserved'",
+                                                 (tid,))
+                            if changed.rowcount != 1:
+                                return self.fail(409, "Withdrawal already settled")
+                        else:
+                            # Legacy tickets did not reserve any balance.
+                            changed = db.execute("UPDATE users SET balance=balance-? WHERE id=? AND balance>=?",
+                                                 (ticket["amount"], ticket["user_id"], ticket["amount"]))
+                            if changed.rowcount != 1:
+                                return self.fail(409, "Player does not have enough balance")
+                        response = ("Manual DonutSMP payout confirmed. " + response)[:1000]
                     else:
                         return self.fail(400, "Close support tickets instead")
+                if ticket["kind"] == "withdraw" and status in ("rejected", "closed"):
+                    reservation = db.execute("SELECT * FROM withdraw_reservations WHERE ticket_id=?",
+                                             (tid,)).fetchone()
+                    if reservation:
+                        changed = db.execute("UPDATE withdraw_reservations SET status='refunded' WHERE ticket_id=? AND status='reserved'",
+                                             (tid,))
+                        if changed.rowcount != 1:
+                            return self.fail(409, "Withdrawal already settled")
+                        db.execute("UPDATE users SET balance=balance+? WHERE id=?",
+                                   (reservation["amount"], reservation["user_id"]))
+                        response = ("Reserved credits refunded. " + response)[:1000]
                 db.execute("UPDATE tickets SET status=?,response=?,handled=? WHERE id=?",
                            (status, response, user["id"], tid))
             return self.send_json(200, {"ok": True})

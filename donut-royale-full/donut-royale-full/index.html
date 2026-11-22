@@ -551,7 +551,7 @@ header{position:sticky}
         <button type="button" id="walletCopy" class="wallet-copy">CREATE DEPOSIT BEFORE COPYING</button>
         <p id="walletNickWarning">⚠️ Bedrock receiving nickname is not configured yet. Do not send any payment until it is confirmed.</p>
       </div>
-      <div class="wallet-withdraw-info" id="walletWithdrawInfo" hidden>⬆ Enter how much you want to withdraw from your DONUT ROYALE balance. Staff will review your request and arrange the DonutSMP payout.</div>
+      <div class="wallet-withdraw-info" id="walletWithdrawInfo" hidden>⬆ Enter how much you want to withdraw from your DONUT ROYALE balance. Credits are reserved immediately. Payouts remain pending until staff verify the actual game transfer.</div>
       <label class="wallet-label" for="message">MINECRAFT NICKNAME (REQUIRED) *</label>
       <input id="message" type="text" maxlength="17" required pattern="\.?[A-Za-z0-9_]{3,16}" title="Enter your Minecraft nickname (3–16 letters, numbers or underscores; optional Bedrock dot)" placeholder="Enter your Minecraft nickname" autocomplete="off">
       <p class="wallet-nick-help">Required for both Deposit and Withdraw. Bedrock players: include the dot (.) if your name starts with one.</p>
@@ -1446,8 +1446,8 @@ $("ticketForm").onsubmit=async e=>{
     }
     await api("tickets",{kind,amount,message:ticketMessage});
     $("message").value="";
-    toast("Withdrawal request submitted for staff review");
-    await loadTickets();
+    toast("Withdrawal requested. Credits reserved until payout is confirmed.");
+    await refresh();
   }catch(err){toast(err.message);}
 };
 
@@ -1493,7 +1493,9 @@ async function loadTickets(){
     ["approved","rejected","closed"].forEach(status=>{
       d.append(button(status.toUpperCase(),async()=>{
         if(status==="approved" &&
-           !confirm("Have you verified this request?"))return;
+           !confirm(t.kind==="withdraw" ? "Have you already sent the exact DonutSMP payment and independently verified its success?" : "Have you verified this request?"))return;
+        if(t.kind==="withdraw" && status!=="approved" &&
+           !confirm("Confirm that no DonutSMP payout was sent. Reserved credits will be refunded."))return;
 
         let verified_amount;
         if(status==="approved" && t.kind==="deposit"){
@@ -1508,7 +1510,7 @@ async function loadTickets(){
 
         try{
           await api("ticket/review",{
-            id:t.id,status,response,...(verified_amount===undefined?{}:{verified_amount})
+            id:t.id,status,response,...(verified_amount===undefined?{}:{verified_amount}),...(t.kind==="withdraw"&&status==="approved"?{payout_confirmed:true}:{})
           });
 
           await refresh();
