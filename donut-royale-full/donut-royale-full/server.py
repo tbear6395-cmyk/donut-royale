@@ -11,6 +11,7 @@ except ImportError:
         from psycopg.rows import dict_row
 from pathlib import Path
 from datetime import datetime, timezone, timedelta
+from decimal import Decimal, InvalidOperation
 from http.server import ThreadingHTTPServer, BaseHTTPRequestHandler
 from http.cookies import SimpleCookie
 from urllib.parse import urlparse
@@ -86,6 +87,11 @@ def setup_postgres():
             event_id TEXT PRIMARY KEY, player TEXT NOT NULL, amount BIGINT NOT NULL,
             raw_message TEXT NOT NULL, status TEXT NOT NULL DEFAULT 'unverified',
             created TIMESTAMP DEFAULT CURRENT_TIMESTAMP)""")
+        db.execute("""CREATE TABLE IF NOT EXISTS bot_deposit_credits (
+            event_id TEXT PRIMARY KEY REFERENCES bot_payment_events(event_id),
+            ticket_id BIGINT NOT NULL UNIQUE REFERENCES tickets(id),
+            user_id BIGINT NOT NULL REFERENCES users(id),
+            amount BIGINT NOT NULL, created TIMESTAMP DEFAULT CURRENT_TIMESTAMP)""")
         db.execute("UPDATE users SET approval='approved' WHERE approval IS NULL OR approval!='approved'")
         db.execute("CREATE TABLE IF NOT EXISTS mines_games (user_id BIGINT PRIMARY KEY REFERENCES users(id), bet BIGINT NOT NULL, mines INTEGER NOT NULL, bombs TEXT NOT NULL, revealed TEXT NOT NULL DEFAULT '[]', created TIMESTAMP DEFAULT CURRENT_TIMESTAMP)")
         # Retired Mines game: return any still-locked stakes once, then clear rounds.
@@ -132,6 +138,11 @@ def setup():
             raw_message TEXT NOT NULL, status TEXT NOT NULL DEFAULT 'unverified',
             created TEXT DEFAULT CURRENT_TIMESTAMP
         );
+        CREATE TABLE IF NOT EXISTS bot_deposit_credits (
+            event_id TEXT PRIMARY KEY, ticket_id INTEGER NOT NULL UNIQUE,
+            user_id INTEGER NOT NULL, amount INTEGER NOT NULL,
+            created TEXT DEFAULT CURRENT_TIMESTAMP
+        );
         CREATE TABLE IF NOT EXISTS sessions (
             token_hash TEXT PRIMARY KEY, user_id INTEGER NOT NULL, expires TEXT NOT NULL
         );
@@ -158,6 +169,73 @@ def setup():
                            (name, salt, pw_hash(password, salt)))
         seed_extra_admin(db)
         db.execute("DELETE FROM sessions WHERE expires<=?", (now().isoformat(),))
+
+def _deposit_time(value):
+    if isinstance(value, datetime):
+        dt = value
+    else:
+        dt = datetime.fromisoformat(str(value).replace(" ", "T").replace("Z", "+00:00"))
+    return dt.replace(tzinfo=timezone.utc) if dt.tzinfo is None else dt.astimezone(timezone.utc)
+
+
+def auto_credit_deposit(db, event_id, player, amount, raw_message):
+    """Opt-in only. Requires independent validation of the payment source before enabling."""
+    if os.getenv("AUTO_DEPOSIT_ENABLED") != "1" or not os.getenv("AUTO_DEPOSIT_START_UTC"):
+        return "unverified"
+    if USE_POSTGRES:
+        db.execute("SELECT pg_advisory_xact_lock(2026112207)")
+    try:
+        cutoff = _deposit_time(os.environ["AUTO_DEPOSIT_START_UTC"])
+    except ValueError:
+        return "unverified"
+    event = db.execute("SELECT created FROM bot_payment_events WHERE event_id=?", (event_id,)).fetchone()
+    if not event or _deposit_time(event["created"]) < cutoff:
+        return "unverified"
+    receipt = re.fullmatch(r"(\.?[A-Za-z0-9_]{3,16}) paid you \$\s*([0-9,]+(?:\.[0-9]+)?)\s*([KMBT])?", raw_message, re.I)
+    if not receipt or receipt.group(1).casefold() != player.casefold():
+        return "needs_review"
+    try:
+        multiplier = {"": 1, "K": 10**3, "M": 10**6, "B": 10**9, "T": 10**12}[str(receipt.group(3) or "").upper()]
+        parsed = Decimal(receipt.group(2).replace(",", "")) * multiplier
+        if parsed != amount:
+            return "needs_review"
+    except (InvalidOperation, ValueError):
+        return "needs_review"
+    # If the same payer and amount appeared within 10 minutes, manual review
+    # is safer than treating a replay as another payment.
+    others = db.execute(
+        "SELECT created FROM bot_payment_events WHERE lower(player)=lower(?) AND amount=? AND event_id!=?",
+        (player, amount, event_id)).fetchall()
+    if any(abs((_deposit_time(event["created"]) - _deposit_time(row["created"])).total_seconds()) < 600
+           for row in others):
+        return "needs_review"
+    tickets = db.execute(
+        "SELECT id,user_id,amount,message,created FROM tickets WHERE kind='deposit' AND status='open' AND amount=?",
+        (amount,)).fetchall()
+    matches = []
+    for ticket in tickets:
+        nick = re.search(r"\[MINECRAFT NICK\]\s+(\.?[A-Za-z0-9_]{3,16})(?![A-Za-z0-9_])",
+                         ticket["message"])
+        if (nick and nick.group(1).casefold() == player.casefold()
+                and cutoff <= _deposit_time(ticket["created"]) <= _deposit_time(event["created"])):
+            matches.append(ticket)
+    if len(matches) != 1:
+        return "needs_review"
+    ticket = matches[0]
+    if db.execute("SELECT event_id FROM bot_deposit_credits WHERE event_id=? OR ticket_id=?",
+                  (event_id, ticket["id"])).fetchone():
+        return "needs_review"
+    changed = db.execute(
+        "UPDATE tickets SET status='approved',response=?,handled=0 WHERE id=? AND status='open'",
+        ("Automatically credited from bot event " + event_id, ticket["id"]))
+    if changed.rowcount != 1:
+        return "needs_review"
+    db.execute("INSERT INTO bot_deposit_credits(event_id,ticket_id,user_id,amount) VALUES(?,?,?,?)",
+               (event_id, ticket["id"], ticket["user_id"], amount))
+    db.execute("UPDATE users SET balance=balance+? WHERE id=?", (amount, ticket["user_id"]))
+    db.execute("UPDATE bot_payment_events SET status='credited' WHERE event_id=?", (event_id,))
+    return "credited"
+
 
 def create_session(db, uid):
     token = secrets.token_urlsafe(40)
@@ -381,14 +459,17 @@ class Handler(BaseHTTPRequestHandler):
                     or not isinstance(raw_message, str) or not 1 <= len(raw_message) <= 500):
                 return self.fail(400, "Invalid payment event")
             with LOCK, db_open() as db:
-                existing = db.execute("SELECT player,amount,raw_message FROM bot_payment_events WHERE event_id=?", (event_id,)).fetchone()
+                existing = db.execute("SELECT player,amount,raw_message,status FROM bot_payment_events WHERE event_id=?", (event_id,)).fetchone()
                 if existing:
                     if (existing["player"], existing["amount"], existing["raw_message"]) != (player, amount, raw_message):
                         return self.fail(409, "Event ID already used for different data")
-                    return self.send_json(200, {"ok": True, "duplicate": True, "status": "unverified"})
+                    return self.send_json(200, {"ok": True, "duplicate": True, "status": existing["status"]})
                 db.execute("INSERT INTO bot_payment_events(event_id,player,amount,raw_message) VALUES(?,?,?,?)",
                            (event_id, player, amount, raw_message))
-            return self.send_json(201, {"ok": True, "duplicate": False, "status": "unverified"})
+                status = auto_credit_deposit(db, event_id, player, amount, raw_message)
+                if status == "needs_review":
+                    db.execute("UPDATE bot_payment_events SET status='needs_review' WHERE event_id=?", (event_id,))
+            return self.send_json(201, {"ok": True, "duplicate": False, "status": status})
         data = self.payload()
         if path == "/api/register":
             username = str(data.get("username", "")).strip()
@@ -451,6 +532,8 @@ class Handler(BaseHTTPRequestHandler):
             if type(tid) is not int or status not in ("approved", "rejected", "closed"):
                 return self.fail(400, "Invalid review")
             with LOCK, db_open() as db:
+                if USE_POSTGRES:
+                    db.execute("SELECT pg_advisory_xact_lock(2026112207)")
                 ticket = db.execute("SELECT * FROM tickets WHERE id=?", (tid,)).fetchone()
                 if not ticket or ticket["status"] != "open":
                     return self.fail(409, "Ticket already handled")
