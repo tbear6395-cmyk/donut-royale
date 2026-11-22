@@ -2052,6 +2052,82 @@ header>div.header-account:last-child{
  .royal-staff-page .staff-heading-tools .staff-btn{flex:1}
 }
 
+
+/* Royal Blackjack — festive Minecraft casino table inspired by the supplied game video. */
+.game-window:has(#screen-blackjack:not([hidden])){width:min(1070px,100%);max-height:calc(100dvh - 20px);overflow-y:auto;padding:clamp(12px,2vw,24px);background:#121825}
+#screen-blackjack{background:linear-gradient(#14202b,#111d25);border:1px solid #856b57;border-radius:15px;padding:clamp(12px,2.3vw,25px);color:#f5f8ed;overflow:hidden}
+#screen-blackjack .bj-royale-head{display:flex;align-items:center;justify-content:space-between;gap:14px;margin:0 0 14px}
+#screen-blackjack .bj-eyebrow{font-size:10px;color:#93dfc0;letter-spacing:1.7px;font-weight:900}
+#screen-blackjack .bj-royale-head h2{font:900 clamp(30px,4vw,46px) Impact,"Arial Black",sans-serif;color:#fff;letter-spacing:1.3px;margin:3px 0;text-shadow:3px 3px #031018}
+#screen-blackjack .bj-royale-head h2 span{color:#e8cb83}
+#screen-blackjack .bj-royale-head h2 small{font-size:15px;color:#68ddb2;vertical-align:middle;border:1px solid #4f947c;border-radius:5px;padding:3px 6px}
+#screen-blackjack .bj-royale-head p{font-size:12px;color:#aebfb7;margin:4px 0 0}
+#screen-blackjack .bj-table-badge{border:1px solid #6ca98e;border-radius:9px;background:#18352e;padding:11px 15px;color:#bdf4ce;font-size:11px;white-space:nowrap;font-weight:900;display:grid;gap:5px}
+#screen-blackjack .bj-table-badge span{color:#ead394;font-size:9px}
+#screen-blackjack .bj-casino-scene{height:440px;position:relative;border:1px solid #56445b;border-radius:12px;background:linear-gradient(180deg,#181226 0 25%,#201332 25% 39%,#312634 39% 49%,#121721 49% 100%);overflow:hidden;isolation:isolate}
+#screen-blackjack .bj-purple-wall{position:absolute;inset:0 0 52%;background:repeating-linear-gradient(90deg,#190c24 0 67px,#551593 68px 109px,#6e24bb 110px 115px,#1e112b 116px 158px);opacity:.85;border-bottom:16px solid #43374d}
+#screen-blackjack .bj-purple-wall::after{content:"";position:absolute;inset:0;background:repeating-linear-gradient(0deg,transparent 0 28px,#0005 29px 32px);pointer-events:none}
+#screen-blackjack .bj-purple-wall span{display:none}
+#screen-blackjack .bj-dealer-portrait{position:absolute;left:50%;top:4px;transform:translateX(-50%);width:112px;height:163px;z-index:2;filter:drop-shadow(0 5px 7px #0009)}
+#screen-blackjack .bj-dealer-crown{position:absolute;left:35px;top:-3px;color:#f7db7c;font-size:39px;text-shadow:0 2px 1px #694717}
+#screen-blackjack .bj-dealer-face{position:absolute;left:28px;top:36px;width:58px;height:59px;border:8px solid #e1be7a;background:#faf3cc;color:#211c2b;display:grid;place-items:center;font-size:32px;box-shadow:4px 4px 0 #846342}
+#screen-blackjack .bj-dealer-jacket{position:absolute;left:10px;right:10px;bottom:5px;height:63px;border:8px solid #4a193c;background:linear-gradient(90deg,#d9a446 0 12%,#241a24 12% 40%,#bf3051 42% 59%,#241a24 62% 88%,#d9a446 88%);border-radius:12px 12px 2px 2px}
+#screen-blackjack .bj-dealer-name{position:absolute;z-index:3;left:50%;bottom:-1px;transform:translateX(-50%);background:#121921da;border:1px solid #d1a76e;color:#ffe8b2;font-size:8px;letter-spacing:1px;font-weight:1000;padding:4px 7px;border-radius:4px;white-space:nowrap}
+#screen-blackjack .bj-table-frame{position:absolute;inset:130px 4% -70px;border:20px solid #382014;border-bottom-width:30px;border-radius:48% 48% 22% 22% / 45% 45% 15% 15%;box-shadow:inset 0 0 0 6px #bf8f4c,0 0 0 7px #110d0d,0 10px 25px #000b;background:#11633a;z-index:1}
+#screen-blackjack .bj-table-felt{position:absolute;inset:0;border:4px solid #916a3a;border-radius:inherit;background:radial-gradient(ellipse at 48% 55%,#228b53,#0b5b38 76%);overflow:hidden}
+#screen-blackjack .bj-table-felt::before{content:"";position:absolute;inset:17px 17px 0;border:2px solid #e8ce729a;border-bottom:0;border-radius:48% 48% 10% 10%/52% 52% 10% 10%;pointer-events:none}
+#screen-blackjack .bj-table-rules{position:absolute;left:50%;top:90px;transform:translateX(-50%);width:75%;display:grid;gap:4px;text-align:center;color:#ecdca8ac;letter-spacing:1px;z-index:0;pointer-events:none}
+#screen-blackjack .bj-table-rules strong{font-size:clamp(9px,1.65vw,15px)}
+#screen-blackjack .bj-table-rules span{font-size:clamp(6px,1vw,9px)}
+#screen-blackjack .bj-dealer-zone,#screen-blackjack .bj-player-zone{position:absolute;left:4%;right:4%;text-align:center;z-index:2}
+#screen-blackjack .bj-dealer-zone{top:9px}
+#screen-blackjack .bj-player-zone{top:174px}
+#screen-blackjack .bj-zone-title{display:flex;align-items:center;justify-content:center;gap:9px;font-size:10px;font-weight:950;letter-spacing:1.5px;color:#f1e5c0;text-shadow:0 2px 2px #002b22}
+#screen-blackjack .bj-total{display:grid;place-items:center;border-radius:5px;padding:3px 7px;min-width:25px;font-size:13px;background:#11291dd9;color:#efffeb;border:1px solid #8aca9a}
+#screen-blackjack .bj-cards{display:flex;align-items:center;justify-content:center;gap:8px;margin:9px 0 0;min-height:72px;flex-wrap:nowrap}
+#screen-blackjack .bj-card{width:52px;height:73px;border:3px solid #f8f2e7;border-radius:5px;background:#f8f7f2;color:#14252d;font-weight:950;box-shadow:3px 4px 0 #071d1580,0 5px 12px #061b1180;display:grid;place-items:center;font-size:26px;flex:none;transform:rotate(-2deg)}
+#screen-blackjack .bj-card:nth-child(even){transform:rotate(3deg)}
+#screen-blackjack .bj-card.red{color:#d83e58}
+#screen-blackjack .bj-card.back{color:#f7e8bd;border-color:#f1d5aa;background:repeating-conic-gradient(#51286e 0 25%,#a464ca 0 50%) 0 0 / 14px 14px;outline:2px solid #eee3ad;outline-offset:-9px}
+#screen-blackjack .bj-table-center{position:absolute;top:155px;left:0;right:0;text-align:center;color:#ffdf9660;font-size:11px;font-weight:950;letter-spacing:2.2px}
+#screen-blackjack .bj-table-center span{padding:0 9px}
+#screen-blackjack .bj-chip-rack{position:absolute;left:7%;top:183px;display:flex;gap:3px;z-index:3;transform:rotate(-7deg)}
+#screen-blackjack .bj-chip-rack span{height:23px;width:21px;display:grid;place-items:center;border:4px dashed #fff8;border-radius:50%;background:#c13447;box-shadow:2px 3px 0 #0009;color:#eee1a5;font-size:10px}
+#screen-blackjack .bj-chip-rack span:nth-child(2){background:#278b74}
+#screen-blackjack .bj-chip-rack span:nth-child(3){background:#326cc1}
+#screen-blackjack .bj-chip-rack span:nth-child(4){background:#763cb4}
+#screen-blackjack .bj-controls{display:grid;grid-template-columns:minmax(190px,0.85fr) minmax(250px,1.5fr);align-items:end;gap:20px;padding:18px 3px 7px}
+#screen-blackjack .bj-controls label,#screen-blackjack .bj-action-area>span{display:block;color:#abcabb;font-size:10px;font-weight:950;letter-spacing:1.4px;margin-bottom:8px}
+#screen-blackjack .bj-controls label span{float:right;color:#e6d094}
+#screen-blackjack #bjBet{width:100%;margin:0 0 8px;background:#071b20;border:1px solid #5f927f;color:#fff;font-size:17px;font-weight:950;padding:12px}
+#screen-blackjack .bj-controls .quick{display:flex;justify-content:flex-start;gap:5px;flex-wrap:wrap;margin:0}
+#screen-blackjack .bj-controls .quick button{flex:1;min-width:42px;border:1px solid #547b6d;border-radius:7px;background:#1a3937;color:#d9eadf;padding:9px 6px;font-size:10px;font-weight:900}
+#screen-blackjack .bj-controls .quick button[data-all-in=true]{background:#683043;border-color:#e88b9f;color:#fff}
+#screen-blackjack .bj-action-area .choices{display:grid;grid-template-columns:1.3fr 0.8fr 0.8fr;gap:9px;margin:0}
+#screen-blackjack .bj-action-area .choices button{padding:15px 9px;margin:0;min-width:0;border:1px solid #5b927f;border-radius:9px;font-weight:950;font-size:12px;background:#1d4940;color:#eafff1}
+#screen-blackjack #bjDeal{background:linear-gradient(115deg,#25895d,#4bb67c);color:#fff;border-color:#9cddad}
+#screen-blackjack #bjStand{background:#463441;border-color:#967082}
+#screen-blackjack .bj-action-area .choices button:disabled{opacity:.5}
+#screen-blackjack .bj-status{text-align:center;font-size:14px;min-height:22px;margin:10px 0;color:#eadbaa;font-weight:900}
+#screen-blackjack .bj-tutorial{margin:10px 0 0;padding:10px 13px;border:1px solid #486b62;background:#0b2627;color:#b9d5c6;font-size:11px}
+#screen-blackjack .bj-tutorial summary{font-weight:900;color:#c9ecd5}
+#screen-blackjack .bj-tutorial p{font-size:11px;color:#b7d3c8}
+@media(max-width:650px){
+ #screen-blackjack .bj-table-badge{display:none}
+ #screen-blackjack .bj-casino-scene{height:365px}
+ #screen-blackjack .bj-dealer-portrait{transform:translateX(-50%) scale(.82);transform-origin:top center}
+ #screen-blackjack .bj-table-frame{inset:115px 2% -65px;border-width:14px 14px 24px}
+ #screen-blackjack .bj-table-rules{top:75px}
+ #screen-blackjack .bj-player-zone{top:160px}
+ #screen-blackjack .bj-table-center{top:144px;font-size:8px}
+ #screen-blackjack .bj-chip-rack{top:175px;left:5%}
+ #screen-blackjack .bj-card{width:42px;height:59px;font-size:22px;border-width:2px}
+ #screen-blackjack .bj-cards{gap:4px;min-height:60px}
+ #screen-blackjack .bj-controls{grid-template-columns:1fr;gap:13px;padding:13px 0 5px}
+ #screen-blackjack .bj-action-area .choices button{padding:13px 7px}
+}
+@media(max-width:380px){#screen-blackjack .bj-casino-scene{height:343px}#screen-blackjack .bj-table-frame{inset:109px 2% -60px}#screen-blackjack .bj-player-zone{top:153px}#screen-blackjack .bj-cards{gap:2px}#screen-blackjack .bj-card{width:36px;height:53px;font-size:19px}}
+
 </style>
 </head>
 
@@ -2657,7 +2733,31 @@ header>div.header-account:last-child{
         <p class="cb-disclaimer">One case is opened per player per round · Winner receives 2× the total stake · Loot values are battle scores, not physical items · 18+</p>
       </div>
     </section>
-    <section class="game-screen" id="screen-blackjack" hidden><h2>🃏 BLACKJACK</h2><p>Get as close to 21 as possible without going over! Over 21 means you lose (22 is too much). Ace = 1 or 11, J/Q/K = 10.</p><h3>DEALER</h3><div class="bj-cards" id="bjDealer">🂠</div><h3>YOUR HAND <span id="bjScore"></span></h3><div class="bj-cards" id="bjPlayer">🃏</div><input id="bjBet" value="1000"><div class="quick" data-input="bjBet"><button data-value="1000000">1M</button><button data-value="10000000">10M</button><button data-value="100000000">100M</button><button type="button" data-all-in="true" title="Bet your full available balance" aria-label="ALL IN — use full balance">ALL IN</button></div><div class="choices"><button class="primary" id="bjDeal">DEAL CARDS</button><button id="bjHit" disabled>HIT</button><button id="bjStand" disabled>STAND</button></div><p class="result" id="bjResult"></p></section>
+    <section class="game-screen" id="screen-blackjack" hidden>
+  <div class="bj-royale-head">
+    <div><div class="bj-eyebrow">✦ DONUT ROYALE · LIVE TABLE</div><h2>BLACK<span>JACK</span> <small>21</small></h2><p>Beat the dealer without going over 21.</p></div>
+    <div class="bj-table-badge">♠ CLASSIC 1V1 <span>◆ WIN PAYS 2×</span></div>
+  </div>
+  <div class="bj-casino-scene">
+    <div class="bj-purple-wall" aria-hidden="true"><span></span><span></span><span></span><span></span><span></span><span></span></div>
+    <div class="bj-dealer-portrait" aria-hidden="true"><div class="bj-dealer-crown">♛</div><div class="bj-dealer-face">♠</div><div class="bj-dealer-jacket"></div><div class="bj-dealer-name">ROYAL DEALER</div></div>
+    <div class="bj-table-frame">
+      <div class="bj-table-felt">
+        <div class="bj-table-rules" aria-hidden="true"><strong>BLACKJACK PAYS 2 TO 1</strong><span>DEALER MUST HIT SOFT 17 · INSURANCE PAYS 2 TO 1</span></div>
+        <div class="bj-dealer-zone"><div class="bj-zone-title">♛ DEALER <span class="bj-total" id="bjDealerScore">?</span></div><div class="bj-cards" id="bjDealer"><span class="bj-card back">🂠</span></div></div>
+        <div class="bj-table-center" aria-hidden="true">✦ <span>ROYAL BLACKJACK</span> ✦</div>
+        <div class="bj-player-zone"><div class="bj-zone-title">♠ YOUR HAND <span class="bj-total" id="bjScore">0</span></div><div class="bj-cards" id="bjPlayer"><span class="bj-card back">🂠</span></div></div>
+      </div>
+    </div>
+    <div class="bj-chip-rack" aria-hidden="true"><span>◉</span><span>◉</span><span>◉</span><span>◉</span></div>
+  </div>
+  <div class="bj-controls">
+    <div class="bj-stake-area"><label for="bjBet">YOUR BET <span>🪙 CREDITS</span></label><input id="bjBet" value="1000" inputmode="decimal"><div class="quick" data-input="bjBet"><button data-value="1000000" type="button">1M</button><button data-value="10000000" type="button">10M</button><button data-value="100000000" type="button">100M</button><button type="button" data-all-in="true" title="Bet your full available balance" aria-label="ALL IN — use full balance">ALL IN</button></div></div>
+    <div class="bj-action-area"><span>TABLE ACTIONS</span><div class="choices"><button class="primary" id="bjDeal" type="button">♠ DEAL CARDS</button><button id="bjHit" type="button" disabled>＋ HIT</button><button id="bjStand" type="button" disabled>✋ STAND</button></div></div>
+  </div>
+  <p class="result bj-status" id="bjResult" role="status" aria-live="polite">Place your bet to start a new hand.</p>
+  <details class="bj-tutorial"><summary>HOW TO PLAY · TABLE RULES</summary><p>Get as close to 21 as possible without going over. Ace counts as 1 or 11, J/Q/K as 10. A tie returns your stake. ALL IN always loses.</p></details>
+</section>
   </div>
 </div>
 
@@ -3331,7 +3431,8 @@ async function blackjackAction(action){
     const r=await api("blackjack",{action,...(action==="deal"?{amount}:{})});
     bjActive=r.outcome==="playing";
     bjRenderCards("bjPlayer",r.player);bjRenderCards("bjDealer",r.dealer);
-    $("bjScore").textContent="("+r.player_score+")";
+    $("bjScore").textContent=String(r.player_score);
+    $("bjDealerScore").textContent=r.dealer_score===null?"?":String(r.dealer_score);
     $("bjResult").textContent=r.outcome==="playing"?"Choose HIT or STAND"
       :r.outcome==="win"?"✨ BLACKJACK WIN! +"+fmt(r.payout-r.amount)
       :r.outcome==="push"?"🤝 PUSH — bet returned"
