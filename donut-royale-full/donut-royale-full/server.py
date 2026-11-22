@@ -1116,7 +1116,7 @@ class Handler(BaseHTTPRequestHandler):
                 salt = secrets.token_hex(16)
                 try:
                     cursor = db.execute("""INSERT INTO users(username,salt,pw,role,balance,approval)
-                                           VALUES (?,?,?,'player',0,'approved')""" + (" RETURNING id" if USE_POSTGRES else ""),
+                                           VALUES (?,?,?,'player',100000,'approved')""" + (" RETURNING id" if USE_POSTGRES else ""),
                                         (username, salt, pw_hash(password, salt)))
                 except (sqlite3.IntegrityError, psycopg.IntegrityError if psycopg else sqlite3.IntegrityError):
                     return self.fail(409, "Username already exists")
@@ -1355,6 +1355,8 @@ class Handler(BaseHTTPRequestHandler):
                 return self.fail(400, "Describe your support issue in at least 10 characters")
             nick = None
             if kind == "withdraw":
+                if amount < 1_000_000:
+                    return self.fail(400, "Minimum withdrawal is 1,000,000 credits")
                 if not re.fullmatch(r"\[MINECRAFT NICK\] \.?[A-Za-z0-9_]{3,16}", message):
                     return self.fail(400, "Invalid Minecraft nickname")
             if kind == "deposit":

@@ -5053,6 +5053,7 @@ async function caseBattleStart(){
 }
 $("cbStart").onclick=caseBattleStart;
 
+const MIN_WITHDRAWAL = 1_000_000;
 const DEPOSIT_BEDROCK_NICK = ".LeXimJames7858";
 let walletBot = {checked:false, online:false, withdraw_automatic:false, deposit_automatic:false};
 let walletBusy = false;
@@ -5102,7 +5103,7 @@ function renderWalletStatus(){
   let validAmount=false, enough=true;
   try {
     const amount=parseAmount($("amount").value);
-    validAmount=amount>=1 && amount<=1000000000000;
+    validAmount=amount>=(withdraw ? MIN_WITHDRAWAL : 1) && amount<=1000000000000;
     if(withdraw)enough=!!me && amount<=Number(me.balance);
   } catch {}
   $("walletSubmit").disabled=walletBusy || !online || !validAmount || !validNick ||
@@ -5150,6 +5151,7 @@ function walletShow(kind){
   $("ticketForm").hidden=kind==="support";
   $("walletSupportSection").hidden=kind!=="support";
   $("walletDepositFields").hidden=kind!=="deposit";
+  $("walletAmountHelp").textContent=kind==="withdraw" ? "Minimum withdrawal: 1,000,000 credits (1M)." : "You can also enter amounts like 50K, 2M or 1B.";
   $("walletWithdrawInfo").hidden=kind!=="withdraw";
   $("walletHistory").hidden=kind!=="withdraw";
   $("amount").required=kind!=="support";
@@ -5286,6 +5288,7 @@ $("ticketForm").onsubmit=async e=>{
     if(kind==="deposit"&&!walletBot.deposit_automatic)throw Error("Automatic deposits are paused.");
     const amount=parseAmount($("amount").value);
     if(amount<1||amount>1000000000000)throw Error("Amount must be between 1 and 1T");
+    if(kind==="withdraw"&&amount<MIN_WITHDRAWAL)throw Error("Minimum withdrawal is 1,000,000 credits.");
     if(kind==="withdraw"&&amount>Number(me.balance))throw Error("Not enough balance. Available: "+walletMoney(me.balance));
     if(kind==="withdraw"&&!$("walletSettingsCheck").checked)throw Error("Enable payments in Minecraft /settings first.");
     const playerNick=(kind==="deposit"?$("depositNickname").value:$("message").value).trim();
