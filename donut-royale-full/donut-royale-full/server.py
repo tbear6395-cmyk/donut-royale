@@ -259,6 +259,13 @@ class Handler(BaseHTTPRequestHandler):
         user = self.me()
         if not user:
             return self.fail(401, "Please log in")
+        if path == "/api/admin/bot-payment-events":
+            if user["role"] not in ("owner", "admin"):
+                return self.fail(403, "Staff only")
+            with db_open() as db:
+                rows = db.execute("""SELECT event_id,player,amount,raw_message,status,created
+                                     FROM bot_payment_events ORDER BY created DESC, event_id DESC LIMIT 100""").fetchall()
+            return self.send_json(200, {"events": [dict(r) for r in rows]})
         if path == "/api/tickets":
             with db_open() as db:
                 if user["role"] in ("owner", "admin"):
