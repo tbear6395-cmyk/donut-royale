@@ -2818,6 +2818,7 @@ function openGame(game){
 
   $("screen-"+game).hidden = false;
   $("gameOverlay").hidden = false;
+  if(game==="casebattle")void cbLoadCatalog().catch(err=>toast(err.message));
 }
 
 function closeGame(){
@@ -3214,136 +3215,250 @@ $("wheelPlay").onclick = ()=>play(
 );
 
 
-/* Case Battle: the backend resolves wins and credit movements. Item reels are visuals. */
-const caseBattleVisualItems={
-  iron:[["⚫","Coal",150],["🩶","Iron Ingot",700],["🟨","Gold Ingot",1500],["💎","Diamond",4900],["🛡️","Netherite",12000]],
-  emerald:[["🟩","Green Dye",250],["💚","Emerald",1700],["📗","Enchanted Book",3700],["🗿","Totem",7800],["✨","Beacon",17500]],
-  nether:[["🟥","Netherrack",300],["🔥","Blaze Rod",2200],["🟠","Magma Cream",4500],["🧱","Ancient Debris",9600],["🌟","Nether Star",25000]]
-};
-let caseBattleRounds=3;
-document.querySelectorAll("#screen-casebattle [data-cb-rounds]").forEach(b=>{
-  b.onclick=()=>{
+/* Case Battle V2: server-priced cases, 1/3/5/10 spins and Minecraft item reels. */
+const CB_TEXTURE_ROOT="https://project-crafting.github.io/minecraft-auto-updated-textures-api/items/";
+const CB_RARITY_COLORS={common:"#aeb6b7",uncommon:"#5fdba1",rare:"#5ab5fa",epic:"#b77aed",legendary:"#ffcb64"};
+let cbCases=[];
+let cbSelectedCaseId="";
+let caseBattleRounds=1;
+let cbLoading=null;
+
+function cbImage(texture,size=48){
+  const image=document.createElement("img");
+  image.width=size;image.height=size;
+  image.alt="";
+  image.loading="eager";
+  image.decoding="async";
+  const safe=/^[a-z0-9_]+$/.test(String(texture))?texture:"stone";
+  image.src=CB_TEXTURE_ROOT+safe+".png";
+  image.onerror=()=>{
+    image.onerror=null;
+    const fallback='<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32" shape-rendering="crispEdges"><path d="M16 2 29 12 25 26 8 30 2 16Z" fill="#234e63" stroke="#80d6c2" stroke-width="3"/><path d="M16 6 23 13 15 24 6 15Z" fill="#74e8d6"/><path d="M16 6 20 13 10 20Z" fill="#c5fff0"/></svg>';
+    image.src="data:image/svg+xml;charset=utf-8,"+encodeURIComponent(fallback);
+  };
+  return image;
+}
+function cbCaseCurrent(){
+  return cbCases.find(c=>c.id===cbSelectedCaseId)||null;
+}
+function cbCaseCard(c){
+  const btn=document.createElement("button");
+  btn.type="button";btn.className="cb-case-card";btn.dataset.caseId=c.id;
+  btn.setAttribute("aria-pressed",c.id===cbSelectedCaseId?"true":"false");
+  btn.style.setProperty("--cb-accent",c.accent);
+  const art=document.createElement("span");art.className="cb-case-art";
+  const cube=document.createElement("span");cube.className="cb-crate";
+  const preview=cbImage(c.preview,40);preview.className="cb-crate-preview";
+  const lock=document.createElement("span");lock.className="cb-case-lock";
+  art.append(cube,preview,lock);
+  const top=document.createElement("span");top.className="cb-case-top";top.textContent="TOP 7×";
+  const name=document.createElement("strong");name.className="cb-case-name";name.textContent=c.name;
+  const price=document.createElement("b");price.className="cb-case-price";price.textContent=fmt(c.price)+" / OPEN";
+  btn.append(top,art,name,price);
+  btn.onclick=()=>cbSelectCase(c.id);
+  return btn;
+}
+function cbSelectCase(id){
+  if(playing)return;
+  const chosen=cbCases.find(c=>c.id===id);
+  if(!chosen)return;
+  cbSelectedCaseId=id;
+  document.querySelectorAll("#cbCatalog .cb-case-card").forEach(btn=>{
+    const selected=btn.dataset.caseId===id;
+    btn.classList.toggle("selected",selected);
+    btn.setAttribute("aria-pressed",selected?"true":"false");
+  });
+  $("cbLootTitle").textContent=chosen.name;
+  const loot=$("cbLootGrid");loot.replaceChildren();
+  chosen.pool.forEach(item=>{
+    const cell=document.createElement("div");
+    cell.style.borderColor=CB_RARITY_COLORS[item.rarity]||"#50656c";
+    const name=document.createElement("small");name.textContent=item.name;
+    const value=document.createElement("b");value.textContent=fmt(item.value);
+    cell.append(cbImage(item.texture,52),name,value);
+    loot.append(cell);
+  });
+  cbResetArena();
+  cbUpdateSummary();
+}
+function cbResetArena(){
+  if(playing)return;
+  const c=cbCaseCurrent();
+  $("cbPlayerScore").textContent="0";
+  $("cbBotScore").textContent="0";
+  $("cbRoundLabel").textContent="ROUND 0 / "+caseBattleRounds;
+  $("cbStageLabel").textContent="NORMAL · 1V1";
+  $("cbPlayerHistory").replaceChildren();
+  $("cbBotHistory").replaceChildren();
+  $("cbResult").textContent="Choose openings and start the battle.";
+  for(const id of ["cbPlayerReel","cbBotReel"]){
+    const el=$(id);el.replaceChildren();
+    if(c&&Array.isArray(c.pool)){
+      const track=document.createElement("div");track.className="cb-track";
+      for(let i=0;i<5;i++)track.append(cbReelItem(c.pool[(i+2)%c.pool.length]));
+      track.style.transform="translateY(-64px)";
+      el.append(track);
+      const mark=document.createElement("div");mark.className="cb-target-line";el.append(mark);
+    }else{
+      const msg=document.createElement("div");msg.className="cb-reel-placeholder";
+      msg.textContent="SELECT A CASE";el.append(msg);
+    }
+  }
+}
+function cbUpdateSummary(){
+  const c=cbCaseCurrent();
+  const stake=c?c.price*caseBattleRounds:0;
+  $("cbUnitPrice").textContent=c?fmt(c.price):"—";
+  $("cbOpenings").textContent="× "+caseBattleRounds;
+  $("cbTotal").textContent=c?fmt(stake):"—";
+  $("cbPayout").textContent=c?fmt(stake*2):"—";
+  const available=!!me&&Number.isSafeInteger(stake)&&stake>=1&&stake<=3000000000&&stake<=me.balance;
+  $("cbStart").disabled=playing||!available;
+  $("cbStart").textContent=stake>3000000000?"TOTAL EXCEEDS 3B LIMIT"
+    :c&&me&&stake>me.balance?"NOT ENOUGH CREDITS"
+    :"⚔ START BATTLE · "+(c?fmt(stake):"SELECT CASE");
+  document.querySelectorAll("#screen-casebattle [data-cb-rounds]").forEach(button=>{
+    const count=Number(button.dataset.cbRounds);
+    button.disabled=playing||!!(c&&count*c.price>3000000000);
+  });
+}
+async function cbLoadCatalog(){
+  if(cbCases.length){cbUpdateSummary();return cbCases;}
+  if(cbLoading)return cbLoading;
+  cbLoading=(async()=>{
+    const data=await api("casebattle/catalog");
+    if(!data||!Array.isArray(data.cases)||!data.cases.length)throw Error("Case catalog not available");
+    cbCases=data.cases.filter(c=>typeof c.id==="string"&&Number.isSafeInteger(c.price)&&c.price>0&&Array.isArray(c.pool)&&c.pool.length>=3);
+    if(!cbCases.length)throw Error("No cases available");
+    cbSelectedCaseId=cbCases[0].id;
+    const grid=$("cbCatalog");grid.replaceChildren();
+    cbCases.forEach(c=>grid.append(cbCaseCard(c)));
+    $("cbCatalogStatus").textContent=cbCases.length+" CASES AVAILABLE";
+    cbSelectCase(cbSelectedCaseId);
+    return cbCases;
+  })();
+  try{return await cbLoading}
+  catch(err){$("cbCatalogStatus").textContent="FAILED TO LOAD CASES";$("cbResult").textContent=err.message;throw err}
+  finally{cbLoading=null}
+}
+document.querySelectorAll("#screen-casebattle [data-cb-rounds]").forEach(button=>{
+  button.onclick=()=>{
     if(playing)return;
-    caseBattleRounds=Number(b.dataset.cbRounds);
-    document.querySelectorAll("#screen-casebattle [data-cb-rounds]").forEach(x=>{
-      const selected=x===b;
-      x.classList.toggle("selected",selected);
-      x.setAttribute("aria-pressed",selected?"true":"false");
+    const count=Number(button.dataset.cbRounds);
+    const c=cbCaseCurrent();
+    if(![1,3,5,10].includes(count)||c&&c.price*count>3000000000)return;
+    caseBattleRounds=count;
+    document.querySelectorAll("#screen-casebattle [data-cb-rounds]").forEach(b=>{
+      const selected=b===button;
+      b.classList.toggle("selected",selected);
+      b.setAttribute("aria-pressed",selected?"true":"false");
     });
-    $("cbRoundLabel").textContent="ROUND 0 / "+caseBattleRounds;
+    cbResetArena();
+    cbUpdateSummary();
   };
 });
-function cbVisualItem(item){
-  const root=document.createElement("div");
-  root.className="cb-drop";
-  const icon=document.createElement("span");
-  icon.className="cb-drop-icon";
-  icon.textContent=item.icon;
-  const title=document.createElement("strong");
-  title.textContent=item.name;
-  const value=document.createElement("small");
-  value.textContent=fmt(item.value)+" SCORE";
-  root.append(icon,title,value);
-  return root;
+function cbReelItem(item){
+  const card=document.createElement("div");card.className="cb-reel-item";
+  card.style.borderLeft="3px solid "+(CB_RARITY_COLORS[item.rarity]||"#53606a");
+  const name=document.createElement("strong");name.textContent=item.name;
+  const score=document.createElement("b");score.textContent=fmt(item.value);
+  card.append(cbImage(item.texture,48),name,score);
+  return card;
 }
-function cbDrawReel(id,item){
-  $(id).replaceChildren(cbVisualItem(item));
-}
-function cbHistoryRow(id,item){
-  const row=document.createElement("div");
-  row.className="cb-history-row";
-  const icon=document.createElement("span");
-  icon.textContent=item.icon;
-  const title=document.createElement("span");
-  title.textContent=item.name;
-  const points=document.createElement("b");
-  points.textContent="+"+fmt(item.value);
-  row.append(icon,title,points);
-  $(id).append(row);
-}
-async function cbSpinRound(playerItem,botItem,caseName){
-  const items=caseBattleVisualItems[caseName];
-  const left=$("cbPlayerReel"),right=$("cbBotReel");
-  left.classList.add("is-rolling");right.classList.add("is-rolling");
-  const randomItem=()=>{
-    const item=items[Math.floor(Math.random()*items.length)];
-    return {icon:item[0],name:item[1],value:item[2]};
-  };
-  const timer=setInterval(()=>{
-    cbDrawReel("cbPlayerReel",randomItem());
-    cbDrawReel("cbBotReel",randomItem());
-  },75);
-  try{
-    await sleep(1250);
-  }finally{
-    clearInterval(timer);
-    left.classList.remove("is-rolling");right.classList.remove("is-rolling");
+function cbReelPrepare(id,finalItem,pool){
+  const reel=$(id);reel.replaceChildren();
+  const track=document.createElement("div");track.className="cb-track";
+  const stopIndex=25;
+  for(let i=0;i<32;i++){
+    const item=i===stopIndex?finalItem:pool[Math.floor(Math.random()*pool.length)];
+    track.append(cbReelItem(item));
   }
-  cbDrawReel("cbPlayerReel",playerItem);
-  cbDrawReel("cbBotReel",botItem);
-  await sleep(420);
+  reel.append(track);
+  const marker=document.createElement("div");marker.className="cb-target-line";reel.append(marker);
+  return {track,offset:stopIndex*96-(352-96)/2};
+}
+async function cbSpinRound(playerItem,botItem,caseData){
+  const left=cbReelPrepare("cbPlayerReel",playerItem,caseData.pool);
+  const right=cbReelPrepare("cbBotReel",botItem,caseData.pool);
+  const short=window.matchMedia&&window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+  const duration=short?300:2350;
+  const ease="cubic-bezier(.12,.66,.12,1)";
+  const slides=[left,right].map(({track,offset})=>
+    track.animate([{transform:"translateY(0px)"},{transform:"translateY(-"+offset+"px)"}],
+      {duration,easing:ease,fill:"forwards"})
+  );
+  try{
+    await Promise.all(slides.map(a=>a.finished));
+  }finally{
+    for(let i=0;i<slides.length;i++){
+      [left,right][i].track.style.transform="translateY(-"+[left,right][i].offset+"px)";
+      slides[i].cancel();
+    }
+  }
+  await sleep(short?120:420);
+}
+function cbHistoryRow(id,item,round){
+  const row=document.createElement("div");row.className="cb-history-row";
+  const img=cbImage(item.texture,29);
+  const name=document.createElement("span");name.textContent=round+". "+item.name;
+  const value=document.createElement("b");value.textContent=fmt(item.value);
+  row.append(img,name,value);
+  $(id).prepend(row);
 }
 async function caseBattleStart(){
   if(playing)return;
-  let amount;
-  try{
-    amount=parseAmount($("cbBet").value);
-    if(amount<1||amount>3000000000)throw Error("Bet must be between 1 and 3B");
-    if(!me||amount>me.balance)throw Error("Not enough credits");
-  }catch(err){toast(err.message);return;}
-  const caseName=$("cbCase").value;
-  if(!caseBattleVisualItems[caseName]){toast("Select a case");return;}
+  const c=cbCaseCurrent();
+  if(!c){toast("Choose a case first");return;}
+  const price=c.price,rounds=caseBattleRounds,stake=price*rounds;
+  if(!Number.isSafeInteger(stake)||stake<1||stake>3000000000){toast("Total bet maximum is 3B");return;}
+  if(!me||stake>me.balance){toast("Not enough credits");return;}
   playing=true;
-  const button=$("cbStart");
-  button.disabled=true;
-  $("cbCase").disabled=true;
-  $("cbBet").readOnly=true;
-  document.querySelectorAll("#screen-casebattle [data-cb-rounds],#screen-casebattle .cb-quick button").forEach(b=>b.disabled=true);
+  $("cbStart").disabled=true;
+  document.querySelectorAll("#cbCatalog .cb-case-card,#screen-casebattle [data-cb-rounds]").forEach(b=>b.disabled=true);
   $("cbPlayerName").textContent=me.username;
   $("cbPlayerScore").textContent="0";
   $("cbBotScore").textContent="0";
   $("cbPlayerHistory").replaceChildren();
   $("cbBotHistory").replaceChildren();
-  $("cbResult").textContent="Opening cases...";
-  $("cbStageLabel").textContent="BATTLE IS LIVE";
-  $("cbRoundLabel").textContent="ROUND 0 / "+caseBattleRounds;
-  $("cbPlayerReel").textContent="📦";
-  $("cbBotReel").textContent="📦";
+  $("cbResult").textContent="OPENING "+rounds+" CASE"+(rounds===1?"":"S")+"...";
+  $("cbStageLabel").textContent="BATTLE IN PROGRESS";
+  $("cbRoundLabel").textContent="ROUND 0 / "+rounds;
   try{
-    const result=await api("game",{game:"casebattle",amount,case:caseName,rounds:caseBattleRounds});
-    if(!result||result.case!==caseName||result.rounds!==caseBattleRounds||!Array.isArray(result.drops)||result.drops.length!==caseBattleRounds){
-      throw Error("Invalid Case Battle result from server");
-    }
+    // Server computes the total from trusted case price × rounds, never a client-supplied amount.
+    const result=await api("game",{game:"casebattle",case:c.id,rounds});
+    if(result.case!==c.id||result.rounds!==rounds||result.amount!==stake||
+       !Array.isArray(result.drops)||result.drops.length!==rounds)throw Error("Invalid Case Battle response");
     let playerScore=0,botScore=0;
     for(let i=0;i<result.drops.length;i++){
-      const round=result.drops[i];
-      if(!round.player||!round.bot||typeof round.player.value!=="number"||typeof round.bot.value!=="number")throw Error("Invalid case drop");
-      $("cbRoundLabel").textContent="ROUND "+(i+1)+" / "+caseBattleRounds;
-      $("cbStageLabel").textContent="OPENING CASE "+(i+1);
-      await cbSpinRound(round.player,round.bot,caseName);
-      playerScore+=round.player.value;
-      botScore+=round.bot.value;
+      const d=result.drops[i];
+      if(!d||!d.player||!d.bot||!Number.isSafeInteger(d.player.value)||!Number.isSafeInteger(d.bot.value))throw Error("Invalid loot roll");
+      $("cbRoundLabel").textContent="ROUND "+(i+1)+" / "+rounds;
+      $("cbStageLabel").textContent="ROLLING "+c.name.toUpperCase();
+      await cbSpinRound(d.player,d.bot,c);
+      playerScore+=d.player.value;
+      botScore+=d.bot.value;
       $("cbPlayerScore").textContent=fmt(playerScore);
       $("cbBotScore").textContent=fmt(botScore);
-      cbHistoryRow("cbPlayerHistory",round.player);
-      cbHistoryRow("cbBotHistory",round.bot);
-      $("cbStageLabel").textContent="CASE "+(i+1)+" OPENED";
+      cbHistoryRow("cbPlayerHistory",d.player,i+1);
+      cbHistoryRow("cbBotHistory",d.bot,i+1);
+      $("cbStageLabel").textContent="ROUND "+(i+1)+" COMPLETE";
     }
-    if(playerScore!==result.player_score||botScore!==result.bot_score||(playerScore>botScore)!==result.win)throw Error("Case Battle scores do not match the result");
-    $("cbStageLabel").textContent=result.win?"YOU WIN THE BATTLE":"ROYAL BOT WINS";
-    $("cbRoundLabel").textContent="FINAL · "+caseBattleRounds+" ROUNDS";
-    $("cbResult").textContent=result.win?"🏆 YOU WIN! +"+fmt(result.profit):"ROYAL BOT WINS · -"+fmt(amount);
+    if(playerScore!==result.player_score||botScore!==result.bot_score||
+      (playerScore>botScore)!==result.win)throw Error("Case Battle scores inconsistent");
+    $("cbStageLabel").textContent=result.win?"YOU WON THE BATTLE":"ROYAL BOT WON";
+    $("cbRoundLabel").textContent="FINAL · "+rounds+" / "+rounds;
+    $("cbResult").textContent=result.win
+      ?"🏆 YOU WIN · PAYOUT "+fmt(stake*2)+" · +"+fmt(stake)+" PROFIT"
+      :"ROYAL BOT WINS · PAYOUT 0 · -"+fmt(stake);
     await refresh();
   }catch(err){
     $("cbResult").textContent="Battle interrupted — check your credit balance.";
     toast(err.message);
-    try{await refresh();}catch(_){}
+    try{await refresh()}catch(_){}
   }finally{
     playing=false;
-    button.disabled=false;
-    $("cbCase").disabled=false;
-    $("cbBet").readOnly=false;
-    document.querySelectorAll("#screen-casebattle [data-cb-rounds],#screen-casebattle .cb-quick button").forEach(b=>b.disabled=false);
+    document.querySelectorAll("#cbCatalog .cb-case-card").forEach(b=>b.disabled=false);
+    cbUpdateSummary();
   }
 }
 $("cbStart").onclick=caseBattleStart;
