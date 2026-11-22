@@ -1417,7 +1417,7 @@ $("ticketForm").onsubmit=async e=>{
     if(amount<1||amount>1000000000000)throw Error("Amount must be between 1 and 1T");
     if(kind==="withdraw"&&amount>me.balance)throw Error("Not enough balance. Available: "+fmt(me.balance));
     const playerNick=$("message").value.trim();
-    if(!/^\\.?[A-Za-z0-9_]{3,16}$/.test(playerNick))throw Error("Minecraft nickname is required (3–16 characters, optional Bedrock dot).");
+    if(!/^\.?[A-Za-z0-9_]{3,16}$/.test(playerNick))throw Error("Minecraft nickname is required (3–16 characters, optional Bedrock dot).");
     let ticketMessage="[MINECRAFT NICK] "+playerNick;
     if(kind==="deposit"){
       if(!DEPOSIT_BEDROCK_NICK)throw Error("Deposit receiver is not configured yet. Ask the owner to set their Bedrock nickname.");
