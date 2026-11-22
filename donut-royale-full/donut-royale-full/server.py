@@ -98,6 +98,10 @@ def setup_postgres():
             amount BIGINT NOT NULL CHECK (amount>0),
             status TEXT NOT NULL DEFAULT 'reserved',
             created TIMESTAMP DEFAULT CURRENT_TIMESTAMP)""")
+        db.execute("""CREATE TABLE IF NOT EXISTS withdraw_attempts (
+            ticket_id BIGINT PRIMARY KEY REFERENCES tickets(id),
+            token TEXT NOT NULL UNIQUE, status TEXT NOT NULL DEFAULT 'claimed',
+            evidence TEXT NOT NULL DEFAULT '', created TIMESTAMP DEFAULT CURRENT_TIMESTAMP)""")
         db.execute("UPDATE users SET approval='approved' WHERE approval IS NULL OR approval!='approved'")
         db.execute("CREATE TABLE IF NOT EXISTS mines_games (user_id BIGINT PRIMARY KEY REFERENCES users(id), bet BIGINT NOT NULL, mines INTEGER NOT NULL, bombs TEXT NOT NULL, revealed TEXT NOT NULL DEFAULT '[]', created TIMESTAMP DEFAULT CURRENT_TIMESTAMP)")
         # Retired Mines game: return any still-locked stakes once, then clear rounds.
@@ -149,6 +153,11 @@ def setup():
             user_id INTEGER NOT NULL, amount INTEGER NOT NULL,
             created TEXT DEFAULT CURRENT_TIMESTAMP
         );
+        CREATE TABLE IF NOT EXISTS withdraw_attempts (
+            ticket_id INTEGER PRIMARY KEY REFERENCES tickets(id),
+            token TEXT NOT NULL UNIQUE, status TEXT NOT NULL DEFAULT 'claimed',
+            evidence TEXT NOT NULL DEFAULT '', created TEXT DEFAULT CURRENT_TIMESTAMP
+        );
         CREATE TABLE IF NOT EXISTS withdraw_reservations (
             ticket_id INTEGER PRIMARY KEY REFERENCES tickets(id),
             user_id INTEGER NOT NULL REFERENCES users(id),
@@ -189,6 +198,24 @@ def _deposit_time(value):
     else:
         dt = datetime.fromisoformat(str(value).replace(" ", "T").replace("Z", "+00:00"))
     return dt.replace(tzinfo=timezone.utc) if dt.tzinfo is None else dt.astimezone(timezone.utc)
+
+
+def withdrawal_config():
+    # Do not send any payment until an actual outgoing receipt format is verified.
+    try:
+        if os.getenv("AUTO_WITHDRAW_ENABLED") != "1":
+            return None
+        cutoff = _deposit_time(os.environ["AUTO_WITHDRAW_START_UTC"])
+        pattern = re.compile(os.environ["AUTO_WITHDRAW_RECEIPT_REGEX"], re.I)
+        if not {"player", "amount"} <= set(pattern.groupindex):
+            return None
+        cap = int(os.getenv("AUTO_WITHDRAW_MAX_AMOUNT", "1000"))
+        daily = int(os.getenv("AUTO_WITHDRAW_DAILY_LIMIT", "5000"))
+        if cap <= 0 or daily < cap or cutoff > now():
+            return None
+        return cutoff, pattern, cap, daily
+    except (KeyError, ValueError, re.error):
+        return None
 
 
 def auto_credit_deposit(db, event_id, player, amount, raw_message):
@@ -354,6 +381,7 @@ class Handler(BaseHTTPRequestHandler):
                     """SELECT t.id,t.amount,t.message,r.status FROM withdraw_reservations r
                        JOIN tickets t ON t.id=r.ticket_id
                        WHERE r.status='reserved' AND t.status='open'
+                       AND NOT EXISTS (SELECT 1 FROM withdraw_attempts a WHERE a.ticket_id=t.id)
                        ORDER BY t.id LIMIT 50""").fetchall()
             items = []
             for row in rows:
@@ -361,8 +389,8 @@ class Handler(BaseHTTPRequestHandler):
                 if nick:
                     items.append({"ticket_id": row["id"], "amount": row["amount"],
                                   "player": nick.group(1), "status": row["status"]})
-            return self.send_json(200, {"withdrawals": items, "mode": "preview_only",
-                                        "auto_payout_enabled": False})
+            return self.send_json(200, {"withdrawals": items, "mode": "automatic" if withdrawal_config() else "preview_only",
+                                        "auto_payout_enabled": bool(withdrawal_config())})
         if path == "/api/bot/health":
             expected = os.getenv("BOT_API_KEY", "")
             provided = self.headers.get("X-Bot-Api-Key", "")
@@ -499,6 +527,90 @@ class Handler(BaseHTTPRequestHandler):
 
     def do_POST(self):
         path = urlparse(self.path).path
+        if path in ("/api/bot/withdrawals/claim", "/api/bot/withdrawals/result"):
+            expected = os.getenv("BOT_API_KEY", "")
+            provided = self.headers.get("X-Bot-Api-Key", "")
+            if not expected or not hmac.compare_digest(provided, expected):
+                return self.fail(401, "Unauthorized")
+            data = self.payload()
+            tid = data.get("ticket_id")
+            if type(tid) is not int or tid <= 0:
+                return self.fail(400, "Invalid ticket")
+            with LOCK, db_open() as db:
+                if USE_POSTGRES:
+                    db.execute("SELECT pg_advisory_xact_lock(2026112207)")
+                ticket = db.execute("""SELECT t.*,r.status AS reservation_status FROM tickets t
+                    JOIN withdraw_reservations r ON r.ticket_id=t.id WHERE t.id=? AND t.kind='withdraw'""",
+                    (tid,)).fetchone()
+                if not ticket:
+                    return self.fail(404, "No reserved withdrawal")
+                attempt = db.execute("SELECT * FROM withdraw_attempts WHERE ticket_id=?", (tid,)).fetchone()
+                if path.endswith("/claim"):
+                    config = withdrawal_config()
+                    if not config:
+                        return self.fail(409, "Automatic withdrawals are disabled")
+                    cutoff, _, cap, daily = config
+                    if attempt or ticket["status"] != "open" or ticket["reservation_status"] != "reserved":
+                        return self.fail(409, "Withdrawal unavailable or already attempted")
+                    if _deposit_time(ticket["created"]) < cutoff or not 1 <= ticket["amount"] <= cap:
+                        return self.fail(409, "Withdrawal outside automatic limits")
+                    # A single unresolved send blocks further automatic transfers until reconciliation.
+                    if db.execute("SELECT ticket_id FROM withdraw_attempts WHERE status IN ('claimed','needs_review') LIMIT 1").fetchone():
+                        return self.fail(409, "An earlier payout needs reconciliation")
+                    recent = db.execute("""SELECT r.amount,a.created FROM withdraw_attempts a
+                        JOIN withdraw_reservations r ON r.ticket_id=a.ticket_id""").fetchall()
+                    if ticket["amount"] + sum(r["amount"] for r in recent
+                        if 0 <= (now()-_deposit_time(r["created"])).total_seconds() < 86400) > daily:
+                        return self.fail(409, "Daily automatic payout limit reached")
+                    nick = re.fullmatch(r"\[MINECRAFT NICK\] (\.?[A-Za-z0-9_]{3,16})", ticket["message"])
+                    if not nick:
+                        return self.fail(400, "Invalid Minecraft nickname")
+                    token = secrets.token_hex(32)
+                    db.execute("INSERT INTO withdraw_attempts(ticket_id,token) VALUES(?,?)", (tid,token))
+                    db.execute("UPDATE tickets SET response=? WHERE id=?",
+                               ("Bot payout attempt claimed; do not send manually until reconciled.",tid))
+                    # Persist the claim before authorizing an external send.
+                    (db.conn if USE_POSTGRES else db).commit()
+                    return self.send_json(200, {"ticket_id":tid,"attempt_token":token,
+                                                "player":nick.group(1),"amount":ticket["amount"]})
+                token = data.get("attempt_token")
+                evidence = data.get("evidence", [])
+                if not attempt or not isinstance(token,str) or not hmac.compare_digest(token,attempt["token"]):
+                    return self.fail(409, "Invalid payout attempt")
+                if attempt["status"] != "claimed":
+                    return self.send_json(200, {"status":attempt["status"]})
+                if not isinstance(evidence,list) or len(evidence)>30 or any(not isinstance(line,str) or len(line)>500 for line in evidence):
+                    return self.fail(400, "Invalid evidence")
+                config = withdrawal_config()
+                nick = re.fullmatch(r"\[MINECRAFT NICK\] (\.?[A-Za-z0-9_]{3,16})",ticket["message"])
+                verified = False
+                proof = ""
+                if config and nick and data.get("source") == "system":
+                    for line in evidence:
+                        match = config[1].fullmatch(line)
+                        if match and match.group("player").casefold() == nick.group(1).casefold():
+                            try:
+                                suffix = (match.groupdict().get("suffix") or "").upper()
+                                verified = Decimal(match.group("amount").replace(",","")) * {
+                                    "":1,"K":1000,"M":1000000,"B":1000000000,"T":1000000000000
+                                }[suffix] == ticket["amount"]
+                            except (InvalidOperation, ValueError, KeyError):
+                                pass
+                            if verified:
+                                proof = line
+                                break
+                if verified and ticket["status"] == "open" and ticket["reservation_status"] == "reserved":
+                    db.execute("UPDATE withdraw_reservations SET status='paid' WHERE ticket_id=?", (tid,))
+                    db.execute("UPDATE tickets SET status='approved',response=?,handled=0 WHERE id=?",
+                               ("Bot payout confirmed. "+proof,tid))
+                    status = "paid"
+                else:
+                    status = "needs_review"
+                    db.execute("UPDATE tickets SET response=? WHERE id=?",
+                               ("Payout outcome unclear. Do not retry or refund until game transfer is checked.",tid))
+                db.execute("UPDATE withdraw_attempts SET status=?,evidence=? WHERE ticket_id=?",
+                           (status,proof or "\n".join(evidence)[:1000],tid))
+            return self.send_json(200, {"status":status})
         if path == "/api/bot/payment-event":
             expected = os.getenv("BOT_API_KEY", "")
             provided = self.headers.get("X-Bot-Api-Key", "")
@@ -625,6 +737,13 @@ class Handler(BaseHTTPRequestHandler):
                 ticket = db.execute("SELECT * FROM tickets WHERE id=?", (tid,)).fetchone()
                 if not ticket or ticket["status"] != "open":
                     return self.fail(409, "Ticket already handled")
+                if ticket["kind"] == "withdraw":
+                    attempt = db.execute("SELECT status,created FROM withdraw_attempts WHERE ticket_id=?", (tid,)).fetchone()
+                    if attempt and attempt["status"] in ("claimed","needs_review"):
+                        if (now()-_deposit_time(attempt["created"])).total_seconds() < 120:
+                            return self.fail(409, "Bot payout attempt is still in progress")
+                        if data.get("payout_reconciled") is not True:
+                            return self.fail(409, "Independently reconcile the previous bot payout before handling this ticket")
                 if status == "approved":
                     if ticket["kind"] == "deposit":
                         if type(verified_amount) is not int or not 0 <= verified_amount <= ticket["amount"]:
@@ -662,6 +781,8 @@ class Handler(BaseHTTPRequestHandler):
                         db.execute("UPDATE users SET balance=balance+? WHERE id=?",
                                    (reservation["amount"], reservation["user_id"]))
                         response = ("Reserved credits refunded. " + response)[:1000]
+                if ticket["kind"] == "withdraw" and attempt and attempt["status"] in ("claimed","needs_review"):
+                    db.execute("UPDATE withdraw_attempts SET status='reconciled' WHERE ticket_id=?", (tid,))
                 db.execute("UPDATE tickets SET status=?,response=?,handled=? WHERE id=?",
                            (status, response, user["id"], tid))
             return self.send_json(200, {"ok": True})
