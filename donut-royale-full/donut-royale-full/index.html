@@ -3029,8 +3029,9 @@ header>div.header-account:last-child{
           <button class="mines-cashout-btn" type="button" id="minesCashout" disabled>💰 CASH OUT</button>
           <div class="mines-info">
             <strong>HOW IT WORKS</strong>
-            <p>Every safe tile adds 0.10×: first 0.50×, second 0.60×, third 0.70×, fourth 0.80×, fifth 0.90×, sixth 1.00× and so on. Cash out after any safe tile.</p>
-            <p>Hitting TNT loses your entire stake. Multipliers show total returned credits, not profit. New rounds allow 1–20 mines. Maximum payout: 1T credits.</p>
+            <p>More mines = higher risk and higher diamond rewards. With 1 mine: 0.30× then +0.05× per diamond; 3 mines: 0.50× then +0.10×; 5 mines: 0.70× then +0.15×.</p>
+            <p id="minesPayoutGuide">Choose your mine count to see its payout rates.</p>
+            <p>You may cash out after one safe tile. TNT loses your entire stake. Multipliers show the total amount returned, not profit. New rounds allow 1–20 mines. Maximum payout: 1T credits.</p>
           </div>
         </div>
       </div>
@@ -3962,7 +3963,13 @@ $("bjStand").onclick=()=>blackjackAction("stand");
 
 /* MINES: the server owns the bombs, bets and payouts; tiles are only the UI. */
 let minesRound=null,minesFinished=null,minesBusy=false;
-function minesMult(x){return Number(x||1).toFixed(2)+"×";}
+function minesMult(x){
+ const n=Number(x);
+ return (Number.isFinite(n)?n:1).toFixed(3).replace(/0+$/,"").replace(/\.$/,"")+"×";
+}
+function minesRewardRates(count){
+ return {first:(2000+1000*count)/10000,step:(250*(count+1))/10000};
+}
 function minesMessage(message,error=false){
  const e=$("minesStatus");e.textContent=message;e.style.color=error?"#ffb3c0":"#c4fbe9";
 }
@@ -3990,6 +3997,9 @@ function minesRender(){
  const revealed=active?minesRound.revealed||[]:done?.revealed||[];
  const revealedSet=new Set(revealed),bombSet=new Set(done?.bombs||[]);
  const opened=revealed.length;
+ const rates=minesRewardRates(mineCount);
+ $("minesPayoutGuide").textContent=mineCount+" MINE"+(mineCount===1?"":"S")+
+  " · FIRST DIAMOND "+minesMult(rates.first)+" · EACH NEXT DIAMOND +"+minesMult(rates.step);
  const payout=active?Number(minesRound.payout||0):done?.status==="cashout"?Number(done.payout||0):0;
  const mult=active?Number(minesRound.multiplier||1):done?.status==="cashout"?Number(done.multiplier||1):1;
  $("minesMinesStat").textContent=String(mineCount);

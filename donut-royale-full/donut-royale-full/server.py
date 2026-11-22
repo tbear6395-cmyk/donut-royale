@@ -485,15 +485,22 @@ def log_game(db, user_id, game, stake, payout, outcome, details=None):
 MINES_TILES = 25
 MINES_MAX_COUNT = 20  # Prevent one-click auto-wins.
 MINES_MAX_PAYOUT = 1_000_000_000_000
-MINES_FIRST_PICK_PERCENT = 50
-MINES_PICK_STEP_PERCENT = 10
+
+def mines_multiplier_bps(mine_count, opened):
+    """Payout in basis points: 1 mine 0.30x/+0.05x, 3 0.50x/+0.10x, 5 0.70x/+0.15x."""
+    if not 1 <= mine_count <= 24 or not 1 <= opened <= MINES_TILES - mine_count:
+        return 0
+    # Interpolate between the advertised presets for all other mine counts.
+    first_bps = 2000 + 1000 * mine_count
+    step_bps = 250 * (mine_count + 1)
+    return first_bps + (opened - 1) * step_bps
 
 def mines_payout(bet, mine_count, opened):
-    if not 1 <= opened <= MINES_TILES - mine_count:
+    multiplier_bps = mines_multiplier_bps(mine_count, opened)
+    if not multiplier_bps:
         return 0
-    # Every safe tile adds 0.10x: first 0.50x, second 0.60x, etc.
-    percent = MINES_FIRST_PICK_PERCENT + (opened - 1) * MINES_PICK_STEP_PERCENT
-    return min(MINES_MAX_PAYOUT, bet * percent // 100)
+    # Integer math keeps payouts exact, even for billion-credit bets.
+    return min(MINES_MAX_PAYOUT, bet * multiplier_bps // 10_000)
 
 def mines_state(row):
     if not row:
@@ -502,7 +509,9 @@ def mines_state(row):
     payout = mines_payout(row["bet"], row["mines"], len(revealed))
     return {"active":True, "bet":row["bet"], "mines":row["mines"],
             "revealed":revealed, "opened":len(revealed), "payout":payout,
-            "multiplier":round(payout/row["bet"],4) if revealed else 1.0}
+            "multiplier":round(payout/row["bet"],4) if revealed else 1.0,
+            "first_pick_multiplier":round(mines_multiplier_bps(row["mines"],1)/10_000,4),
+            "step_multiplier":round((row["mines"]+1)*250/10_000,4)}
 
 def mines_log(db, user_id, bet, payout, outcome, mines, safe_picks):
     log_game(db,user_id,"mines",bet,payout,outcome,
@@ -673,8 +682,9 @@ class Handler(BaseHTTPRequestHandler):
             return self.send_json(200, {"round":mines_state(current),
                                         "max_bet":MAX_BET,
                                         "max_payout":MINES_MAX_PAYOUT,
-                                        "first_pick_percent":MINES_FIRST_PICK_PERCENT,
-                                        "pick_step_percent":MINES_PICK_STEP_PERCENT})
+                                        "payout_formula":"risk_scaled",
+                                        "first_pick_bps_formula":"2000+1000*mines",
+                                        "step_bps_formula":"250*(mines+1)"})
         if path == "/api/admin/bot-auto-deposit-preview":
             if user["role"] not in ("owner", "admin"):
                 return self.fail(403, "Staff only")
