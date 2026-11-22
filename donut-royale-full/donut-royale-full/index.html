@@ -1441,6 +1441,119 @@ header>div.header-account:last-child{
   header>.wallet-header-tools .bot-header-status{font-size:8px;padding:8px}
 }
 
+
+/* ROULETTE TABLE V2 — ball orbits the numbered wheel; backend still decides win/loss. */
+.game-window:has(#screen-wheel:not([hidden])){width:min(1010px,100%);max-height:calc(100dvh - 28px);padding:clamp(13px,2.4vw,27px)}
+#screen-wheel{text-align:left;color:#f3f5f9}
+#screen-wheel .roulette-heading{text-align:left;margin:13px 0 21px}
+.roulette-heading-kicker,.roulette-panel-kicker{display:block;color:#8ec6ae;font-size:11px;font-weight:900;letter-spacing:1.5px}
+#screen-wheel .roulette-heading h2{font-family:Impact,"Arial Black",sans-serif;font-size:clamp(31px,4vw,51px);letter-spacing:1px;color:#f8f9f9;margin:7px 0 2px;text-shadow:2px 3px #000}
+.roulette-heading h2 span{font-size:.5em;color:#cfcab8;vertical-align:middle;letter-spacing:1px}
+#screen-wheel .roulette-heading p{font-size:13px;color:#b6c5c5;line-height:1.5;margin:7px 0 0}
+.roulette-layout{display:grid;grid-template-columns:minmax(0,1.35fr) minmax(255px,.75fr);gap:22px;align-items:stretch}
+.roulette-table{min-width:0;border-radius:19px;border:1px solid #46616075;background:radial-gradient(circle at 50% 43%,#3137385c,transparent 64%),#141a20;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:19px 15px 14px;overflow:hidden}
+.roulette-wheel-outer{position:relative;isolation:isolate;aspect-ratio:1;width:min(100%,540px);margin:auto;display:grid;place-items:center}
+.roulette-wheel-outer::before{
+  content:"";position:absolute;inset:0;pointer-events:none;border-radius:50%;
+  background:radial-gradient(circle at center,transparent 57%,#0910122a 67%,transparent 69%);
+  box-shadow:0 15px 31px #0009;z-index:0
+}
+.roulette-wheel-outer::after{
+  content:"";position:absolute;inset:1.9%;pointer-events:none;border-radius:50%;
+  border:3px solid #41484c;box-shadow:inset 0 0 0 7px #151a1e,0 0 0 4px #20292f;z-index:0
+}
+.roulette-wheel-svg{display:block;width:100%;height:100%;z-index:1;pointer-events:none;filter:drop-shadow(0 11px 12px #0008)}
+.roulette-ball-track{
+  position:absolute;z-index:5;inset:0;border-radius:50%;transform:rotate(0deg);
+  will-change:transform;pointer-events:none
+}
+.roulette-ball{
+  position:absolute;top:7.1%;left:50%;width:clamp(10px,1.6vw,15px);height:clamp(10px,1.6vw,15px);
+  transform:translateX(-50%);border-radius:50%;
+  background:radial-gradient(circle at 25% 24%,#fff,#f9fafb 32%,#b8c2c9 65%,#515a68);
+  box-shadow:0 3px 4px #000c,0 0 7px #fff7, inset -2px -2px 2px #8394a5
+}
+.roulette-wheel-center{
+  position:absolute;z-index:4;left:50%;top:50%;transform:translate(-50%,-50%);
+  width:39%;aspect-ratio:1;border-radius:50%;
+  background:radial-gradient(circle,#171d23 40%,#161b20);
+  border:3px solid #7a6439;
+  box-shadow:0 0 0 10px #161b1f,0 0 0 12px #272e30,0 10px 17px #0007;
+  display:flex;flex-direction:column;align-items:center;justify-content:center;gap:7px;text-align:center;
+  padding:7px;pointer-events:none
+}
+.roulette-center-kicker{font-size:clamp(8px,1vw,11px);color:#a9b7c0;font-weight:900;letter-spacing:1.6px;line-height:1.3}
+.roulette-center-number{font-size:clamp(15px,2.3vw,30px);color:#fff;line-height:1.04;letter-spacing:-.5px}
+.roulette-center-number.is-result-red{color:#ff7c84}
+.roulette-center-number.is-result-black{color:#e6ecf6}
+.roulette-center-detail{font-size:clamp(8px,.95vw,11px);color:#c4a56a;font-weight:800;letter-spacing:1px}
+.roulette-wheel-note{text-align:center;color:#a4b6b4;font-size:11px;line-height:1.5;margin:13px 0 0}
+.roulette-bet-panel{
+  border:1px solid #4f5c5c9c;border-radius:17px;
+  background:linear-gradient(135deg,#20262d,#171c23 85%);
+  padding:clamp(15px,2vw,23px);box-shadow:inset 0 1px #ffffff14;min-width:0
+}
+#screen-wheel .roulette-color-choices{display:grid;grid-template-columns:1fr 1fr;gap:9px;margin:13px 0 28px}
+#screen-wheel .roulette-color-choices .wheel-choice{
+  display:flex;align-items:center;justify-content:center;gap:7px;min-width:0;
+  padding:15px 10px;background:#252b30;border:1px solid #546068;
+  font-size:13px;font-weight:950;color:#fff;letter-spacing:1px;border-radius:12px;
+}
+#screen-wheel .roulette-color-choices .wheel-choice.selected{
+  border:2px solid #f9d992;background:#38332c;box-shadow:0 0 15px #eac77b3b
+}
+.roulette-choice-disc{display:inline-block;width:13px;height:13px;border-radius:50%;border:1px solid #fff5;flex:none}
+.roulette-choice-disc.red{background:#ed414d;box-shadow:0 0 10px #dd324d}
+.roulette-choice-disc.black{background:#171a20;box-shadow:0 0 0 1px #858e99}
+#screen-wheel .roulette-amount-label{margin-bottom:9px}
+#screen-wheel #wheelBet{
+  width:100%;max-width:none;margin:0;padding:13px 15px;background:#0c1118;color:#f5f8f8;
+  border:1px solid #556068;border-radius:9px;font-size:20px;font-weight:900
+}
+#screen-wheel .roulette-chip-bar{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:6px;margin:12px 0 20px}
+#screen-wheel .roulette-chip-bar button{
+  display:block;min-width:0;margin:0;padding:10px 4px;border:2px solid #e4cf82;
+  border-radius:50px;background:linear-gradient(145deg,#d5ad4d,#88612d);
+  color:#14171b;font-size:11px;font-weight:950;box-shadow:0 2px 9px #0006;
+  cursor:pointer
+}
+#screen-wheel .roulette-chip-bar button:nth-child(2){background:linear-gradient(145deg,#b0e6bc,#31975e);border-color:#acf5c8}
+#screen-wheel .roulette-chip-bar button:nth-child(3){background:linear-gradient(145deg,#d3b7f5,#8c4bcc);border-color:#e6d6fb}
+#screen-wheel .roulette-chip-bar button:nth-child(4){background:linear-gradient(145deg,#fcb3aa,#d84a50);border-color:#ffd7cc}
+#screen-wheel .roulette-odds{border-top:1px solid #5b646052;padding:13px 0;margin:5px 0 15px;display:grid;gap:10px}
+.roulette-odds>div{display:flex;align-items:center;justify-content:space-between;gap:6px}
+.roulette-odds span{font-size:10px;letter-spacing:.6px;font-weight:900;color:#a8bdba}
+.roulette-odds strong{color:#f4de9d;font-size:18px}
+#screen-wheel .roulette-spin-button{
+  width:100%;display:flex;justify-content:center;align-items:center;gap:12px;
+  padding:14px 15px;border:1px solid #f5d7a4;
+  border-radius:11px;color:white;background:linear-gradient(110deg,#b2364b,#962d42);
+  font-size:13px;letter-spacing:1px;font-weight:950
+}
+#screen-wheel .roulette-spin-button:disabled{opacity:.65;cursor:wait}
+#screen-wheel .roulette-result{min-height:42px;text-align:center;margin:12px 0;font-size:13px;line-height:1.5}
+#screen-wheel .roulette-fine-print{font-size:10px;color:#aab5b0;line-height:1.5;margin:8px 0}
+#screen-wheel .roulette-bet-panel button:focus-visible,#screen-wheel input:focus-visible{outline:3px solid #ffe4a0;outline-offset:3px}
+@media(max-width:790px){
+  .roulette-layout{grid-template-columns:1fr;gap:12px}
+  .roulette-wheel-outer{width:min(100%,445px)}
+  .roulette-bet-panel{max-width:none}
+  #screen-wheel .roulette-heading{margin-top:13px}
+  .roulette-wheel-note{font-size:10px}
+  .roulette-center-number{font-size:clamp(16px,4vw,28px)}
+}
+@media(max-width:460px){
+  #screen-wheel .roulette-heading h2{font-size:31px}
+  .roulette-wheel-outer{width:min(100%,350px)}
+  .roulette-table{padding:8px 7px 12px}
+  .roulette-wheel-center{gap:3px;border-width:2px;box-shadow:0 0 0 6px #161b1f,0 0 0 8px #272e30}
+  .roulette-center-kicker{font-size:7px;letter-spacing:.5px}
+  .roulette-center-number{font-size:clamp(14px,4vw,21px)}
+  .roulette-center-detail{font-size:7px;letter-spacing:0}
+  .roulette-bet-panel{padding:13px}
+}
+@media(prefers-reduced-motion:reduce){.roulette-ball-track{will-change:auto}}
+
 </style>
 </head>
 
@@ -1830,31 +1943,44 @@ header>div.header-account:last-child{
     </section>
 
     <section class="game-screen" id="screen-wheel" hidden>
-      <h2>🎯 COLOR WHEEL</h2>
-      <p>Choose red or black.</p>
-
-      <div class="wheel-wrap">
-        <div class="pointer">▼</div>
-        <div class="wheel" id="wheelVisual"></div>
+      <div class="roulette-heading"><span class="roulette-heading-kicker">✦ DONUT ROYALE TABLE GAMES</span><h2>ROULETTE <span>/ RED & BLACK</span></h2><p>Pick a colour, place your bet and watch the ball travel around the wheel.</p></div>
+      <div class="roulette-layout">
+        <div class="roulette-table" aria-label="Roulette wheel with decorative numbers">
+          <div class="roulette-wheel-outer" id="rouletteStage">
+            <svg id="rouletteWheelSvg" class="roulette-wheel-svg" viewBox="0 0 600 600" aria-hidden="true" focusable="false"></svg>
+            <div class="roulette-ball-track" id="rouletteBallTrack" aria-hidden="true"><span class="roulette-ball"></span></div>
+            <div class="roulette-wheel-center" aria-live="polite" aria-atomic="true">
+              <span class="roulette-center-kicker" id="rouletteCenterLabel">PLACE YOUR BET</span>
+              <strong class="roulette-center-number" id="rouletteCenterValue">RED / BLACK</strong>
+              <span class="roulette-center-detail" id="rouletteCenterDetail">READY TO PLAY</span>
+            </div>
+          </div>
+          <div class="roulette-wheel-note">Numbers are for decoration only. Only the selected colour affects the bet.</div>
+        </div>
+        <div class="roulette-bet-panel">
+          <span class="roulette-panel-kicker">01 / CHOOSE A COLOUR</span>
+          <div class="choices roulette-color-choices" role="group" aria-label="Bet on red or black">
+            <button type="button" class="wheel-choice selected" data-color="red" aria-pressed="true"><span class="roulette-choice-disc red" aria-hidden="true"></span> RED</button>
+            <button type="button" class="wheel-choice" data-color="black" aria-pressed="false"><span class="roulette-choice-disc black" aria-hidden="true"></span> BLACK</button>
+          </div>
+          <label class="roulette-panel-kicker roulette-amount-label" for="wheelBet">02 / BET AMOUNT</label>
+          <input id="wheelBet" value="1000" inputmode="decimal" aria-label="Roulette bet amount">
+          <div class="quick roulette-chip-bar" data-input="wheelBet" aria-label="Quick bet amounts">
+            <button type="button" data-value="1000">1K</button>
+            <button type="button" data-value="10000">10K</button>
+            <button type="button" data-value="100000">100K</button>
+            <button type="button" data-value="1000000">1M</button>
+          </div>
+          <div class="roulette-odds" aria-label="Roulette game odds">
+            <div><span>YOUR WIN CHANCE</span><strong>40%</strong></div>
+            <div><span>HOUSE WIN CHANCE</span><strong>60%</strong></div>
+            <div><span>WINNING PAYOUT</span><strong>2×</strong></div>
+          </div>
+          <button type="button" class="primary roulette-spin-button" id="wheelPlay">SPIN ROULETTE <span aria-hidden="true">↗</span></button>
+          <p class="result roulette-result" id="wheelResult" role="status" aria-live="polite"></p>
+          <p class="roulette-fine-print">In-game credits only · Maximum bet 3B · All-in bets always lose · 18+ · Take breaks</p>
+        </div>
       </div>
-
-      <div class="choices">
-        <button class="wheel-choice selected" data-color="red">
-          🔴 RED
-        </button>
-        <button class="wheel-choice" data-color="black">
-          ⚫ BLACK
-        </button>
-      </div>
-
-      <input id="wheelBet" value="1000">
-      <div class="quick" data-input="wheelBet">
-        <button data-value="1000000">1M</button>
-        <button data-value="10000000">10M</button>
-        <button data-value="100000000">100M</button>
-      </div>
-      <button class="primary" id="wheelPlay">SPIN WHEEL</button>
-      <p class="result" id="wheelResult"></p>
     </section>
     <section class="game-screen" id="screen-blackjack" hidden><h2>🃏 BLACKJACK</h2><p>Get as close to 21 as possible without going over! Over 21 means you lose (22 is too much). Ace = 1 or 11, J/Q/K = 10.</p><h3>DEALER</h3><div class="bj-cards" id="bjDealer">🂠</div><h3>YOUR HAND <span id="bjScore"></span></h3><div class="bj-cards" id="bjPlayer">🃏</div><input id="bjBet" value="1000"><div class="quick" data-input="bjBet"><button data-value="1000000">1M</button><button data-value="10000000">10M</button><button data-value="100000000">100M</button></div><div class="choices"><button class="primary" id="bjDeal">DEAL CARDS</button><button id="bjHit" disabled>HIT</button><button id="bjStand" disabled>STAND</button></div><p class="result" id="bjResult"></p></section>
   </div>
@@ -2249,10 +2375,12 @@ $("coinStage").onkeydown=e=>{if(e.key==="Enter"||e.key===" "){e.preventDefault()
 
 document.querySelectorAll(".wheel-choice").forEach(b=>{
   b.onclick = ()=>{
+    if(playing)return;
     color = b.dataset.color;
-
     document.querySelectorAll(".wheel-choice").forEach(x=>{
-      x.classList.toggle("selected",x===b);
+      const selected=x===b;
+      x.classList.toggle("selected",selected);
+      x.setAttribute("aria-pressed",selected?"true":"false");
     });
   };
 });
@@ -2394,30 +2522,98 @@ async function animateSlots(request){
   }
 }
 
-async function animateWheel(request){
-  const result = await request;
-
-  const target = result.result==="red" ? 0 : 30;
-
-  const end =
-    wheelAngle + 2160 +
-    ((target-(wheelAngle%360)+360)%360);
-
-  const wheel = $("wheelVisual");
-
-  const animation = wheel.animate([
-    {transform:`rotate(${wheelAngle}deg)`},
-    {transform:`rotate(${end}deg)`}
-  ],{
-    duration:2700,
-    easing:"cubic-bezier(.12,.72,.15,1)"
+// European roulette layout. Numbers are visual ONLY: backend settles RED or BLACK.
+const rouletteNumbers=[0,32,15,19,4,21,2,25,17,34,6,27,13,36,11,30,8,23,10,5,24,16,33,1,20,14,31,9,22,18,29,7,28,12,35,3,26];
+const rouletteRedNumbers=new Set([1,3,5,7,9,12,14,16,18,19,21,23,25,27,30,32,34,36]);
+function rouletteNumberColor(num){
+  return num===0?"green":rouletteRedNumbers.has(num)?"red":"black";
+}
+function buildRouletteWheel(){
+  const svg=$("rouletteWheelSvg");
+  const NS="http://www.w3.org/2000/svg",center=300;
+  const elt=(tag,attrs={})=>{
+    const node=document.createElementNS(NS,tag);
+    Object.entries(attrs).forEach(([k,v])=>node.setAttribute(k,String(v)));
+    return node;
+  };
+  svg.replaceChildren();
+  const outer=elt("circle",{cx:center,cy:center,r:283,fill:"#171b20",stroke:"#3b454b","stroke-width":13});
+  svg.appendChild(outer);
+  svg.appendChild(elt("circle",{cx:center,cy:center,r:251,fill:"#13171b",stroke:"#242b30","stroke-width":16}));
+  const polar=(radius,degrees)=>{
+    const rad=(degrees-90)*Math.PI/180;
+    return [center+Math.cos(rad)*radius,center+Math.sin(rad)*radius];
+  };
+  const slice=360/rouletteNumbers.length;
+  rouletteNumbers.forEach((num,index)=>{
+    const start=index*slice-slice/2,end=index*slice+slice/2;
+    const a=polar(244,start),b=polar(244,end),c=polar(175,end),d=polar(175,start);
+    const color=rouletteNumberColor(num);
+    const fill=color==="red"?"#d9414c":color==="green"?"#198a63":"#2c3338";
+    const path=elt("path",{
+      d:`M ${a[0]} ${a[1]} A 244 244 0 0 1 ${b[0]} ${b[1]} L ${c[0]} ${c[1]} A 175 175 0 0 0 ${d[0]} ${d[1]} Z`,
+      fill,stroke:"#171b20","stroke-width":1.8
+    });
+    svg.appendChild(path);
+    const text=elt("text",{
+      x:300,y:98,"text-anchor":"middle","dominant-baseline":"middle",
+      "font-size":num===0?20:18,"font-family":"Arial,sans-serif","font-weight":"900",
+      fill:"#f9f9fb",transform:`rotate(${index*slice} 300 300)`
+    });
+    text.textContent=String(num);
+    svg.appendChild(text);
   });
+  svg.appendChild(elt("circle",{cx:center,cy:center,r:174,fill:"#1a2025",stroke:"#11171c","stroke-width":4}));
+  svg.appendChild(elt("circle",{cx:center,cy:center,r:144,fill:"#181e23",stroke:"#2d3438","stroke-width":4}));
+  svg.appendChild(elt("circle",{cx:center,cy:center,r:119,fill:"#171c22",stroke:"#856d37","stroke-width":3}));
+}
+buildRouletteWheel();
+function rouletteCenter(label,value,detail,colorName=""){
+  $("rouletteCenterLabel").textContent=label;
+  const number=$("rouletteCenterValue");
+  number.textContent=value;
+  number.classList.toggle("is-result-red",colorName==="red");
+  number.classList.toggle("is-result-black",colorName==="black");
+  $("rouletteCenterDetail").textContent=detail;
+}
+async function animateWheel(request){
+  rouletteCenter("BALL IN MOTION","SPINNING","WAIT FOR THE RESULT");
+  const result=await request; // Authoritative game result from server, not the animation.
+  if(result.result!=="red" && result.result!=="black")throw Error("Invalid roulette outcome");
 
-  await animation.finished;
-
-  wheelAngle = end;
-  wheel.style.transform = `rotate(${end}deg)`;
-
+  const matchingIndices=rouletteNumbers
+    .map((num,index)=>rouletteNumberColor(num)===result.result?index:-1)
+    .filter(index=>index>=0);
+  const chosenIndex=matchingIndices[Math.floor(Math.random()*matchingIndices.length)];
+  const finalPosition=chosenIndex*(360/rouletteNumbers.length);
+  const start=wheelAngle;
+  const end=start+1800+((finalPosition-(start%360)+360)%360);
+  const track=$("rouletteBallTrack");
+  const button=$("wheelPlay");
+  const colourButtons=[...document.querySelectorAll("#screen-wheel .wheel-choice")];
+  const chips=[...document.querySelectorAll("#screen-wheel .roulette-chip-bar button")];
+  const bet=$("wheelBet");
+  colourButtons.forEach(el=>el.disabled=true);
+  chips.forEach(el=>el.disabled=true);
+  bet.readOnly=true;
+  button.textContent="BALL SPINNING · 5S";
+  try{
+    // Keep the numbered wheel fixed; only the white ball orbits, like the reference video.
+    const animation=track.animate([
+      {transform:`rotate(${start}deg)`},
+      {transform:`rotate(${end}deg)`}
+    ],{duration:5000,easing:"cubic-bezier(.13,.66,.18,1)",fill:"forwards"});
+    await animation.finished;
+    wheelAngle=end%360;
+    track.style.transform=`rotate(${wheelAngle}deg)`;
+    animation.cancel();
+    rouletteCenter("BALL LANDED ON",result.result.toUpperCase(),"NUMBERS ARE DECORATIVE",result.result);
+  }finally{
+    colourButtons.forEach(el=>el.disabled=false);
+    chips.forEach(el=>el.disabled=false);
+    bet.readOnly=false;
+    button.textContent="SPIN ROULETTE ↗";
+  }
   return result;
 }
 
