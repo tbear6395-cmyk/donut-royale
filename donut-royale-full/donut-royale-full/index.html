@@ -1554,6 +1554,55 @@ header>div.header-account:last-child{
 }
 @media(prefers-reduced-motion:reduce){.roulette-ball-track{will-change:auto}}
 
+
+/* Roulette: sharp, purpose-built vector thumbnail, instead of the old target icon. */
+.game-card.card-wheel.has-roulette-thumbnail{
+  --accent:#f8b652;
+  background:#231118;
+  border:2px solid #f2bf67;
+  box-shadow:inset 0 0 20px #100b0db0,0 7px 23px #0006,0 0 17px #a6542077;
+  isolation:isolate;
+}
+.game-card.card-wheel.has-roulette-thumbnail::before{display:none!important}
+.game-card.card-wheel.has-roulette-thumbnail::after{
+  content:"";position:absolute;inset:0;z-index:2;pointer-events:none;
+  background:linear-gradient(to bottom,#160e1955,transparent 25%,transparent 43%,#100c1a3b 64%,#080d14d9 100%);
+}
+.game-card.card-wheel.has-roulette-thumbnail .roulette-thumb-art{
+  display:block;position:absolute;inset:0;width:100%;height:100%;
+  z-index:1;pointer-events:none;filter:saturate(1.1) contrast(1.04);
+  transition:transform .3s ease,filter .3s ease;
+}
+.game-card.card-wheel.has-roulette-thumbnail:hover .roulette-thumb-art{
+  transform:scale(1.035);filter:saturate(1.2) contrast(1.08);
+}
+.game-card.card-wheel.has-roulette-thumbnail .game-title{
+  position:absolute!important;top:auto!important;left:18px!important;right:12px!important;
+  bottom:52px!important;transform:none!important;text-align:left!important;
+  color:#fff!important;font-size:clamp(27px,2.45vw,40px)!important;
+  letter-spacing:1px!important;white-space:nowrap!important;z-index:10!important;
+  text-shadow:3px 3px #120a12,0 0 10px #000d!important;
+}
+.game-card.card-wheel.has-roulette-thumbnail .game-subtitle{
+  bottom:19px!important;left:18px!important;right:auto!important;
+  color:#fff0ce!important;z-index:10!important;text-shadow:0 2px 4px #000c;
+}
+.game-card.card-wheel.has-roulette-thumbnail .game-play{
+  z-index:12!important;bottom:15px!important;right:14px!important;
+  color:#22170c!important;background:#ffdf92!important;border:1px solid #ffeeb7!important;
+}
+.game-card.card-wheel.has-roulette-thumbnail .game-live,
+.game-card.card-wheel.has-roulette-thumbnail .game-index,
+.game-card.card-wheel.has-roulette-thumbnail .xmas-game-snow{z-index:11!important}
+@media(max-width:580px){
+  .game-card.card-wheel.has-roulette-thumbnail .game-title{font-size:clamp(28px,7vw,36px)!important;bottom:50px!important}
+  .game-card.card-wheel.has-roulette-thumbnail .game-subtitle{font-size:10px!important;bottom:16px!important}
+  .game-card.card-wheel.has-roulette-thumbnail .game-play{font-size:9px!important;bottom:13px!important}
+}
+@media(prefers-reduced-motion:reduce){
+  .game-card.card-wheel.has-roulette-thumbnail .roulette-thumb-art{transition:none!important}
+}
+
 </style>
 </head>
 
@@ -1579,7 +1628,7 @@ header>div.header-account:last-child{
   <button data-game="coinflip">🪙 Coinflip</button>
   <button data-game="dice">🎲 Lucky Dice</button>
   <button data-game="slots">🎰 Triple Sevens</button>
-  <button data-game="wheel">🎯 Color Wheel</button>
+  <button data-game="wheel">🎰 Roulette</button>
   <button data-game="blackjack">🃏 Blackjack</button>
   <h4>WALLET</h4>
   <button type="button" id="walletSide">💸 Deposit / Withdraw</button>
@@ -1719,7 +1768,49 @@ header>div.header-account:last-child{
     <button type="button" class="game-card card-dice" data-game="dice" aria-label="Open Lucky Dice"><span class="game-index" aria-hidden="true">02 / 05</span><span class="xmas-game-snow" aria-hidden="true">❄</span><span class="game-live">✦ WINTER GAME</span><span class="game-art art-dice" aria-hidden="true"><span class="thumbnail-die">⚄</span><span class="thumbnail-die second">⚅</span></span><span class="game-title">LUCKY DICE</span><span class="game-subtitle">ROLL THE DICE</span><span class="game-play">PLAY NOW ↗</span></button>
     <button type="button" class="game-card card-slots" data-game="slots" aria-label="Open Triple Sevens"><span class="game-index" aria-hidden="true">03 / 05</span><span class="xmas-game-snow" aria-hidden="true">❄</span><span class="game-live">✦ WINTER GAME</span><span class="game-art art-slots" aria-hidden="true"><span>7</span><span>7</span><span>7</span></span><span class="game-title">TRIPLE SEVENS</span><span class="game-subtitle">JACKPOT SLOTS</span><span class="game-play">PLAY NOW ↗</span></button>
     <button type="button" class="game-card card-blackjack" data-game="blackjack" aria-label="Open Blackjack"><span class="game-index" aria-hidden="true">04 / 05</span><span class="xmas-game-snow" aria-hidden="true">❄</span><span class="game-live">✦ WINTER GAME</span><span class="game-art art-blackjack" aria-hidden="true"><img class="minecraft-dealer" src="https://mc-heads.net/body/Technoblade/220" alt=""><span class="dealer-glow"></span><span class="dealer-hand">✊</span><span class="dealer-cards"><span class="playing-card card-j"><small>J<br>♣</small><strong>♣</strong></span><span class="playing-card card-a"><small>A<br>♠</small><strong>♠</strong></span></span></span><span class="game-title">BLACKJACK</span><span class="game-subtitle">GET 21 · HIT / STAND</span><span class="game-play">PLAY NOW ↗</span></button>
-    <button type="button" class="game-card card-wheel" data-game="wheel" aria-label="Open Color Wheel"><span class="game-index" aria-hidden="true">05 / 05</span><span class="xmas-game-snow" aria-hidden="true">❄</span><span class="game-live">✦ WINTER GAME</span><span class="game-art art-wheel" aria-hidden="true"><span>🎯</span><span class="thumbnail-wheel"></span></span><span class="game-title">COLOR WHEEL</span><span class="game-subtitle">RED OR BLACK</span><span class="game-play">PLAY NOW ↗</span></button>
+    <button type="button" class="game-card card-wheel has-roulette-thumbnail" data-game="wheel" aria-label="Open Roulette"><span class="game-index" aria-hidden="true">05 / 05</span><span class="xmas-game-snow" aria-hidden="true">❄</span><span class="game-live">✦ WINTER GAME</span><svg class="roulette-thumb-art" viewBox="0 0 860 480" preserveAspectRatio="xMidYMid slice" focusable="false" aria-hidden="true" xmlns="http://www.w3.org/2000/svg">
+<defs>
+<radialGradient id="rtBg"><stop stop-color="#b22c32" offset="0"/><stop stop-color="#6d1726" offset=".44"/><stop stop-color="#21111d" offset="1"/></radialGradient>
+<linearGradient id="rtGold" x1="0" y1="0" x2="1" y2="1"><stop stop-color="#fff0a8"/><stop offset=".2" stop-color="#ffdd56"/><stop offset=".52" stop-color="#da8117"/><stop offset=".78" stop-color="#ffcc56"/><stop offset="1" stop-color="#805018"/></linearGradient>
+<linearGradient id="rtWood" x1="0" y1="0" x2="1" y2="1"><stop stop-color="#ad5629"/><stop offset=".6" stop-color="#562a22"/><stop offset="1" stop-color="#241419"/></linearGradient>
+<radialGradient id="rtBall" cx=".3" cy=".26"><stop stop-color="#fff" offset="0"/><stop stop-color="#eef3f5" offset=".5"/><stop stop-color="#9299a5" offset="1"/></radialGradient>
+<linearGradient id="rtFade" x1="0" y1="0" x2="0" y2="1"><stop stop-color="#090f17" stop-opacity="0"/><stop offset=".6" stop-color="#080c13" stop-opacity=".55"/><stop offset="1" stop-color="#070a10" stop-opacity=".95"/></linearGradient>
+<filter id="rtGlow" x="-35%" y="-35%" width="170%" height="170%"><feGaussianBlur stdDeviation="8"/></filter>
+</defs>
+<rect width="860" height="480" fill="url(#rtBg)"/>
+<path d="M580 240 L115 -80 400 -80 Z" fill="#fa5c30" opacity=".12"/>
+<path d="M580 240 L750 -50 910 20 Z" fill="#ffcf42" opacity=".12"/>
+<path d="M580 240 L915 105 920 250 Z" fill="#f63c35" opacity=".09"/>
+<path d="M580 240 L-40 100 0 210 Z" fill="#ff9d28" opacity=".08"/>
+<rect x="57" y="51" width="5" height="5" rx="1" fill="#ffcd67" opacity=".6"/><rect x="194" y="130" width="2.5" height="2.5" rx="1" fill="#fbdaac" opacity=".35"/><rect x="331" y="209" width="2.5" height="2.5" rx="1" fill="#fbdaac" opacity=".35"/><rect x="468" y="288" width="2.5" height="2.5" rx="1" fill="#fbdaac" opacity=".6"/><rect x="605" y="367" width="5" height="5" rx="1" fill="#ffcd67" opacity=".35"/><rect x="742" y="56" width="2.5" height="2.5" rx="1" fill="#fbdaac" opacity=".35"/><rect x="29" y="135" width="2.5" height="2.5" rx="1" fill="#fbdaac" opacity=".6"/><rect x="166" y="214" width="2.5" height="2.5" rx="1" fill="#fbdaac" opacity=".35"/><rect x="303" y="293" width="5" height="5" rx="1" fill="#ffcd67" opacity=".35"/><rect x="440" y="372" width="2.5" height="2.5" rx="1" fill="#fbdaac" opacity=".6"/><rect x="577" y="61" width="2.5" height="2.5" rx="1" fill="#fbdaac" opacity=".35"/><rect x="714" y="140" width="2.5" height="2.5" rx="1" fill="#fbdaac" opacity=".35"/><rect x="1" y="219" width="5" height="5" rx="1" fill="#ffcd67" opacity=".6"/><rect x="138" y="298" width="2.5" height="2.5" rx="1" fill="#fbdaac" opacity=".35"/><rect x="275" y="377" width="2.5" height="2.5" rx="1" fill="#fbdaac" opacity=".35"/><rect x="412" y="66" width="2.5" height="2.5" rx="1" fill="#fbdaac" opacity=".6"/><rect x="549" y="145" width="5" height="5" rx="1" fill="#ffcd67" opacity=".35"/><rect x="686" y="224" width="2.5" height="2.5" rx="1" fill="#fbdaac" opacity=".35"/><rect x="823" y="303" width="2.5" height="2.5" rx="1" fill="#fbdaac" opacity=".6"/><rect x="110" y="382" width="2.5" height="2.5" rx="1" fill="#fbdaac" opacity=".35"/><rect x="247" y="71" width="5" height="5" rx="1" fill="#ffcd67" opacity=".35"/><rect x="384" y="150" width="2.5" height="2.5" rx="1" fill="#fbdaac" opacity=".6"/><rect x="521" y="229" width="2.5" height="2.5" rx="1" fill="#fbdaac" opacity=".35"/><rect x="658" y="308" width="2.5" height="2.5" rx="1" fill="#fbdaac" opacity=".35"/><rect x="795" y="387" width="5" height="5" rx="1" fill="#ffcd67" opacity=".6"/><rect x="82" y="76" width="2.5" height="2.5" rx="1" fill="#fbdaac" opacity=".35"/>
+<!-- Minecraft-inspired blocky croupier on the left -->
+<path d="M81 315 L156 248 270 249 354 318 377 475 52 475 Z" fill="#1a1a22" stroke="#67442b" stroke-width="11"/>
+<path d="M137 259 L194 340 261 259 258 473 147 473 Z" fill="#eee4d2"/>
+<path d="M194 341 L234 341 231 473 181 473 Z" fill="#251d20"/>
+<path d="M183 274 L227 281 210 309 Z" fill="#bf2541"/><path d="M183 309 L227 305 213 281 Z" fill="#e94355"/>
+<path d="M92 318 L43 356 8 433 87 457 132 352 Z" fill="#272129" stroke="#9f642a" stroke-width="8"/>
+<path d="M304 309 L364 326 432 283 459 330 380 402 316 365 Z" fill="#282128" stroke="#8b572e" stroke-width="7"/>
+<path d="M429 281 L454 256 487 260 512 286 479 327 448 322 Z" fill="#efb784" stroke="#a46d52" stroke-width="6"/>
+<path d="M117 138 L150 83 278 81 304 134 302 258 129 261 Z" fill="#ad704b" stroke="#d49f6d" stroke-width="8"/>
+<path d="M113 155 L117 91 155 64 280 64 318 98 313 171 286 138 273 108 245 128 194 128 170 148 Z" fill="#2d1a16" stroke="#b16b23" stroke-width="7"/>
+<rect x="155" y="172" width="33" height="23" fill="#f7f3dd"/><rect x="167" y="173" width="13" height="22" fill="#1f1a19"/>
+<rect x="240" y="172" width="31" height="23" fill="#f7f3dd"/><rect x="248" y="173" width="13" height="22" fill="#1f1a19"/>
+<path d="M184 229 L250 229" stroke="#825940" stroke-width="8"/>
+<path d="M140 259 L200 280 256 261" stroke="#f8d9b1" stroke-width="6" fill="none"/>
+<!-- Wheel gold rims, numbered wedges (numbers are purely visual) -->
+<ellipse cx="625" cy="310" rx="258" ry="125" fill="#140f11" stroke="#9e511b" stroke-width="30"/>
+<ellipse cx="625" cy="300" rx="272" ry="134" fill="#1c1b23" stroke="url(#rtGold)" stroke-width="23"/>
+<path d="M625 300 L608.0 187.3 A244 113 0 0 1 671.6 189.1 Z" fill="#ea394b" stroke="#100f13" stroke-width="1.8"/><path d="M625 300 L671.6 189.1 A244 113 0 0 1 732.0 198.4 Z" fill="#151d25" stroke="#100f13" stroke-width="1.8"/><path d="M625 300 L732.0 198.4 A244 113 0 0 1 785.1 214.7 Z" fill="#ea394b" stroke="#100f13" stroke-width="1.8"/><path d="M625 300 L785.1 214.7 A244 113 0 0 1 827.3 236.8 Z" fill="#151d25" stroke="#100f13" stroke-width="1.8"/><path d="M625 300 L827.3 236.8 A244 113 0 0 1 855.7 263.2 Z" fill="#ea394b" stroke="#100f13" stroke-width="1.8"/><path d="M625 300 L855.7 263.2 A244 113 0 0 1 868.4 292.1 Z" fill="#151d25" stroke="#100f13" stroke-width="1.8"/><path d="M625 300 L868.4 292.1 A244 113 0 0 1 864.5 321.6 Z" fill="#ea394b" stroke="#100f13" stroke-width="1.8"/><path d="M625 300 L864.5 321.6 A244 113 0 0 1 844.3 349.5 Z" fill="#151d25" stroke="#100f13" stroke-width="1.8"/><path d="M625 300 L844.3 349.5 A244 113 0 0 1 809.1 374.1 Z" fill="#ea394b" stroke="#100f13" stroke-width="1.8"/><path d="M625 300 L809.1 374.1 A244 113 0 0 1 761.4 393.7 Z" fill="#151d25" stroke="#100f13" stroke-width="1.8"/><path d="M625 300 L761.4 393.7 A244 113 0 0 1 704.4 406.8 Z" fill="#ea394b" stroke="#100f13" stroke-width="1.8"/><path d="M625 300 L704.4 406.8 A244 113 0 0 1 642.0 412.7 Z" fill="#151d25" stroke="#100f13" stroke-width="1.8"/><path d="M625 300 L642.0 412.7 A244 113 0 0 1 578.4 410.9 Z" fill="#ea394b" stroke="#100f13" stroke-width="1.8"/><path d="M625 300 L578.4 410.9 A244 113 0 0 1 518.0 401.6 Z" fill="#151d25" stroke="#100f13" stroke-width="1.8"/><path d="M625 300 L518.0 401.6 A244 113 0 0 1 464.9 385.3 Z" fill="#ea394b" stroke="#100f13" stroke-width="1.8"/><path d="M625 300 L464.9 385.3 A244 113 0 0 1 422.7 363.2 Z" fill="#151d25" stroke="#100f13" stroke-width="1.8"/><path d="M625 300 L422.7 363.2 A244 113 0 0 1 394.3 336.8 Z" fill="#ea394b" stroke="#100f13" stroke-width="1.8"/><path d="M625 300 L394.3 336.8 A244 113 0 0 1 381.6 307.9 Z" fill="#151d25" stroke="#100f13" stroke-width="1.8"/><path d="M625 300 L381.6 307.9 A244 113 0 0 1 385.5 278.4 Z" fill="#ea394b" stroke="#100f13" stroke-width="1.8"/><path d="M625 300 L385.5 278.4 A244 113 0 0 1 405.7 250.5 Z" fill="#151d25" stroke="#100f13" stroke-width="1.8"/><path d="M625 300 L405.7 250.5 A244 113 0 0 1 440.9 225.9 Z" fill="#ea394b" stroke="#100f13" stroke-width="1.8"/><path d="M625 300 L440.9 225.9 A244 113 0 0 1 488.6 206.3 Z" fill="#151d25" stroke="#100f13" stroke-width="1.8"/><path d="M625 300 L488.6 206.3 A244 113 0 0 1 545.6 193.2 Z" fill="#ea394b" stroke="#100f13" stroke-width="1.8"/><path d="M625 300 L545.6 193.2 A244 113 0 0 1 608.0 187.3 Z" fill="#151d25" stroke="#100f13" stroke-width="1.8"/>
+<ellipse cx="625" cy="300" rx="107" ry="49" fill="url(#rtWood)" stroke="url(#rtGold)" stroke-width="14"/>
+<ellipse cx="625" cy="310" rx="240" ry="111" fill="none" stroke="#f8c64b" stroke-width="5" opacity=".9"/>
+<ellipse cx="625" cy="300" rx="262" ry="126" fill="none" stroke="#ffed9c" stroke-width="5" opacity=".8"/>
+<path d="M603 212 L608 124 644 124 652 212 Z" fill="url(#rtGold)" stroke="#9b5c20" stroke-width="5"/>
+<path d="M592 119 L619 90 650 115 640 141 607 141 Z" fill="url(#rtGold)"/>
+<path d="M592 196 L659 196 671 232 581 232 Z" fill="url(#rtGold)" stroke="#d89025" stroke-width="4"/>
+<circle cx="502" cy="370" r="22" fill="#fff" opacity=".3" filter="url(#rtGlow)"/>
+<circle cx="502" cy="362" r="15" fill="url(#rtBall)" stroke="#f2f4f3" stroke-width="2"/>
+<path d="M0 325 L860 325 860 480 0 480 Z" fill="url(#rtFade)"/>
+</svg><span class="game-title">ROULETTE</span><span class="game-subtitle">RED OR BLACK</span><span class="game-play">PLAY NOW ↗</span></button>
   </div>
 
   <section class="royale-guide" aria-labelledby="royaleGuideHeading">
