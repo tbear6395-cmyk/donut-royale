@@ -529,11 +529,11 @@ class Handler(BaseHTTPRequestHandler):
                     for case_id, case in CASE_BATTLE_CASES.items()
                 ],
                 "rounds": list(CASE_BATTLE_ROUNDS), "max_bet": MAX_BET,
-                "payout_multiplier": 2, "win_chance_percent": 40
+                "payout_multiplier": 2, "win_chance_percent": 30
             })
         if path == "/api/rules":
-            return self.send_json(200, {"max_bet": MAX_BET, "win_chance_percent": 40,
-                                        "loss_chance_percent": 60, "payout_multiplier": 2,
+            return self.send_json(200, {"max_bet": MAX_BET, "win_chance_percent": 30,
+                                        "loss_chance_percent": 70, "payout_multiplier": 2,
                                         "all_in_always_loses": True})
         user = self.me()
         if not user:
@@ -1037,7 +1037,7 @@ class Handler(BaseHTTPRequestHandler):
                 if not row or amount > row["balance"]:
                     return self.fail(400, "Not enough balance")
                 all_in = amount == row["balance"]
-                win = not all_in and secrets.randbelow(100) < 40
+                win = not all_in and secrets.randbelow(100) < 30
                 if game == "coinflip":
                     result = choice if win else ("tails" if choice == "heads" else "heads")
                     details = {"result": result}
