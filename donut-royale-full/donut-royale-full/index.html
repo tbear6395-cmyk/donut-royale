@@ -2250,6 +2250,114 @@ header>div.header-account:last-child{
  #screen-blackjack .bj-payout-visible{opacity:1;transform:translate(-50%,-50%)}
 }
 
+/* MINES: sharp arcade 5x5 tile opening, based on the user's video reference. */
+.game-card.card-mines{grid-column:span 12;min-height:265px;height:265px;border:2px solid #4ce5da;
+ background:radial-gradient(ellipse at 62% 42%,#126b75ad,transparent 48%),linear-gradient(118deg,#0d2030 0%,#103042 45%,#07151f 100%);isolation:isolate;overflow:hidden}
+.game-card.card-mines .game-title{font:1000 clamp(42px,5.5vw,76px) Impact,"Arial Black",sans-serif;left:33px;bottom:70px;top:auto;transform:none;color:#e1fffb;letter-spacing:2px;text-shadow:3px 5px #031820,0 0 24px #22edda55}
+.game-card.card-mines .game-subtitle{left:36px;bottom:39px;color:#b3f1e2;letter-spacing:1px}
+.game-card.card-mines .game-play{right:28px;bottom:28px;padding:13px 17px;font-size:12px;z-index:12}
+.game-card.card-mines .game-index{right:22px;top:20px;z-index:12}
+.game-card.card-mines .game-live{left:30px;top:22px;z-index:12}
+.game-card.card-mines .xmas-game-snow{right:27px;top:68px;z-index:12}
+.game-card.card-mines .mines-card-art{position:absolute;inset:0 12% 0 43%;z-index:2;display:flex;align-items:center;justify-content:center;gap:30px;pointer-events:none}
+.game-card.card-mines .mines-art-grid{display:grid;grid-template-columns:repeat(5,43px);gap:5px;transform:perspective(620px) rotateX(13deg) rotateY(-13deg) rotateZ(4deg);box-shadow:15px 17px 36px #000a}
+.game-card.card-mines .mines-art-tile{display:grid;place-items:center;width:43px;height:43px;background:linear-gradient(#34495d,#223345);border:2px solid #506d7f;border-radius:5px;box-shadow:2px 3px 0 #091723}
+.game-card.card-mines .mines-art-safe{background:linear-gradient(145deg,#d0fff6,#52e7d4);border-color:#a8fced}
+.game-card.card-mines .mines-art-safe::after{content:"◆";font-size:30px;color:#19a39f;text-shadow:1px 2px #eaffff}
+.game-card.card-mines .mines-art-bomb{background:#5b3038;border-color:#ef747f}
+.game-card.card-mines .mines-art-bomb::after{content:"TNT";font:900 12px Impact,Arial,sans-serif;color:#fff;letter-spacing:-.6px;background:#dd3e4f;padding:2px}
+.game-card.card-mines .mines-art-payout{font:900 clamp(32px,3.5vw,48px) Impact,"Arial Black",sans-serif;color:#82ffe2;text-shadow:0 3px 10px #062b26;display:grid;gap:0;align-items:center;transform:rotate(-4deg)}
+.game-card.card-mines .mines-art-payout small{font:900 11px Arial,sans-serif;color:#d4fff3;letter-spacing:2px}
+.game-window:has(#screen-mines:not([hidden])){width:min(1120px,100%);max-height:calc(100dvh - 12px);overflow-y:auto;padding:clamp(12px,2vw,23px);background:#0c1623}
+#screen-mines{text-align:left;background:linear-gradient(135deg,#142434,#0b1523);border:1px solid #35606a;border-radius:13px;padding:clamp(12px,2vw,22px);color:#edf8f7}
+#screen-mines .mines-head{display:flex;justify-content:space-between;align-items:center;gap:15px;margin-bottom:16px}
+#screen-mines .mines-head h2{font:1000 clamp(32px,4.7vw,53px) Impact,"Arial Black",sans-serif;letter-spacing:1.5px;color:#eafffc;margin:3px 0;text-shadow:3px 3px #041c27}
+#screen-mines .mines-head h2 em{font-style:normal;color:#5de8d8}
+#screen-mines .mines-head p{font-size:11px;color:#aac2c5;margin:6px 0}
+#screen-mines .mines-kicker{font-size:10px;font-weight:900;letter-spacing:1.5px;color:#88e9d9}
+#screen-mines .mines-head-chip{border:1px solid #50757c;background:#132d3e;color:#9beee3;padding:10px;font-size:10px;font-weight:950;border-radius:9px;white-space:nowrap}
+#screen-mines .mines-game-layout{display:grid;grid-template-columns:minmax(0,1.6fr) minmax(260px,.82fr);gap:18px}
+#screen-mines .mines-panel{border:1px solid #2c4354;background:#101c2a;border-radius:12px;padding:clamp(10px,2.3vw,22px);display:flex;flex-direction:column;align-items:center;min-width:0;overflow:hidden}
+#screen-mines .mines-statbar{display:grid;grid-template-columns:repeat(3,1fr);width:100%;gap:8px;margin:0 0 22px}
+#screen-mines .mines-statbar>div{display:grid;gap:6px;padding:10px 12px;background:#172736;border:1px solid #283a4c;border-radius:8px;text-align:center}
+#screen-mines .mines-statbar small{font-size:9px;letter-spacing:1px;color:#9dafb6;font-weight:900}
+#screen-mines .mines-statbar strong{color:#eafffb;font-size:18px;font-weight:1000}
+#screen-mines .mines-grid{width:min(100%,380px);display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:6px;aspect-ratio:1/1}
+#screen-mines .mines-tile{min-width:0;min-height:0;position:relative;display:grid;place-items:center;cursor:pointer;border-radius:8px;
+ border:2px solid #40546b;background:linear-gradient(145deg,#33445a,#273748);box-shadow:inset 1px 2px #566c81,0 3px 0 #0b1623;transition:transform .14s,border-color .15s,background .16s;color:#dafbf5}
+#screen-mines .mines-tile:not(:disabled):hover{transform:translateY(-2px);border-color:#9ae9d9;background:linear-gradient(#426177,#2f5363)}
+#screen-mines .mines-tile:focus-visible{outline:3px solid #93efc8;outline-offset:1px}
+#screen-mines .mines-tile:disabled{cursor:default}
+#screen-mines .mines-tile.safe{background:linear-gradient(145deg,#c1fff8,#46d8d0);border-color:#7cebe1;box-shadow:inset 2px 2px #e9fffc,0 3px #184d54;animation:minesTileReveal .34s cubic-bezier(.25,.7,.25,1) both}
+#screen-mines .mines-tile.safe::before{content:"";width:54%;height:54%;background:linear-gradient(135deg,#b8ffff 0%,#6ceadf 35%,#169c9d 36%,#d6fffc 63%,#3acaca 70%);
+ clip-path:polygon(50% 0,95% 32%,77% 82%,50% 100%,22% 82%,5% 32%);filter:drop-shadow(1px 2px 1px #0a737a)}
+#screen-mines .mines-tile.mine{background:linear-gradient(#8b2738,#55212d);border-color:#f28596}
+#screen-mines .mines-tile.mine::before{content:"TNT";display:grid;place-items:center;width:65%;height:62%;border-top:9px solid #ed5667;border-bottom:9px solid #ee5663;background:#f5e7d7;color:#b42235;
+ font:1000 clamp(9px,1.5vw,15px) Impact,Arial,sans-serif;box-shadow:2px 3px #29151d;border-radius:3px}
+#screen-mines .mines-tile.exploded{animation:minesTileExplode .55s ease-out both;box-shadow:0 0 24px #f54265,0 0 8px #ffb3b3}
+#screen-mines .mines-tile.inert{opacity:.6}
+@keyframes minesTileReveal{from{transform:scale(.62) rotateY(80deg);opacity:.25}to{transform:scale(1) rotateY(0);opacity:1}}
+@keyframes minesTileExplode{0%{transform:scale(.88)}35%{transform:scale(1.13);filter:brightness(2)}100%{transform:scale(1);filter:brightness(1)}}
+#screen-mines .mines-underboard{display:flex;justify-content:space-between;align-items:center;width:min(100%,420px);gap:12px;margin:18px 0 5px}
+#screen-mines .mines-underboard button{border-radius:8px;border:1px solid #476174;background:#20384a;color:#d5f9ef;font-size:11px;font-weight:900;padding:10px 14px;cursor:pointer}
+#screen-mines .mines-underboard button:disabled{opacity:.45;cursor:default}
+#screen-mines .mines-underboard span{font-size:11px;color:#a6c7c9}
+#screen-mines .mines-underboard strong{color:#aefce8}
+#screen-mines .mines-status{margin:14px 0 0;font-weight:850;color:#c3e7df;font-size:13px;min-height:28px;text-align:center;max-width:100%}
+#screen-mines .mines-bet-panel{display:flex;flex-direction:column;gap:10px;min-width:0;background:linear-gradient(#162b39,#0f2130);border:1px solid #36576b;border-radius:12px;padding:20px}
+#screen-mines .mines-bet-heading>span{font-size:10px;color:#89eadc;letter-spacing:1.2px;font-weight:900}
+#screen-mines .mines-bet-heading h3{font:900 28px Impact,sans-serif;color:#fff4e1;margin:5px 0}
+#screen-mines .mines-bet-panel>label{margin:7px 0 -4px;font-size:10px;font-weight:900;letter-spacing:1px;color:#b4d4cf}
+#screen-mines #minesBet,#screen-mines #minesCount{height:44px;width:100%;max-width:none;margin:0;padding:0 12px;border:1px solid #547889;border-radius:8px;background:#0b1b29;color:#f1fffc;font-size:15px;font-weight:800}
+#screen-mines .mines-quick{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:5px;margin:0}
+#screen-mines .mines-quick button{font-size:10px;font-weight:850;padding:7px 4px;margin:0;min-width:0;background:#1b3546;border:1px solid #3d6a74;border-radius:7px;color:#d0f9f2;cursor:pointer}
+#screen-mines .mines-quick button:disabled{opacity:.45}
+#screen-mines .mines-metrics{display:grid;gap:0;border:1px solid #3c5362;border-radius:9px;margin:7px 0}
+#screen-mines .mines-metrics>div{padding:12px;display:flex;justify-content:space-between;align-items:center;gap:6px;border-bottom:1px solid #38505c}
+#screen-mines .mines-metrics>div:last-child{border-bottom:0}
+#screen-mines .mines-metrics span{font-size:10px;color:#a5bcc1;font-weight:900}
+#screen-mines .mines-metrics b{font-size:18px;color:#c5fff2;font-weight:950}
+#screen-mines #minesStart,#screen-mines #minesCashout{width:100%;padding:14px 9px;margin:0;border-radius:8px;font-size:13px;font-weight:1000;letter-spacing:.5px;cursor:pointer}
+#screen-mines #minesStart{background:linear-gradient(120deg,#319675,#4bd3ab);color:#092721;border:1px solid #9cffdb}
+#screen-mines #minesCashout{background:linear-gradient(115deg,#2777b8,#389dd9);color:#fff;border:1px solid #7eceff}
+#screen-mines #minesStart:disabled,#screen-mines #minesCashout:disabled{opacity:.4;cursor:default}
+#screen-mines .mines-info{border-top:1px solid #466476;margin-top:10px;padding-top:14px;color:#9eb9ba}
+#screen-mines .mines-info strong{font-size:10px;letter-spacing:1px;color:#c9f4e8}
+#screen-mines .mines-info p{font-size:10px;line-height:1.65;margin:8px 0}
+@media(max-width:1000px){
+ .game-card.card-mines .mines-card-art{inset:0 8% 0 40%}
+}
+@media(max-width:750px){
+ #screen-mines .mines-game-layout{grid-template-columns:1fr}
+ #screen-mines .mines-grid{width:min(100%,340px)}
+ #screen-mines .mines-head-chip{display:none}
+ #screen-mines .mines-bet-panel{padding:15px}
+ #screen-mines .mines-metrics{grid-template-columns:repeat(3,1fr)}
+ #screen-mines .mines-metrics>div{display:grid;gap:3px;padding:10px 7px;border-bottom:0;border-right:1px solid #38505c}
+ #screen-mines .mines-metrics>div:last-child{border-right:0}
+ #screen-mines .mines-metrics b{font-size:14px}
+ #screen-mines .mines-underboard{flex-wrap:wrap}
+}
+@media(max-width:580px){
+ .game-card.card-mines{grid-column:1!important;height:233px;min-height:233px}
+ .game-card.card-mines .mines-card-art{inset:0 2% 15px 29%;gap:5px;opacity:.83}
+ .game-card.card-mines .mines-art-grid{grid-template-columns:repeat(5,28px);gap:3px}
+ .game-card.card-mines .mines-art-tile{height:28px;width:28px;border-width:1px}
+ .game-card.card-mines .mines-art-safe::after{font-size:18px}
+ .game-card.card-mines .mines-art-bomb::after{font-size:9px}
+ .game-card.card-mines .mines-art-payout{font-size:28px}
+ .game-card.card-mines .mines-art-payout small{font-size:8px}
+ .game-card.card-mines .game-title{font-size:47px;left:16px;bottom:57px}
+ .game-card.card-mines .game-subtitle{font-size:9px;left:17px;bottom:19px}
+ .game-card.card-mines .game-play{right:10px;bottom:15px;font-size:9px;padding:8px}
+ .game-card.card-mines .game-live{left:15px;top:14px}
+ .game-card.card-mines .game-index{right:13px;top:16px}
+ #screen-mines .mines-statbar{margin-bottom:12px}
+ #screen-mines .mines-grid{gap:5px}
+ #screen-mines .mines-statbar>div{padding:7px 6px}
+}
+@media(prefers-reduced-motion:reduce){#screen-mines .mines-tile.safe,#screen-mines .mines-tile.exploded{animation:none}}
+
 </style>
 </head>
 
@@ -2278,6 +2386,7 @@ header>div.header-account:last-child{
   <button data-game="wheel">🎰 Roulette</button>
   <button data-game="blackjack">🃏 Blackjack</button>
   <button data-game="casebattle">📦 Case Battle</button>
+  <button data-game="mines">💎 Mines</button>
   <h4>WALLET</h4>
   <button type="button" id="walletSide">💸 Deposit / Withdraw</button>
   <a href="#myTickets">📋 Transaction Requests</a>
@@ -2484,17 +2593,17 @@ header>div.header-account:last-child{
   </div>
 
   <div class="royale-section-heading">
-    <div><span class="section-kicker">✦ THE ARCADE COLLECTION</span><h2 id="gamesHeading">SIX GAMES. <em>ONE LOBBY.</em></h2><p>Explore the full lineup in its winter festival outfit.</p></div>
-    <div class="game-collection-count" aria-label="Six available games"><b>06</b><small>GAME MODES</small></div>
+    <div><span class="section-kicker">✦ THE ARCADE COLLECTION</span><h2 id="gamesHeading">SEVEN GAMES. <em>ONE LOBBY.</em></h2><p>Explore the full lineup in its winter festival outfit.</p></div>
+    <div class="game-collection-count" aria-label="Seven available games"><b>07</b><small>GAME MODES</small></div>
   </div>
   <div class="rules-note"><strong>✧ PLAY WITH THE RULES IN MIND</strong><span id="publicGameRules">Game rules: 30% win chance, 70% loss chance. Winning bets return 2×. Maximum bet: 3B. 18+ · Play responsibly and take breaks.</span></div>
 
   <div class="game-grid">
-    <button type="button" class="game-card card-coinflip has-hd-coinflip" data-game="coinflip" aria-label="Open Coinflip"><picture class="coinflip-hd-art" aria-hidden="true"><source media="(max-width: 1100px)" srcset="/coinflip-thumbnail-mobile.webp"><img src="/coinflip-thumbnail-hd.webp" alt="" width="1700" height="567" decoding="async"></picture><span class="game-index" aria-hidden="true">01 / 06</span><span class="xmas-game-snow" aria-hidden="true">❄</span><span class="game-live">✦ WINTER GAME</span><span class="game-title">COINFLIP</span><span class="game-subtitle">SONIC VS TAILS</span><span class="game-play">PLAY NOW ↗</span></button>
-    <button type="button" class="game-card card-dice has-hd-dice" data-game="dice" aria-label="Open Lucky Dice"><picture class="dice-hd-art" aria-hidden="true"><source media="(max-width: 1100px)" srcset="/lucky-dice-thumbnail-mobile.webp"><img src="/lucky-dice-thumbnail-hd.webp" alt="" width="2020" height="778" decoding="async"></picture><span class="game-index" aria-hidden="true">02 / 06</span><span class="xmas-game-snow" aria-hidden="true">❄</span><span class="game-live">✦ WINTER GAME</span><span class="game-title">LUCKY DICE</span><span class="game-subtitle">ROLL THE DICE</span><span class="game-play">PLAY NOW ↗</span></button>
-    <button type="button" class="game-card card-slots" data-game="slots" aria-label="Open Triple Sevens"><span class="game-index" aria-hidden="true">03 / 06</span><span class="xmas-game-snow" aria-hidden="true">❄</span><span class="game-live">✦ WINTER GAME</span><span class="game-art art-slots" aria-hidden="true"><span>7</span><span>7</span><span>7</span></span><span class="game-title">TRIPLE SEVENS</span><span class="game-subtitle">JACKPOT SLOTS</span><span class="game-play">PLAY NOW ↗</span></button>
-    <button type="button" class="game-card card-blackjack" data-game="blackjack" aria-label="Open Blackjack"><span class="game-index" aria-hidden="true">04 / 06</span><span class="xmas-game-snow" aria-hidden="true">❄</span><span class="game-live">✦ WINTER GAME</span><span class="game-art art-blackjack" aria-hidden="true"><img class="minecraft-dealer" src="https://mc-heads.net/body/Technoblade/220" alt=""><span class="dealer-glow"></span><span class="dealer-hand">✊</span><span class="dealer-cards"><span class="playing-card card-j"><small>J<br>♣</small><strong>♣</strong></span><span class="playing-card card-a"><small>A<br>♠</small><strong>♠</strong></span></span></span><span class="game-title">BLACKJACK</span><span class="game-subtitle">GET 21 · HIT / STAND</span><span class="game-play">PLAY NOW ↗</span></button>
-    <button type="button" class="game-card card-wheel has-roulette-thumbnail" data-game="wheel" aria-label="Open Roulette"><span class="game-index" aria-hidden="true">05 / 06</span><span class="xmas-game-snow" aria-hidden="true">❄</span><span class="game-live">✦ WINTER GAME</span><svg class="roulette-thumb-art" viewBox="0 0 860 480" preserveAspectRatio="xMidYMid slice" focusable="false" aria-hidden="true" xmlns="http://www.w3.org/2000/svg">
+    <button type="button" class="game-card card-coinflip has-hd-coinflip" data-game="coinflip" aria-label="Open Coinflip"><picture class="coinflip-hd-art" aria-hidden="true"><source media="(max-width: 1100px)" srcset="/coinflip-thumbnail-mobile.webp"><img src="/coinflip-thumbnail-hd.webp" alt="" width="1700" height="567" decoding="async"></picture><span class="game-index" aria-hidden="true">01 / 07</span><span class="xmas-game-snow" aria-hidden="true">❄</span><span class="game-live">✦ WINTER GAME</span><span class="game-title">COINFLIP</span><span class="game-subtitle">SONIC VS TAILS</span><span class="game-play">PLAY NOW ↗</span></button>
+    <button type="button" class="game-card card-dice has-hd-dice" data-game="dice" aria-label="Open Lucky Dice"><picture class="dice-hd-art" aria-hidden="true"><source media="(max-width: 1100px)" srcset="/lucky-dice-thumbnail-mobile.webp"><img src="/lucky-dice-thumbnail-hd.webp" alt="" width="2020" height="778" decoding="async"></picture><span class="game-index" aria-hidden="true">02 / 07</span><span class="xmas-game-snow" aria-hidden="true">❄</span><span class="game-live">✦ WINTER GAME</span><span class="game-title">LUCKY DICE</span><span class="game-subtitle">ROLL THE DICE</span><span class="game-play">PLAY NOW ↗</span></button>
+    <button type="button" class="game-card card-slots" data-game="slots" aria-label="Open Triple Sevens"><span class="game-index" aria-hidden="true">03 / 07</span><span class="xmas-game-snow" aria-hidden="true">❄</span><span class="game-live">✦ WINTER GAME</span><span class="game-art art-slots" aria-hidden="true"><span>7</span><span>7</span><span>7</span></span><span class="game-title">TRIPLE SEVENS</span><span class="game-subtitle">JACKPOT SLOTS</span><span class="game-play">PLAY NOW ↗</span></button>
+    <button type="button" class="game-card card-blackjack" data-game="blackjack" aria-label="Open Blackjack"><span class="game-index" aria-hidden="true">04 / 07</span><span class="xmas-game-snow" aria-hidden="true">❄</span><span class="game-live">✦ WINTER GAME</span><span class="game-art art-blackjack" aria-hidden="true"><img class="minecraft-dealer" src="https://mc-heads.net/body/Technoblade/220" alt=""><span class="dealer-glow"></span><span class="dealer-hand">✊</span><span class="dealer-cards"><span class="playing-card card-j"><small>J<br>♣</small><strong>♣</strong></span><span class="playing-card card-a"><small>A<br>♠</small><strong>♠</strong></span></span></span><span class="game-title">BLACKJACK</span><span class="game-subtitle">GET 21 · HIT / STAND</span><span class="game-play">PLAY NOW ↗</span></button>
+    <button type="button" class="game-card card-wheel has-roulette-thumbnail" data-game="wheel" aria-label="Open Roulette"><span class="game-index" aria-hidden="true">05 / 07</span><span class="xmas-game-snow" aria-hidden="true">❄</span><span class="game-live">✦ WINTER GAME</span><svg class="roulette-thumb-art" viewBox="0 0 860 480" preserveAspectRatio="xMidYMid slice" focusable="false" aria-hidden="true" xmlns="http://www.w3.org/2000/svg">
 <defs>
 <radialGradient id="rtBg"><stop stop-color="#b22c32" offset="0"/><stop stop-color="#6d1726" offset=".44"/><stop stop-color="#21111d" offset="1"/></radialGradient>
 <linearGradient id="rtGold" x1="0" y1="0" x2="1" y2="1"><stop stop-color="#fff0a8"/><stop offset=".2" stop-color="#ffdd56"/><stop offset=".52" stop-color="#da8117"/><stop offset=".78" stop-color="#ffcc56"/><stop offset="1" stop-color="#805018"/></linearGradient>
@@ -2538,7 +2647,7 @@ header>div.header-account:last-child{
 <path d="M0 325 L860 325 860 480 0 480 Z" fill="url(#rtFade)"/>
 </svg><span class="game-title">ROULETTE</span><span class="game-subtitle">RED OR BLACK</span><span class="game-play">PLAY NOW ↗</span></button>
     <button type="button" class="game-card card-casebattle" data-game="casebattle" aria-label="Open Case Battle">
-      <span class="game-index" aria-hidden="true">06 / 06</span>
+      <span class="game-index" aria-hidden="true">06 / 07</span>
       <span class="xmas-game-snow" aria-hidden="true">❄</span>
       <span class="game-live">✦ WINTER GAME</span>
       <span class="cb-banner-art" aria-hidden="true">
@@ -2548,6 +2657,22 @@ header>div.header-account:last-child{
       </span>
       <span class="game-title">CASE BATTLE</span>
       <span class="game-subtitle">OPEN CASES · 1V1 ROYAL BOT</span>
+      <span class="game-play">PLAY NOW ↗</span>
+    </button>
+    <button type="button" class="game-card card-mines" data-game="mines" aria-label="Open Mines">
+      <span class="game-index" aria-hidden="true">07 / 07</span>
+      <span class="xmas-game-snow" aria-hidden="true">❄</span>
+      <span class="game-live">✦ WINTER GAME</span>
+      <span class="mines-card-art" aria-hidden="true">
+        <span class="mines-art-grid">
+          <i class="mines-art-tile" style="--tile-index:0"></i><i class="mines-art-tile mines-art-safe"></i><i class="mines-art-tile"></i><i class="mines-art-tile mines-art-bomb"></i><i class="mines-art-tile"></i>
+          <i class="mines-art-tile"></i><i class="mines-art-tile"></i><i class="mines-art-tile mines-art-safe"></i><i class="mines-art-tile"></i><i class="mines-art-tile"></i>
+          <i class="mines-art-tile"></i><i class="mines-art-tile mines-art-safe"></i><i class="mines-art-tile"></i><i class="mines-art-tile"></i><i class="mines-art-tile mines-art-bomb"></i>
+        </span>
+        <span class="mines-art-payout">1.91× <small>CASH OUT</small></span>
+      </span>
+      <span class="game-title">MINES</span>
+      <span class="game-subtitle">REVEAL GEMS · AVOID TNT · CASH OUT</span>
       <span class="game-play">PLAY NOW ↗</span>
     </button>
 
@@ -2857,6 +2982,58 @@ header>div.header-account:last-child{
         <button type="button" class="primary" id="cbStart" disabled>⚔ START CASE BATTLE</button>
         <p class="result" id="cbResult" role="status" aria-live="polite">Choose a case and number of openings.</p>
         <p class="cb-disclaimer">One case is opened per player per round · Winner receives 2× the total stake · Loot values are battle scores, not physical items · 18+</p>
+      </div>
+    </section>
+    <section class="game-screen" id="screen-mines" hidden>
+      <div class="mines-head">
+        <div><span class="mines-kicker">✦ DONUT ROYALE · HIGH STAKES GRID</span><h2>💎 MINES <em>ROYAL</em></h2><p>Reveal diamonds, avoid TNT and cash out before a mine ends the round.</p></div>
+        <span class="mines-head-chip">25 TILES · FAIR SERVER REVEAL</span>
+      </div>
+      <div class="mines-game-layout">
+        <div class="mines-panel">
+          <div class="mines-statbar">
+            <div><small>MINES</small><strong id="minesMinesStat">3</strong></div>
+            <div><small>CLEARED</small><strong id="minesClearedStat">0</strong></div>
+            <div><small>CURRENT VALUE</small><strong id="minesMultiplierStat">1.00×</strong></div>
+          </div>
+          <div id="minesGrid" class="mines-grid" role="group" aria-label="Mines 5 by 5 board"></div>
+          <div class="mines-underboard"><button id="minesAuto" type="button" disabled>✧ AUTO PICK</button><span>🎯 Next safe tile chance: <strong id="minesSafeChance">88%</strong></span></div>
+          <p class="mines-status" id="minesStatus" role="status" aria-live="polite">Choose your bet and mine count to begin.</p>
+        </div>
+        <div class="mines-bet-panel">
+          <div class="mines-bet-heading"><span>✦ PREPARE YOUR ROUND</span><h3>YOUR BET</h3></div>
+          <label for="minesBet">BET AMOUNT</label>
+          <input id="minesBet" inputmode="decimal" autocomplete="off" value="10000" aria-label="Mines bet amount">
+          <div class="quick mines-quick" data-input="minesBet">
+            <button type="button" data-value="10000">10K</button>
+            <button type="button" data-value="100000">100K</button>
+            <button type="button" data-value="1000000">1M</button>
+            <button type="button" data-value="10000000">10M</button>
+          </div>
+          <label for="minesCount">NUMBER OF MINES</label>
+          <select id="minesCount">
+            <option value="1">1 mine · easier</option>
+            <option value="2">2 mines</option>
+            <option value="3" selected>3 mines · classic</option>
+            <option value="5">5 mines</option>
+            <option value="10">10 mines</option>
+            <option value="15">15 mines · high risk</option>
+            <option value="20">20 mines</option>
+            <option value="24">24 mines · extreme</option>
+          </select>
+          <div class="mines-metrics">
+            <div><span>BET</span><b id="minesBetStat">10K</b></div>
+            <div><span>CURRENT CASH OUT</span><b id="minesPayoutStat">—</b></div>
+            <div><span>MULTIPLIER</span><b id="minesPayMult">1.00×</b></div>
+          </div>
+          <button class="mines-start-btn" type="button" id="minesStart">✦ START MINES</button>
+          <button class="mines-cashout-btn" type="button" id="minesCashout" disabled>💰 CASH OUT</button>
+          <div class="mines-info">
+            <strong>HOW IT WORKS</strong>
+            <p>Each safe tile raises your payout. TNT ends the round with zero payout. Cash out after at least one diamond.</p>
+            <p>94% theoretical return before the maximum payout cap. Mines has variable odds, not a fixed 30% win chance. ALL IN always loses under the site's current rules. Maximum payout: 1T credits.</p>
+          </div>
+        </div>
       </div>
     </section>
     <section class="game-screen" id="screen-blackjack" hidden>
