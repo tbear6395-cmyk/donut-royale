@@ -217,7 +217,7 @@ def withdrawal_config():
             return None
         cap = int(os.getenv("AUTO_WITHDRAW_MAX_AMOUNT", "1000"))
         daily = int(os.getenv("AUTO_WITHDRAW_DAILY_LIMIT", "5000"))
-        if cap <= 0 or daily < cap or cutoff > now():
+        if cap < 0 or daily < 0 or (cap and daily and daily < cap) or cutoff > now():
             return None
         return cutoff, pattern, cap, daily
     except (KeyError, ValueError, re.error):
@@ -580,14 +580,16 @@ class Handler(BaseHTTPRequestHandler):
                         if not config:
                             return self.fail(409, "Automatic withdrawals are disabled")
                         cutoff, _, cap, daily = config
-                        if _deposit_time(ticket["created"]) < cutoff or not 1 <= ticket["amount"] <= cap:
+                        if (_deposit_time(ticket["created"]) < cutoff or ticket["amount"] < 1
+                                or (cap and ticket["amount"] > cap)
+                                or ticket["amount"] > 9_007_199_254_740_991):
                             return self.fail(409, "Withdrawal outside automatic limits")
                     # A single unresolved send blocks further automatic transfers until reconciliation.
                     if db.execute("SELECT ticket_id FROM withdraw_attempts WHERE status IN ('claimed','needs_review') LIMIT 1").fetchone():
                         return self.fail(409, "An earlier payout needs reconciliation")
                     recent = db.execute("""SELECT r.amount,a.created FROM withdraw_attempts a
                         JOIN withdraw_reservations r ON r.ticket_id=a.ticket_id""").fetchall()
-                    if ticket["amount"] + sum(r["amount"] for r in recent
+                    if daily and ticket["amount"] + sum(r["amount"] for r in recent
                         if 0 <= (now()-_deposit_time(r["created"])).total_seconds() < 86400) > daily:
                         return self.fail(409, "Daily automatic payout limit reached")
                     nick = re.fullmatch(r"\[MINECRAFT NICK\] (\.?[A-Za-z0-9_]{3,16})", ticket["message"])
