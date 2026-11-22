@@ -1761,7 +1761,7 @@ header>div.header-account:last-child{
     <div><span class="section-kicker">✦ THE ARCADE COLLECTION</span><h2 id="gamesHeading">FIVE GAMES. <em>ONE LOBBY.</em></h2><p>Explore the full lineup in its winter festival outfit.</p></div>
     <div class="game-collection-count" aria-label="Five available games"><b>05</b><small>GAME MODES</small></div>
   </div>
-  <div class="rules-note"><strong>✧ PLAY WITH THE RULES IN MIND</strong><span>Game rules: 40% win chance, 60% loss chance. Winning bets return 2×. Betting your entire balance (all-in) automatically loses. Maximum bet: 3B. 18+ · Play responsibly and take breaks.</span></div>
+  <div class="rules-note"><strong>✧ PLAY WITH THE RULES IN MIND</strong><span>Game rules: 40% win chance, 60% loss chance. Winning bets return 2×. Betting your entire balance (all-in) has 0% win chance and immediately loses. Maximum bet: 3B. 18+ · Play responsibly and take breaks.</span></div>
 
   <div class="game-grid">
     <button type="button" class="game-card card-coinflip" data-game="coinflip" aria-label="Open Coinflip"><span class="game-index" aria-hidden="true">01 / 05</span><span class="xmas-game-snow" aria-hidden="true">❄</span><span class="game-live">✦ WINTER GAME</span><span class="game-art art-coin" aria-hidden="true"><span>🪙</span><span>⚡</span></span><span class="game-title">COINFLIP</span><span class="game-subtitle">SONIC VS TAILS</span><span class="game-play">PLAY NOW ↗</span></button>
@@ -2069,7 +2069,7 @@ header>div.header-account:last-child{
           </div>
           <button type="button" class="primary roulette-spin-button" id="wheelPlay">SPIN ROULETTE <span aria-hidden="true">↗</span></button>
           <p class="result roulette-result" id="wheelResult" role="status" aria-live="polite"></p>
-          <p class="roulette-fine-print">In-game credits only · Maximum bet 3B · All-in bets always lose · 18+ · Take breaks</p>
+          <p class="roulette-fine-print">In-game credits only · Maximum bet 3B · All-in = instant loss (0% win chance) · 18+ · Take breaks</p>
         </div>
       </div>
     </section>
@@ -2397,7 +2397,12 @@ async function blackjackAction(action){
     bjActive=r.outcome==="playing";
     bjRenderCards("bjPlayer",r.player);bjRenderCards("bjDealer",r.dealer);
     $("bjScore").textContent="("+r.player_score+")";
-    $("bjResult").textContent=r.outcome==="playing"?"Choose HIT or STAND":r.outcome==="win"?"✨ BLACKJACK WIN! +"+fmt(r.payout-r.amount):r.outcome==="push"?"🤝 PUSH — bet returned":"HOUSE WINS · -"+fmt(r.amount);
+    $("bjResult").textContent=r.all_in
+      ?"ALL-IN · HOUSE WINS · -"+fmt(r.amount)+" (0% win chance)"
+      :r.outcome==="playing"?"Choose HIT or STAND"
+      :r.outcome==="win"?"✨ BLACKJACK WIN! +"+fmt(r.payout-r.amount)
+      :r.outcome==="push"?"🤝 PUSH — bet returned"
+      :"HOUSE WINS · -"+fmt(r.amount);
     me.balance=r.balance;$("balance").textContent=fmt(r.balance);$("topBalance").textContent=fmt(r.balance);
   }catch(e){toast(e.message);}
   finally{bjBusy=false;$("bjDeal").disabled=bjActive;$("bjHit").disabled=!bjActive;$("bjStand").disabled=!bjActive;}
@@ -2708,6 +2713,29 @@ async function animateWheel(request){
   return result;
 }
 
+// Server settles the bet first. All-in results are shown instantly with no spin animation.
+function renderAllInLoss(game,result){
+  if(!result.all_in || result.win)throw Error("Invalid all-in response");
+  if(game==="coinflip"){
+    coinAngle=result.result==="heads"?0:180;
+    $("coinVisual").style.transform=`rotateY(${coinAngle}deg)`;
+  }else if(game==="dice"){
+    const positions={1:[0,0],2:[0,-Math.PI/2],3:[-Math.PI/2,0],4:[Math.PI/2,0],5:[0,Math.PI/2],6:[0,Math.PI]};
+    const p=positions[result.roll];
+    if(!p)throw Error("Invalid dice result");
+    diceRotation=[p[0]-.35,p[1]-.4];
+    drawDice();
+  }else if(game==="slots"){
+    if(!Array.isArray(result.reels) || result.reels.length!==3)throw Error("Invalid slots result");
+    document.querySelectorAll(".reel span").forEach((reel,i)=>reel.textContent=result.reels[i]);
+  }else if(game==="wheel"){
+    if(result.result!=="red" && result.result!=="black")throw Error("Invalid roulette result");
+    const index=rouletteNumbers.findIndex(n=>rouletteNumberColor(n)===result.result);
+    wheelAngle=index*(360/rouletteNumbers.length);
+    $("rouletteBallTrack").style.transform=`rotate(${wheelAngle}deg)`;
+    rouletteCenter("ALL-IN · HOUSE WINS",result.result.toUpperCase(),"0% WIN CHANCE",result.result);
+  }
+}
 async function play(game,inputId,resultId,buttonId,extra={}){
   if(playing)return;
 
@@ -2745,7 +2773,13 @@ async function play(game,inputId,resultId,buttonId,extra={}){
       wheel:animateWheel
     };
 
-    const result = await animations[game](request);
+    // The backend is authoritative about whether this was the entire balance.
+    // For all-in, reveal the loss immediately after the API responds; never spin.
+    const serverResult=await request;
+    const result=serverResult.all_in
+      ? serverResult
+      : await animations[game](Promise.resolve(serverResult));
+    if(result.all_in)renderAllInLoss(game,result);
 
     let prefix = "";
 
@@ -2765,11 +2799,13 @@ async function play(game,inputId,resultId,buttonId,extra={}){
         : "⚫ BLACK · ";
     }
 
-    $(resultId).textContent = prefix + (
-      result.win
-        ? "✨ YOU WIN! +"+fmt(result.profit)
-        : "HOUSE WINS · -"+fmt(amount)
-    );
+    $(resultId).textContent = result.all_in
+      ? "ALL-IN · HOUSE WINS · -"+fmt(amount)+" (0% win chance)"
+      : prefix + (
+          result.win
+            ? "✨ YOU WIN! +"+fmt(result.profit)
+            : "HOUSE WINS · -"+fmt(amount)
+        );
 
     await refresh();
   }catch(err){
