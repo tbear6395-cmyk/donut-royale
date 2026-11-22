@@ -1620,22 +1620,6 @@ header>div.header-account:last-child{
   box-shadow:0 2px 9px #0009,0 0 12px #cd355052;
 }
 
-/* Non-blocking, persistent ALL IN rule disclosure beside each bet selector. */
-.game-screen .quick .all-in-disclosure{
-  display:block;
-  width:100%;
-  margin:6px auto 8px;
-  font-size:11px;
-  color:#ffc3cc;
-  font-weight:750;
-  line-height:1.35;
-  text-align:center;
-}
-#screen-wheel .roulette-chip-bar .all-in-disclosure{
-  grid-column:1/-1;
-  margin:2px 0 0;
-  font-size:10px;
-}
 
 </style>
 </head>
@@ -1795,7 +1779,7 @@ header>div.header-account:last-child{
     <div><span class="section-kicker">✦ THE ARCADE COLLECTION</span><h2 id="gamesHeading">FIVE GAMES. <em>ONE LOBBY.</em></h2><p>Explore the full lineup in its winter festival outfit.</p></div>
     <div class="game-collection-count" aria-label="Five available games"><b>05</b><small>GAME MODES</small></div>
   </div>
-  <div class="rules-note"><strong>✧ PLAY WITH THE RULES IN MIND</strong><span>Game rules: 40% win chance, 60% loss chance. Winning bets return 2×. Betting your entire balance (all-in) has 0% win chance and immediately loses. Maximum bet: 3B. 18+ · Play responsibly and take breaks.</span></div>
+  <div class="rules-note"><strong>✧ PLAY WITH THE RULES IN MIND</strong><span>Game rules: 40% win chance, 60% loss chance. Winning bets return 2×. Maximum bet: 3B. 18+ · Play responsibly and take breaks.</span></div>
 
   <div class="game-grid">
     <button type="button" class="game-card card-coinflip" data-game="coinflip" aria-label="Open Coinflip"><span class="game-index" aria-hidden="true">01 / 05</span><span class="xmas-game-snow" aria-hidden="true">❄</span><span class="game-live">✦ WINTER GAME</span><span class="game-art art-coin" aria-hidden="true"><span>🪙</span><span>⚡</span></span><span class="game-title">COINFLIP</span><span class="game-subtitle">SONIC VS TAILS</span><span class="game-play">PLAY NOW ↗</span></button>
@@ -2025,7 +2009,7 @@ header>div.header-account:last-child{
         <button data-value="10000000">10M</button>
         <button data-value="100000000">100M</button>
       
-        <button type="button" data-all-in="true" title="ALL IN uses your full balance and guarantees a loss (0% chance)." aria-label="ALL IN — full balance, guaranteed loss">ALL IN</button><small class="all-in-disclosure">ALL IN = guaranteed loss · 0% win chance</small></div>
+        <button type="button" data-all-in="true" title="Bet your full available balance" aria-label="ALL IN — use full balance">ALL IN</button></div>
       <button class="primary" id="flip">FLIP COIN</button>
       <p class="result" id="gameResult"></p>
     </section>
@@ -2044,7 +2028,7 @@ header>div.header-account:last-child{
         <button data-value="10000000">10M</button>
         <button data-value="100000000">100M</button>
       
-        <button type="button" data-all-in="true" title="ALL IN uses your full balance and guarantees a loss (0% chance)." aria-label="ALL IN — full balance, guaranteed loss">ALL IN</button><small class="all-in-disclosure">ALL IN = guaranteed loss · 0% win chance</small></div>
+        <button type="button" data-all-in="true" title="Bet your full available balance" aria-label="ALL IN — use full balance">ALL IN</button></div>
       <button class="primary" id="dicePlay">ROLL DICE</button>
       <p class="result" id="diceResult"></p>
     </section>
@@ -2065,7 +2049,7 @@ header>div.header-account:last-child{
         <button data-value="10000000">10M</button>
         <button data-value="100000000">100M</button>
       
-        <button type="button" data-all-in="true" title="ALL IN uses your full balance and guarantees a loss (0% chance)." aria-label="ALL IN — full balance, guaranteed loss">ALL IN</button><small class="all-in-disclosure">ALL IN = guaranteed loss · 0% win chance</small></div>
+        <button type="button" data-all-in="true" title="Bet your full available balance" aria-label="ALL IN — use full balance">ALL IN</button></div>
       <button class="primary" id="slotsPlay">SPIN SLOTS</button>
       <p class="result" id="slotsResult"></p>
     </section>
@@ -2099,7 +2083,7 @@ header>div.header-account:last-child{
             <button type="button" data-value="100000">100K</button>
             <button type="button" data-value="1000000">1M</button>
           
-        <button type="button" data-all-in="true" title="ALL IN uses your full balance and guarantees a loss (0% chance)." aria-label="ALL IN — full balance, guaranteed loss">ALL IN</button><small class="all-in-disclosure">ALL IN = guaranteed loss · 0% win chance</small></div>
+        <button type="button" data-all-in="true" title="Bet your full available balance" aria-label="ALL IN — use full balance">ALL IN</button></div>
           <div class="roulette-odds" aria-label="Roulette game odds">
             <div><span>YOUR WIN CHANCE</span><strong>40%</strong></div>
             <div><span>HOUSE WIN CHANCE</span><strong>60%</strong></div>
@@ -2107,11 +2091,11 @@ header>div.header-account:last-child{
           </div>
           <button type="button" class="primary roulette-spin-button" id="wheelPlay">SPIN ROULETTE <span aria-hidden="true">↗</span></button>
           <p class="result roulette-result" id="wheelResult" role="status" aria-live="polite"></p>
-          <p class="roulette-fine-print">In-game credits only · Maximum bet 3B · All-in = instant loss (0% win chance) · 18+ · Take breaks</p>
+          <p class="roulette-fine-print">In-game credits only · Maximum bet 3B · 18+ · Take breaks</p>
         </div>
       </div>
     </section>
-    <section class="game-screen" id="screen-blackjack" hidden><h2>🃏 BLACKJACK</h2><p>Get as close to 21 as possible without going over! Over 21 means you lose (22 is too much). Ace = 1 or 11, J/Q/K = 10.</p><h3>DEALER</h3><div class="bj-cards" id="bjDealer">🂠</div><h3>YOUR HAND <span id="bjScore"></span></h3><div class="bj-cards" id="bjPlayer">🃏</div><input id="bjBet" value="1000"><div class="quick" data-input="bjBet"><button data-value="1000000">1M</button><button data-value="10000000">10M</button><button data-value="100000000">100M</button><button type="button" data-all-in="true" title="ALL IN uses your full balance and guarantees a loss (0% chance)." aria-label="ALL IN — full balance, guaranteed loss">ALL IN</button><small class="all-in-disclosure">ALL IN = guaranteed loss · 0% win chance</small></div><div class="choices"><button class="primary" id="bjDeal">DEAL CARDS</button><button id="bjHit" disabled>HIT</button><button id="bjStand" disabled>STAND</button></div><p class="result" id="bjResult"></p></section>
+    <section class="game-screen" id="screen-blackjack" hidden><h2>🃏 BLACKJACK</h2><p>Get as close to 21 as possible without going over! Over 21 means you lose (22 is too much). Ace = 1 or 11, J/Q/K = 10.</p><h3>DEALER</h3><div class="bj-cards" id="bjDealer">🂠</div><h3>YOUR HAND <span id="bjScore"></span></h3><div class="bj-cards" id="bjPlayer">🃏</div><input id="bjBet" value="1000"><div class="quick" data-input="bjBet"><button data-value="1000000">1M</button><button data-value="10000000">10M</button><button data-value="100000000">100M</button><button type="button" data-all-in="true" title="Bet your full available balance" aria-label="ALL IN — use full balance">ALL IN</button></div><div class="choices"><button class="primary" id="bjDeal">DEAL CARDS</button><button id="bjHit" disabled>HIT</button><button id="bjStand" disabled>STAND</button></div><p class="result" id="bjResult"></p></section>
   </div>
 </div>
 
@@ -2804,7 +2788,7 @@ async function play(game,inputId,resultId,buttonId,extra={}){
       wheel:animateWheel
     };
 
-    // Animate every round, including ALL IN. The server still guarantees that ALL IN loses.
+    // Animate every bet; server determines the authoritative outcome.
     const result=await animations[game](request);
 
     let prefix = "";
