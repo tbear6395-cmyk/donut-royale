@@ -2358,6 +2358,80 @@ header>div.header-account:last-child{
 }
 @media(prefers-reduced-motion:reduce){#screen-mines .mines-tile.safe,#screen-mines .mines-tile.exploded{animation:none}}
 
+
+/* CHRISTMAS FINISHING TOUCHES — subtle visual-only accents, Nov 2026 */
+header::after{
+  content:"";position:absolute;inset:auto 0 0;height:3px;pointer-events:none;
+  background:repeating-linear-gradient(105deg,#b94050 0 19px,#ffe9c5 19px 28px,#257459 28px 47px,#ffe9c5 47px 56px);
+  opacity:.83;
+}
+header .brand-symbol{position:relative;box-shadow:inset 0 1px #fff5,0 0 21px #efd69a24}
+header .brand-symbol::after{
+  content:"✦";position:absolute;right:-7px;top:-11px;font-size:17px;
+  color:#ffe7a1;text-shadow:0 0 12px #ffd47e;pointer-events:none
+}
+.hero{
+  border-color:#efd2999c;
+  box-shadow:inset 0 1px #fff3,inset 0 0 80px #a8d9ba14,0 19px 55px #0007,0 0 30px #e6be7030
+}
+.hero .xmas-lights{filter:drop-shadow(0 2px 9px #ffe7b466)}
+.royale-hero-kicker{border-color:#e4d1a67a;box-shadow:0 0 20px #f0d79921}
+.xmas-hero-stamp{box-shadow:inset 0 0 14px #fbe6b217,0 0 18px #fbe6b21d}
+.xmas-event{
+  border-color:#e6c89199;
+  box-shadow:inset 0 1px #ffffff20,0 12px 35px #0006,0 0 25px #dfbb7b1c
+}
+.xmas-event-side{border-color:#deb98e72}
+.xmas-event-actions #xmasGift{box-shadow:0 5px 16px #b83e5340}
+.royale-section-heading .section-kicker::before{content:"🎁 ";letter-spacing:normal}
+.stats .panel.royale-stat{
+  border-color:#bcce9c65;
+  box-shadow:inset 0 1px #ffffff24,0 9px 28px #0004,0 0 14px #e7d0980d
+}
+.stats .panel.royale-stat::after{
+  content:"✳";position:absolute;right:17px;bottom:5px;font-size:31px;
+  color:#f9e0a1;opacity:.16;pointer-events:none
+}
+.game-card .game-live{
+  color:#fff2d1;background:#275c4cdb;border-color:#ebda9e9c;
+  box-shadow:0 0 16px #ffe7b01b
+}
+.game-card .xmas-game-snow{
+  color:#ecfffc;text-shadow:0 0 9px #e1fcff;
+  animation:holidayStarGlow 3.8s ease-in-out infinite
+}
+.game-card .game-play{
+  background:linear-gradient(120deg,#ffefd0,#f0d28b);
+  border-color:#fff0c6;box-shadow:0 5px 13px #0006,0 0 14px #d9b16625
+}
+.game-card:hover .game-play{background:linear-gradient(120deg,#fff6e2,#fbe0a3)}
+aside .winter{box-shadow:inset 0 1px #fff2,0 10px 30px #0005,0 0 19px #e1bd7226}
+#screen-mines .mines-head{position:relative;padding-bottom:12px}
+#screen-mines .mines-head::after{
+  content:"";position:absolute;bottom:0;left:0;right:0;height:2px;
+  background:linear-gradient(90deg,#bd4c63,#f7d89e 45%,#64c6a1,transparent)
+}
+#screen-mines .mines-bet-panel{
+  border-color:#b9a2768f;
+  background:radial-gradient(circle at 100% 0%,#65433932,transparent 58%),linear-gradient(#162e37,#0f2130)
+}
+#screen-mines #minesStart{
+  background:linear-gradient(115deg,#2b916f,#49c99e);border-color:#d8d39f;
+  box-shadow:0 5px 15px #16715136
+}
+@keyframes holidayStarGlow{
+  0%,100%{opacity:.76;filter:drop-shadow(0 0 3px #d9fdff)}
+  50%{opacity:1;filter:drop-shadow(0 0 9px #fff2b4)}
+}
+@media(max-width:580px){
+  header::after{height:2px;opacity:.7}
+  header .brand-symbol::after{display:none}
+  .game-card .xmas-game-snow{animation-duration:5.5s}
+}
+@media(prefers-reduced-motion:reduce){
+  .game-card .xmas-game-snow{animation:none}
+}
+
 </style>
 </head>
 
@@ -2365,7 +2439,7 @@ header>div.header-account:last-child{
 <div class="xmas-snow" id="xmasSnow" aria-hidden="true"></div>
 
 <header>
-  <div class="logo"><span class="brand-symbol" aria-hidden="true"><img class="brand-logo-image" src="data:image/png;base64,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" alt="" width="64" height="64" decoding="async"></span><span class="brand-type"><em>Donut<span>Royale</span></em><small>THE WINTER EDITION</small></span></div>
+  <div class="logo"><span class="brand-symbol" aria-hidden="true"><img class="brand-logo-image" src="data:image/png;base64,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" alt="" width="64" height="64" decoding="async"></span><span class="brand-type"><em>Donut<span>Royale</span></em><small>🎄 HOLIDAY EDITION</small></span></div>
   <div class="wallet-header-tools">
     <button type="button" id="walletNav" class="wallet-nav" aria-label="Open wallet and cashier"><span aria-hidden="true">◈</span> WALLET <span> / CASHIER</span></button>
     <span class="bot-header-status is-checking" id="botHeaderStatus" role="status" aria-live="polite" aria-atomic="true" title="Checking Minecraft bot connection">
