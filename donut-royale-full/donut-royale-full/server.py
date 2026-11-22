@@ -11,6 +11,7 @@ except ImportError:
         from psycopg.rows import dict_row
 from pathlib import Path
 from datetime import datetime, timezone, timedelta
+from decimal import Decimal, InvalidOperation
 from http.server import ThreadingHTTPServer, BaseHTTPRequestHandler
 from http.cookies import SimpleCookie
 from urllib.parse import urlparse
@@ -181,6 +182,8 @@ def auto_credit_deposit(db, event_id, player, amount, raw_message):
     """Opt-in only. Requires independent validation of the payment source before enabling."""
     if os.getenv("AUTO_DEPOSIT_ENABLED") != "1" or not os.getenv("AUTO_DEPOSIT_START_UTC"):
         return "unverified"
+    if USE_POSTGRES:
+        db.execute("SELECT pg_advisory_xact_lock(2026112207)")
     try:
         cutoff = _deposit_time(os.environ["AUTO_DEPOSIT_START_UTC"])
     except ValueError:
@@ -188,13 +191,15 @@ def auto_credit_deposit(db, event_id, player, amount, raw_message):
     event = db.execute("SELECT created FROM bot_payment_events WHERE event_id=?", (event_id,)).fetchone()
     if not event or _deposit_time(event["created"]) < cutoff:
         return "unverified"
-    receipt = re.fullmatch(r"(\.?[A-Za-z0-9_]{3,16}) paid you \$\s*([0-9,]+)", raw_message, re.I)
+    receipt = re.fullmatch(r"(\.?[A-Za-z0-9_]{3,16}) paid you \$\s*([0-9,]+(?:\.[0-9]+)?)\s*([KMBT])?", raw_message, re.I)
     if not receipt or receipt.group(1).casefold() != player.casefold():
         return "needs_review"
     try:
-        if int(receipt.group(2).replace(",", "")) != amount:
+        multiplier = {"": 1, "K": 10**3, "M": 10**6, "B": 10**9, "T": 10**12}[str(receipt.group(3) or "").upper()]
+        parsed = Decimal(receipt.group(2).replace(",", "")) * multiplier
+        if parsed != amount:
             return "needs_review"
-    except ValueError:
+    except (InvalidOperation, ValueError):
         return "needs_review"
     # If the same payer and amount appeared within 10 minutes, manual review
     # is safer than treating a replay as another payment.
@@ -454,11 +459,11 @@ class Handler(BaseHTTPRequestHandler):
                     or not isinstance(raw_message, str) or not 1 <= len(raw_message) <= 500):
                 return self.fail(400, "Invalid payment event")
             with LOCK, db_open() as db:
-                existing = db.execute("SELECT player,amount,raw_message FROM bot_payment_events WHERE event_id=?", (event_id,)).fetchone()
+                existing = db.execute("SELECT player,amount,raw_message,status FROM bot_payment_events WHERE event_id=?", (event_id,)).fetchone()
                 if existing:
                     if (existing["player"], existing["amount"], existing["raw_message"]) != (player, amount, raw_message):
                         return self.fail(409, "Event ID already used for different data")
-                    return self.send_json(200, {"ok": True, "duplicate": True, "status": "unverified"})
+                    return self.send_json(200, {"ok": True, "duplicate": True, "status": existing["status"]})
                 db.execute("INSERT INTO bot_payment_events(event_id,player,amount,raw_message) VALUES(?,?,?,?)",
                            (event_id, player, amount, raw_message))
                 status = auto_credit_deposit(db, event_id, player, amount, raw_message)
