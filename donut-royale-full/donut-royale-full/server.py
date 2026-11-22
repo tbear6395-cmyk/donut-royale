@@ -259,6 +259,54 @@ class Handler(BaseHTTPRequestHandler):
         user = self.me()
         if not user:
             return self.fail(401, "Please log in")
+        if path == "/api/admin/bot-auto-deposit-preview":
+            if user["role"] not in ("owner", "admin"):
+                return self.fail(403, "Staff only")
+            # Dry-run only. Never modify balances based on chat text or bot-generated IDs.
+            with db_open() as db:
+                events = [dict(r) for r in db.execute(
+                    """SELECT event_id,player,amount,status,created FROM bot_payment_events
+                       WHERE status='unverified' ORDER BY created DESC, event_id DESC
+                       LIMIT 1000""").fetchall()]
+                tickets = [dict(r) for r in db.execute(
+                    """SELECT t.id,t.user_id,t.amount,t.message,t.created,u.username AS account_username
+                       FROM tickets t JOIN users u ON u.id=t.user_id
+                       WHERE t.kind='deposit' AND t.status='open'
+                       ORDER BY t.id DESC LIMIT 1000""").fetchall()]
+            pair_events = {}
+            pair_tickets = {}
+            for event in events:
+                matches = []
+                for ticket in tickets:
+                    nick = re.search(r"\[MINECRAFT NICK\]\s+(\.?[A-Za-z0-9_]{3,16})(?![A-Za-z0-9_])",
+                                     ticket["message"])
+                    if (nick and nick.group(1).casefold() == event["player"].casefold()
+                            and ticket["amount"] == event["amount"]):
+                        matches.append(ticket)
+                        pair_tickets.setdefault(ticket["id"], []).append(event["event_id"])
+                pair_events[event["event_id"]] = matches
+            results = []
+            for event in events:
+                matches = pair_events[event["event_id"]]
+                if not matches:
+                    decision = "no_open_ticket"
+                elif len(matches) > 1:
+                    decision = "ambiguous_tickets"
+                elif len(pair_tickets[matches[0]["id"]]) > 1:
+                    decision = "ambiguous_events"
+                else:
+                    decision = "candidate_needs_verification"
+                results.append({
+                    "event_id": event["event_id"], "player": event["player"],
+                    "amount": event["amount"], "decision": decision,
+                    "ticket_ids": [t["id"] for t in matches],
+                })
+            return self.send_json(200, {
+                "mode": "dry_run", "auto_credit_enabled": False,
+                "events": results,
+                "warning": "System chat and UUIDs do not establish a unique authentic payment. "
+                           "No balance changes or automatic approvals are made.",
+            })
         if path == "/api/admin/bot-deposit-matches":
             if user["role"] not in ("owner", "admin"):
                 return self.fail(403, "Staff only")
