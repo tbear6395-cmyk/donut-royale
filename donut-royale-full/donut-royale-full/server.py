@@ -1105,8 +1105,12 @@ class Handler(BaseHTTPRequestHandler):
                         return self.fail(400,"Adjust 1 to 1B credits per action")
                     if not isinstance(reason,str) or not 8<=len(reason.strip())<=250:
                         return self.fail(400,"Reason must have 8-250 characters")
-                    if target["role"]=="owner" or target_id==user["id"]:
-                        return self.fail(403,"Cannot adjust owner/self credits")
+                    # Real owner may adjust their own balance, with an audit trail.
+                    # Delegated staff cannot credit themselves or the protected owner.
+                    if target["role"]=="owner" and not (user["role"]=="owner" and target_id==user["id"]):
+                        return self.fail(403,"Owner balance is protected")
+                    if target_id==user["id"] and user["role"]!="owner":
+                        return self.fail(403,"Staff cannot adjust their own credits")
                     updated_balance=target["balance"]+delta
                     if not 0<=updated_balance<=10000000000000:
                         return self.fail(400,"Balance cannot become negative or exceed 10T")
