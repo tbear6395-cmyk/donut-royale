@@ -344,6 +344,25 @@ class Handler(BaseHTTPRequestHandler):
                 "payment_deadline_minutes": 30,
                 "note": "Only fresh unambiguous bot-reported payments are eligible. Minecraft bot must be online; high or ambiguous amounts require review.",
             })
+        if path == "/api/bot/withdrawals/pending":
+            expected = os.getenv("BOT_API_KEY", "")
+            provided = self.headers.get("X-Bot-Api-Key", "")
+            if not expected or not hmac.compare_digest(provided, expected):
+                return self.fail(401, "Unauthorized")
+            with db_open() as db:
+                rows = db.execute(
+                    """SELECT t.id,t.amount,t.message,r.status FROM withdraw_reservations r
+                       JOIN tickets t ON t.id=r.ticket_id
+                       WHERE r.status='reserved' AND t.status='open'
+                       ORDER BY t.id LIMIT 50""").fetchall()
+            items = []
+            for row in rows:
+                nick = re.fullmatch(r"\[MINECRAFT NICK\] (\.?[A-Za-z0-9_]{3,16})", row["message"])
+                if nick:
+                    items.append({"ticket_id": row["id"], "amount": row["amount"],
+                                  "player": nick.group(1), "status": row["status"]})
+            return self.send_json(200, {"withdrawals": items, "mode": "preview_only",
+                                        "auto_payout_enabled": False})
         if path == "/api/bot/health":
             expected = os.getenv("BOT_API_KEY", "")
             provided = self.headers.get("X-Bot-Api-Key", "")
