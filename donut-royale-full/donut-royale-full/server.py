@@ -411,18 +411,20 @@ CASE_BATTLE_CASES = {
 CASE_BATTLE_SCORE_FACTORS = (35, 75, 150, 300, 700)
 CASE_BATTLE_RARITIES = ("common", "uncommon", "rare", "epic", "legendary")
 
-def case_battle_pool(case_type):
+def case_battle_pool(case_type, price=None):
     case = CASE_BATTLE_CASES[case_type]
+    if price is None:
+        price = case["price"]
     return [
         {"name": name, "texture": texture,
-         "value": case["price"] * CASE_BATTLE_SCORE_FACTORS[i] // 100,
+         "value": price * CASE_BATTLE_SCORE_FACTORS[i] // 100,
          "rarity": CASE_BATTLE_RARITIES[i]}
         for i, (name, texture) in enumerate(case["items"])
     ]
 
-def case_battle_drops(case_type, rounds, player_wins):
+def case_battle_drops(case_type, rounds, player_wins, price=None):
     """Generate loot reveal scores consistent with the settled server outcome."""
-    pool = case_battle_pool(case_type)
+    pool = case_battle_pool(case_type, price)
     for _ in range(60):
         drops = [{"player": secrets.choice(pool), "bot": secrets.choice(pool)}
                  for _ in range(rounds)]
@@ -514,9 +516,9 @@ class Handler(BaseHTTPRequestHandler):
             return None
         with db_open() as db:
             row = db.execute("""
-                SELECT u.id,u.username,u.role,u.balance FROM sessions s
+                SELECT u.id,u.username,u.role,u.balance,u.suspended FROM sessions s
                 JOIN users u ON u.id=s.user_id
-                WHERE s.token_hash=? AND s.expires>?
+                WHERE s.token_hash=? AND s.expires>? AND u.suspended=0
             """, (hashlib.sha256(token.encode()).hexdigest(), now().isoformat())).fetchone()
         return dict(row) if row else None
 
@@ -600,19 +602,27 @@ class Handler(BaseHTTPRequestHandler):
         if path == "/api/me":
             return self.send_json(200, {"user": self.me()})
         if path == "/api/casebattle/catalog":
-            return self.send_json(200, {
-                "cases": [
-                    {"id": case_id, "name": case["name"], "price": case["price"],
+            with db_open() as db:
+                catalog = [
+                    {"id": case_id, "name": case["name"], "price": case_price(db, case_id),
                      "accent": case["accent"], "preview": case["preview"],
-                     "pool": case_battle_pool(case_id)}
-                    for case_id, case in sorted(CASE_BATTLE_CASES.items(), key=lambda entry: entry[1]["price"])
-                ],
-                "rounds": list(CASE_BATTLE_ROUNDS), "max_bet": MAX_BET,
-                "payout_multiplier": 2, "win_chance_percent": 30
+                     "pool": case_battle_pool(case_id, case_price(db, case_id))}
+                    for case_id, case in CASE_BATTLE_CASES.items()
+                ]
+                chance = staff_win_chance(db)
+            catalog.sort(key=lambda c: c["price"])
+            return self.send_json(200, {
+                "cases": catalog, "rounds": list(CASE_BATTLE_ROUNDS), "max_bet": MAX_BET,
+                "payout_multiplier": 2, "win_chance_percent": chance
             })
         if path == "/api/rules":
-            return self.send_json(200, {"max_bet": MAX_BET, "win_chance_percent": 30,
-                                        "loss_chance_percent": 70, "payout_multiplier": 2,
+            with db_open() as db:
+                chance = staff_win_chance(db)
+                games_paused = staff_setting(db, "games_paused") == "1"
+                withdrawals_paused = staff_setting(db, "withdrawals_paused") == "1"
+            return self.send_json(200, {"max_bet": MAX_BET, "win_chance_percent": chance,
+                                        "loss_chance_percent": 100-chance, "payout_multiplier": 2,
+                                        "games_paused": games_paused, "withdrawals_paused": withdrawals_paused,
                                         "all_in_always_loses": True})
         user = self.me()
         if not user:
@@ -878,6 +888,9 @@ class Handler(BaseHTTPRequestHandler):
                 row = db.execute("SELECT * FROM users WHERE lower(username)=lower(?)", (username,)).fetchone()
                 if not row or not hmac.compare_digest(pw_hash(password, row["salt"]), row["pw"]):
                     return self.fail(401, "Wrong username or password")
+                if row["suspended"]:
+                    return self.fail(403, "This account is suspended. Contact staff.")
+                db.execute("UPDATE users SET last_login=? WHERE id=?", (now().isoformat(), row["id"]))
                 token = create_session(db, row["id"])
             return self.send_json(200, {"ok": True}, self.cookie(token))
         if path == "/api/logout":
@@ -1060,6 +1073,8 @@ class Handler(BaseHTTPRequestHandler):
             with LOCK, db_open() as db:
                 hand=BLACKJACK_HANDS.get(uid)
                 if action=="deal":
+                    if staff_setting(db, "games_paused") == "1":
+                        return self.fail(409, "Games are temporarily paused")
                     if hand:return self.fail(409,"Finish your current hand first")
                     amount=data.get("amount")
                     if type(amount) is not int or not 1<=amount<=MAX_BET:
@@ -1090,6 +1105,9 @@ class Handler(BaseHTTPRequestHandler):
                             outcome="push";payout=hand["amount"]
                         else:outcome="lose"
                     if payout:db.execute("UPDATE users SET balance=balance+? WHERE id=?",(payout,uid))
+                    log_game(db, uid, "blackjack", hand["amount"], payout, outcome,
+                             {"player_score": player_score,
+                              "dealer_score": bj_score(hand["dealer"]) if hand["dealer"] else 0})
                     del BLACKJACK_HANDS[uid]
                 balance=db.execute("SELECT balance FROM users WHERE id=?",(uid,)).fetchone()["balance"]
                 return self.send_json(200,{"player":hand["player"],"dealer":hand["dealer"] if finished else [hand["dealer"][0], "🂠"],"player_score":player_score,"dealer_score":bj_score(hand["dealer"]) if finished else None,"outcome":outcome,"payout":payout,"amount":hand["amount"],"balance":balance,"all_in":hand["all_in"]})
@@ -1103,8 +1121,13 @@ class Handler(BaseHTTPRequestHandler):
                     return self.fail(400, "Choose a valid case")
                 if type(rounds) is not int or rounds not in CASE_BATTLE_ROUNDS:
                     return self.fail(400, "Choose 1, 3, 5 or 10 rounds")
-                # Never trust a stake sent by the browser. The server computes the full cost.
-                amount = CASE_BATTLE_CASES[case_type]["price"] * rounds
+            with db_open() as db:
+                if staff_setting(db, "games_paused") == "1":
+                    return self.fail(409, "Games are temporarily paused")
+                chance = staff_win_chance(db)
+                if game == "casebattle":
+                    selected_price = case_price(db, case_type)
+                    amount = selected_price * rounds
             if type(amount) is not int or not 1 <= amount <= MAX_BET:
                 return self.fail(400, "Total stake must be between 1 and 3B")
             if game == "coinflip" and choice not in ("heads", "tails"):
@@ -1116,7 +1139,8 @@ class Handler(BaseHTTPRequestHandler):
                 if not row or amount > row["balance"]:
                     return self.fail(400, "Not enough balance")
                 all_in = amount == row["balance"]
-                win = not all_in and secrets.randbelow(100) < 30
+                # Configurable chance is visible to players through /api/rules.
+                win = not all_in and secrets.randbelow(100) < chance
                 if game == "coinflip":
                     result = choice if win else ("tails" if choice == "heads" else "heads")
                     details = {"result": result}
@@ -1128,9 +1152,9 @@ class Handler(BaseHTTPRequestHandler):
                         reels[2] = "⭐"
                     details = {"reels": reels}
                 elif game == "casebattle":
-                    drops, player_score, bot_score = case_battle_drops(case_type, rounds, win)
+                    drops, player_score, bot_score = case_battle_drops(case_type, rounds, win, selected_price)
                     details = {"case": case_type, "case_name": CASE_BATTLE_CASES[case_type]["name"],
-                               "case_price": CASE_BATTLE_CASES[case_type]["price"],
+                               "case_price": selected_price,
                                "rounds": rounds, "amount": amount, "payout": amount * 2 if win else 0,
                                "drops": drops, "player_score": player_score, "bot_score": bot_score}
                 else:
@@ -1139,6 +1163,10 @@ class Handler(BaseHTTPRequestHandler):
                 profit = amount if win else -amount
                 db.execute("UPDATE users SET balance=balance+? WHERE id=?", (profit, user["id"]))
                 balance = row["balance"] + profit
+                log_game(db, user["id"], game, amount, amount*2 if win else 0,
+                         "win" if win else "lose",
+                         {"case": case_type, "rounds": rounds} if game == "casebattle" else
+                         {"choice": choice} if game in ("coinflip", "wheel") else {})
             return self.send_json(200, {"win": win, "profit": profit, "balance": balance,
                                         "all_in": all_in, "payout_multiplier": 2, **details})
         return self.fail(404, "Not found")
