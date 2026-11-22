@@ -1290,176 +1290,6 @@ main{margin-left:244px;max-width:1750px;padding:30px clamp(20px,3.1vw,52px) 55px
   .brand-symbol{width:28px;height:28px;flex-basis:28px}
 }
 
-
-/* DONUT ROYALE — VOXEL ARCADE 2026
-   Original themed UI: real working game buttons only, no invented player counts. */
-.arcade-zone{margin:20px 0 38px}
-.arcade-section-title{display:flex;align-items:center;gap:14px;margin:0 0 20px}
-.arcade-section-spaced{margin-top:34px}
-.arcade-section-left{display:flex;align-items:center;gap:11px;flex-shrink:0}
-.arcade-section-emoji{font-size:25px;filter:drop-shadow(0 0 11px #e4bc646b)}
-.arcade-section-title h2{font-family:Inter,ui-sans-serif,system-ui,sans-serif;font-size:20px;margin:0;font-weight:950;letter-spacing:-.5px;color:#f7f8ff}
-.arcade-count{padding:5px 9px;border-radius:7px;background:#29313c;color:#ffdb75;font-size:12px;font-weight:900;line-height:1}
-.arcade-line{height:1px;min-width:10px;flex:1;background:linear-gradient(90deg,#4e56654d,transparent)}
-.arcade-banner-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:18px}
-.arcade-banner{
-  --arcade-color:#f1b64d;--arcade-glow:#d49532;--arcade-base:#3a230d;
-  position:relative;display:block;isolation:isolate;min-width:0;width:100%;height:260px;
-  border:2px solid var(--arcade-color);border-radius:18px;padding:0;
-  text-align:left;overflow:hidden;color:#fff;
-  background:
-    radial-gradient(ellipse at 55% 76%,color-mix(in srgb,var(--arcade-glow),transparent 5%) 0,transparent 56%),
-    radial-gradient(ellipse at 12% 20%,color-mix(in srgb,var(--arcade-color),transparent 66%) 0,transparent 60%),
-    linear-gradient(130deg,var(--arcade-base),#09121e);
-  box-shadow:inset 0 0 40px #0008,0 7px 19px #0007,0 0 13px color-mix(in srgb,var(--arcade-color),transparent 62%);
-  transition:transform .23s ease,box-shadow .23s ease,filter .23s ease;
-}
-.arcade-banner::before{
-  content:"";position:absolute;inset:0;z-index:0;pointer-events:none;
-  background:linear-gradient(90deg,#02071138,transparent 35%,#05071538),
-             radial-gradient(circle at 10% 85%,#fff5 0 1px,transparent 2px),
-             radial-gradient(circle at 67% 17%,#fff5 0 1px,transparent 2px);
-  background-size:auto,95px 80px,65px 85px;
-}
-.arcade-banner::after{
-  content:"";position:absolute;inset:0;z-index:4;pointer-events:none;
-  background:linear-gradient(180deg,#090b1b8c 0,transparent 24%,transparent 61%,#080b18dd 100%);
-}
-.arcade-banner:hover{
-  transform:translateY(-6px);
-  box-shadow:inset 0 0 50px #0006,0 15px 34px #0008,0 0 24px color-mix(in srgb,var(--arcade-color),transparent 30%);
-}
-.arcade-banner:focus-visible{outline:3px solid white;outline-offset:4px}
-.arcade-banner:active{transform:translateY(-1px)}
-.arcade-amber{--arcade-color:#ffc149;--arcade-glow:#d78b0e;--arcade-base:#3b2606}
-.arcade-purple{--arcade-color:#ca43ff;--arcade-glow:#7b17dd;--arcade-base:#270c42}
-.arcade-gold{--arcade-color:#ffce55;--arcade-glow:#e3a011;--arcade-base:#533209}
-.arcade-lime{--arcade-color:#67ff65;--arcade-glow:#38b921;--arcade-base:#123717}
-.arcade-pink{--arcade-color:#ff5ab6;--arcade-glow:#d4257c;--arcade-base:#4b1236}
-.arcade-rays{position:absolute;z-index:0;inset:-65%;pointer-events:none;opacity:.48;
-  background:repeating-conic-gradient(from 3deg at 50% 57%,#ffffff20 0deg 9deg,transparent 10deg 27deg);
-  mask-image:radial-gradient(ellipse,#000 0 37%,transparent 62%)}
-.arcade-floating-stars{position:absolute;z-index:2;left:13%;top:33%;color:var(--arcade-color);opacity:.85;
-  font-size:16px;text-shadow:0 0 15px var(--arcade-color);pointer-events:none}
-.arcade-floating-stars i:nth-child(1){position:absolute;left:175px;top:15px;font-style:normal;font-size:24px}
-.arcade-floating-stars i:nth-child(2){position:absolute;left:45px;top:118px;font-style:normal;font-size:13px}
-.arcade-top-title{
-  position:absolute;z-index:8;top:16px;left:8px;right:8px;display:block;
-  color:#fff7fa;text-align:center;font-family:Impact,"Arial Black",ui-sans-serif,sans-serif;
-  font-size:clamp(26px,2.45vw,40px);font-weight:1000;letter-spacing:2px;
-  line-height:1.03;white-space:nowrap;
-  text-shadow:2px 3px #10091a,4px 6px #0008,0 0 17px color-mix(in srgb,var(--arcade-color),transparent 35%);
-}
-.arcade-ready{
-  position:absolute;z-index:10;top:11px;left:11px;display:flex;align-items:center;gap:4px;
-  background:#d9415a;color:white;padding:5px 8px;border-radius:15px;
-  font-size:9px;font-weight:950;letter-spacing:.5px;box-shadow:0 3px 9px #0007
-}
-.arcade-ready-light{width:6px;height:6px;border-radius:50%;background:white;box-shadow:0 0 5px white}
-.arcade-number{
-  position:absolute;right:12px;top:12px;z-index:10;padding:5px 8px;
-  border-radius:7px;background:#060f19b3;font-size:9px;font-weight:900;color:#d8ebed
-}
-.arcade-avatar{
-  position:absolute;z-index:2;left:33%;bottom:-39px;transform:rotate(-9deg);
-  width:43%;height:202px;pointer-events:none;
-  filter:drop-shadow(8px 13px 3px #000b) drop-shadow(0 0 18px var(--arcade-color));
-  transition:transform .24s ease
-}
-.arcade-avatar img{display:block;width:100%;height:100%;object-fit:contain;image-rendering:pixelated}
-.arcade-banner:hover .arcade-avatar{transform:rotate(-3deg) translateY(-5px) scale(1.05)}
-.arcade-prop{position:absolute;z-index:3;right:7%;bottom:42px;pointer-events:none;
-  filter:drop-shadow(0 8px 7px #0009) drop-shadow(0 0 12px var(--arcade-color))}
-.arcade-wheel-visual{
-  position:relative;display:grid;place-items:center;width:117px;height:117px;
-  border:10px solid #d6a858;border-radius:50%;
-  background:repeating-conic-gradient(from -15deg,#ca3853 0deg 30deg,#111a28 30deg 60deg);
-  box-shadow:inset 0 0 0 4px #fff0ba,0 0 22px #e5b1649c;transform:rotate(-20deg)
-}
-.arcade-wheel-center{
-  display:grid;place-items:center;width:40px;height:40px;border-radius:50%;
-  background:radial-gradient(circle,#f5cc75,#96602d);border:4px solid #ffeba6;color:#633d25;font-size:23px
-}
-.arcade-card-stack{position:relative;display:block;width:118px;height:126px}
-.arcade-card-stack b{
-  position:absolute;left:1px;top:4px;display:grid;place-items:center;
-  width:74px;height:103px;border-radius:8px;border:3px solid #eee8fc;
-  background:linear-gradient(130deg,#fff,#d9d9ed);font:bold 28px Georgia,serif;
-  color:#24202e;transform:rotate(-17deg);box-shadow:6px 7px 4px #0006
-}
-.arcade-card-stack b+ b{left:42px;top:9px;color:#c93952;transform:rotate(17deg)}
-.arcade-gold-coin{
-  display:grid;place-items:center;width:121px;height:121px;border:8px solid #fff3aa;
-  border-radius:50%;font-size:70px;color:#fff0a4;transform:rotate(22deg);
-  background:radial-gradient(circle at 31% 24%,#fff7b6,#edb536 45%,#a55c1c 85%);
-  box-shadow:inset 0 0 0 5px #c6832c,0 0 28px #ffc3359c
-}
-.arcade-dice-pair{position:relative;display:block;width:157px;height:130px}
-.arcade-dice-pair b{
-  display:block;position:absolute;left:0;top:0;font-size:96px;line-height:1.1;
-  color:#fff9ed;transform:rotate(-18deg);text-shadow:4px 6px #1b3c2e,0 0 15px #fff;
-}
-.arcade-dice-pair b+b{left:65px;top:26px;color:#e6fff4;font-size:78px;transform:rotate(14deg)}
-.arcade-slot-reels{
-  display:flex;gap:4px;align-items:center;padding:7px;
-  background:#27142fa8;border:2px solid #ffb9d9;border-radius:12px;
-  box-shadow:0 0 22px #f350aa7a;transform:rotate(5deg)
-}
-.arcade-slot-reels b{
-  display:grid;place-items:center;min-width:42px;height:63px;border-radius:7px;
-  border:2px solid #c978b5;background:linear-gradient(#52334e,#1e1628);
-  color:#ffe99d;font:bold 53px Georgia,serif;text-shadow:0 0 10px #ffe47e
-}
-.arcade-bottom{
-  position:absolute;z-index:9;bottom:10px;left:13px;right:13px;
-  display:flex;align-items:end;justify-content:space-between;gap:10px
-}
-.arcade-caption{
-  font-size:10px;font-weight:900;letter-spacing:1px;color:#e3eeec;text-shadow:0 2px #0009;
-  max-width:60%
-}
-.arcade-launch{
-  display:inline-flex;align-items:center;gap:6px;border-radius:99px;
-  background:#06101bdc;border:1px solid #ffffff5c;color:white;
-  padding:6px 10px;font-size:10px;font-weight:900;white-space:nowrap
-}
-.arcade-launch>span{color:#a5f3c8;font-size:13px}
-.arcade-rules{
-  margin:25px 0 4px;background:#101f2a;border-color:#414856;
-  box-shadow:inset 3px 0 #e8c56f
-}
-@media(max-width:1250px){
-  .arcade-banner-grid{gap:12px}
-  .arcade-banner{height:230px}
-  .arcade-top-title{font-size:clamp(24px,2.3vw,32px);letter-spacing:1.2px;top:19px}
-  .arcade-avatar{bottom:-36px;height:174px}
-  .arcade-prop{right:3%;bottom:37px;transform:scale(.82);transform-origin:bottom right}
-}
-@media(max-width:1050px){
-  .arcade-banner-grid{grid-template-columns:repeat(2,minmax(0,1fr))}
-  .arcade-banner{height:250px}
-  .arcade-banner-grid>.arcade-banner:last-child:nth-child(odd){grid-column:1/-1}
-  .arcade-top-title{font-size:clamp(26px,3.2vw,38px)}
-  .arcade-avatar{height:200px}
-}
-@media(max-width:590px){
-  .arcade-section-title{margin-bottom:12px;gap:10px}
-  .arcade-section-spaced{margin-top:25px}
-  .arcade-section-title h2{font-size:15px;letter-spacing:-.3px}
-  .arcade-section-emoji{font-size:19px}
-  .arcade-section-left{gap:7px}
-  .arcade-count{font-size:10px;padding:4px 7px}
-  .arcade-banner-grid{grid-template-columns:1fr;gap:15px}
-  .arcade-banner-grid>.arcade-banner:last-child:nth-child(odd){grid-column:1}
-  .arcade-banner{height:230px;border-radius:16px}
-  .arcade-top-title{font-size:clamp(27px,7.5vw,36px);top:16px}
-  .arcade-avatar{height:187px}
-  .arcade-prop{transform:scale(.8)}
-}
-@media(prefers-reduced-motion:reduce){
-  .arcade-banner,.arcade-avatar{transition:none!important}
-}
-
 </style>
 </head>
 
@@ -1608,69 +1438,19 @@ main{margin-left:244px;max-width:1750px;padding:30px clamp(20px,3.1vw,52px) 55px
     </div>
   </div>
 
-  <section class="arcade-zone" aria-label="Donut Royale games">
-    <div class="arcade-section-title">
-      <div class="arcade-section-left"><span class="arcade-section-emoji" aria-hidden="true">🌟</span>
-        <h2 id="gamesHeading">Recommended Games</h2><span class="arcade-count">3</span></div>
-      <span class="arcade-line" aria-hidden="true"></span>
-    </div>
-    <div class="arcade-banner-grid"><button type="button" class="arcade-banner arcade-amber" data-game="wheel" aria-label="Open COLOR WHEEL">
-    <span class="arcade-rays" aria-hidden="true"></span>
-    <span class="arcade-floating-stars" aria-hidden="true">✦ <i>✧</i> <i>✦</i></span>
-    <span class="arcade-top-title">COLOR WHEEL</span>
-    <span class="arcade-ready"><span class="arcade-ready-light"></span>READY</span>
-    <span class="arcade-number">01 / 05</span>
-    <span class="arcade-avatar" aria-hidden="true"><img src="https://mc-heads.net/body/Grian/240" alt="" loading="lazy" decoding="async" width="140" height="240"></span>
-    <span class="arcade-prop arcade-prop-wheel" aria-hidden="true"><span class="arcade-wheel-visual"><span class="arcade-wheel-center">✦</span></span></span>
-    <span class="arcade-bottom"><span class="arcade-caption">RED OR BLACK</span><span class="arcade-launch">PLAY <span aria-hidden="true">↗</span></span></span>
-  </button>
-<button type="button" class="arcade-banner arcade-purple" data-game="blackjack" aria-label="Open BLACKJACK">
-    <span class="arcade-rays" aria-hidden="true"></span>
-    <span class="arcade-floating-stars" aria-hidden="true">✦ <i>✧</i> <i>✦</i></span>
-    <span class="arcade-top-title">BLACKJACK</span>
-    <span class="arcade-ready"><span class="arcade-ready-light"></span>READY</span>
-    <span class="arcade-number">02 / 05</span>
-    <span class="arcade-avatar" aria-hidden="true"><img src="https://mc-heads.net/body/Ranboo/240" alt="" loading="lazy" decoding="async" width="140" height="240"></span>
-    <span class="arcade-prop arcade-prop-blackjack" aria-hidden="true"><span class="arcade-card-stack"><b>A♠</b><b>J♣</b></span></span>
-    <span class="arcade-bottom"><span class="arcade-caption">HIT · STAND · 21</span><span class="arcade-launch">PLAY <span aria-hidden="true">↗</span></span></span>
-  </button>
-<button type="button" class="arcade-banner arcade-gold" data-game="coinflip" aria-label="Open COINFLIP">
-    <span class="arcade-rays" aria-hidden="true"></span>
-    <span class="arcade-floating-stars" aria-hidden="true">✦ <i>✧</i> <i>✦</i></span>
-    <span class="arcade-top-title">COINFLIP</span>
-    <span class="arcade-ready"><span class="arcade-ready-light"></span>READY</span>
-    <span class="arcade-number">03 / 05</span>
-    <span class="arcade-avatar" aria-hidden="true"><img src="https://mc-heads.net/body/CaptainSparklez/240" alt="" loading="lazy" decoding="async" width="140" height="240"></span>
-    <span class="arcade-prop arcade-prop-coinflip" aria-hidden="true"><span class="arcade-gold-coin" aria-hidden="true">✦</span></span>
-    <span class="arcade-bottom"><span class="arcade-caption">SONIC VS TAILS</span><span class="arcade-launch">PLAY <span aria-hidden="true">↗</span></span></span>
-  </button></div>
-    <div class="arcade-section-title arcade-section-spaced">
-      <div class="arcade-section-left"><span class="arcade-section-emoji" aria-hidden="true">🎮</span>
-        <h2>More Arcade Games</h2><span class="arcade-count">2</span></div>
-      <span class="arcade-line" aria-hidden="true"></span>
-    </div>
-    <div class="arcade-banner-grid"><button type="button" class="arcade-banner arcade-lime" data-game="dice" aria-label="Open LUCKY DICE">
-    <span class="arcade-rays" aria-hidden="true"></span>
-    <span class="arcade-floating-stars" aria-hidden="true">✦ <i>✧</i> <i>✦</i></span>
-    <span class="arcade-top-title">LUCKY DICE</span>
-    <span class="arcade-ready"><span class="arcade-ready-light"></span>READY</span>
-    <span class="arcade-number">04 / 05</span>
-    <span class="arcade-avatar" aria-hidden="true"><img src="https://mc-heads.net/body/Sapnap/240" alt="" loading="lazy" decoding="async" width="140" height="240"></span>
-    <span class="arcade-prop arcade-prop-dice" aria-hidden="true"><span class="arcade-dice-pair" aria-hidden="true"><b>⚄</b><b>⚅</b></span></span>
-    <span class="arcade-bottom"><span class="arcade-caption">ROLL FOR LUCK</span><span class="arcade-launch">PLAY <span aria-hidden="true">↗</span></span></span>
-  </button>
-<button type="button" class="arcade-banner arcade-pink" data-game="slots" aria-label="Open TRIPLE SEVENS">
-    <span class="arcade-rays" aria-hidden="true"></span>
-    <span class="arcade-floating-stars" aria-hidden="true">✦ <i>✧</i> <i>✦</i></span>
-    <span class="arcade-top-title">TRIPLE SEVENS</span>
-    <span class="arcade-ready"><span class="arcade-ready-light"></span>READY</span>
-    <span class="arcade-number">05 / 05</span>
-    <span class="arcade-avatar" aria-hidden="true"><img src="https://mc-heads.net/body/Skeppy/240" alt="" loading="lazy" decoding="async" width="140" height="240"></span>
-    <span class="arcade-prop arcade-prop-slots" aria-hidden="true"><span class="arcade-slot-reels" aria-hidden="true"><b>7</b><b>7</b><b>7</b></span></span>
-    <span class="arcade-bottom"><span class="arcade-caption">SPIN THE REELS</span><span class="arcade-launch">PLAY <span aria-hidden="true">↗</span></span></span>
-  </button></div>
-    <div class="rules-note arcade-rules"><strong>✧ KNOW THE GAME RULES</strong><span>Game rules: 40% win chance, 60% loss chance. Winning bets return 2×. Betting your entire balance (all-in) automatically loses. Maximum bet: 3B. These are in-game credits. 18+ · Play responsibly and take breaks.</span></div>
-  </section>
+  <div class="royale-section-heading">
+    <div><span class="section-kicker">✦ THE ARCADE COLLECTION</span><h2 id="gamesHeading">FIVE GAMES. <em>ONE LOBBY.</em></h2><p>Explore the full lineup in its winter festival outfit.</p></div>
+    <div class="game-collection-count" aria-label="Five available games"><b>05</b><small>GAME MODES</small></div>
+  </div>
+  <div class="rules-note"><strong>✧ PLAY WITH THE RULES IN MIND</strong><span>Game rules: 40% win chance, 60% loss chance. Winning bets return 2×. Betting your entire balance (all-in) automatically loses. Maximum bet: 3B. 18+ · Play responsibly and take breaks.</span></div>
+
+  <div class="game-grid">
+    <button type="button" class="game-card card-coinflip" data-game="coinflip" aria-label="Open Coinflip"><span class="game-index" aria-hidden="true">01 / 05</span><span class="xmas-game-snow" aria-hidden="true">❄</span><span class="game-live">✦ WINTER GAME</span><span class="game-art art-coin" aria-hidden="true"><span>🪙</span><span>⚡</span></span><span class="game-title">COINFLIP</span><span class="game-subtitle">SONIC VS TAILS</span><span class="game-play">PLAY NOW ↗</span></button>
+    <button type="button" class="game-card card-dice" data-game="dice" aria-label="Open Lucky Dice"><span class="game-index" aria-hidden="true">02 / 05</span><span class="xmas-game-snow" aria-hidden="true">❄</span><span class="game-live">✦ WINTER GAME</span><span class="game-art art-dice" aria-hidden="true"><span class="thumbnail-die">⚄</span><span class="thumbnail-die second">⚅</span></span><span class="game-title">LUCKY DICE</span><span class="game-subtitle">ROLL THE DICE</span><span class="game-play">PLAY NOW ↗</span></button>
+    <button type="button" class="game-card card-slots" data-game="slots" aria-label="Open Triple Sevens"><span class="game-index" aria-hidden="true">03 / 05</span><span class="xmas-game-snow" aria-hidden="true">❄</span><span class="game-live">✦ WINTER GAME</span><span class="game-art art-slots" aria-hidden="true"><span>7</span><span>7</span><span>7</span></span><span class="game-title">TRIPLE SEVENS</span><span class="game-subtitle">JACKPOT SLOTS</span><span class="game-play">PLAY NOW ↗</span></button>
+    <button type="button" class="game-card card-blackjack" data-game="blackjack" aria-label="Open Blackjack"><span class="game-index" aria-hidden="true">04 / 05</span><span class="xmas-game-snow" aria-hidden="true">❄</span><span class="game-live">✦ WINTER GAME</span><span class="game-art art-blackjack" aria-hidden="true"><img class="minecraft-dealer" src="https://mc-heads.net/body/Technoblade/220" alt=""><span class="dealer-glow"></span><span class="dealer-hand">✊</span><span class="dealer-cards"><span class="playing-card card-j"><small>J<br>♣</small><strong>♣</strong></span><span class="playing-card card-a"><small>A<br>♠</small><strong>♠</strong></span></span></span><span class="game-title">BLACKJACK</span><span class="game-subtitle">GET 21 · HIT / STAND</span><span class="game-play">PLAY NOW ↗</span></button>
+    <button type="button" class="game-card card-wheel" data-game="wheel" aria-label="Open Color Wheel"><span class="game-index" aria-hidden="true">05 / 05</span><span class="xmas-game-snow" aria-hidden="true">❄</span><span class="game-live">✦ WINTER GAME</span><span class="game-art art-wheel" aria-hidden="true"><span>🎯</span><span class="thumbnail-wheel"></span></span><span class="game-title">COLOR WHEEL</span><span class="game-subtitle">RED OR BLACK</span><span class="game-play">PLAY NOW ↗</span></button>
+  </div>
 
   <section class="royale-guide" aria-labelledby="royaleGuideHeading">
     <div class="royale-guide-intro"><span class="section-kicker">❄ HOW IT WORKS</span><h2 id="royaleGuideHeading">All the details.<br><em>None of the guesswork.</em></h2><p>Know what you're playing, take it at your own pace and enjoy the festive atmosphere.</p></div>
