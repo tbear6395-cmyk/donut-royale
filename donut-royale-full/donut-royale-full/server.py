@@ -321,6 +321,53 @@ def bj_score(cards):
         if c=="A" and total>21: total-=10
     return total
 
+# Case Battle collectible drops are round scores only; they are not withdrawable items.
+# The credit stake and 2x winner payout remain server-authoritative.
+CASE_BATTLE_POOLS = {
+    "iron": [
+        {"name": "Coal", "icon": "⚫", "value": 150},
+        {"name": "Iron Ingot", "icon": "🩶", "value": 700},
+        {"name": "Gold Ingot", "icon": "🟨", "value": 1500},
+        {"name": "Diamond", "icon": "💎", "value": 4900},
+        {"name": "Netherite", "icon": "🛡️", "value": 12000},
+    ],
+    "emerald": [
+        {"name": "Green Dye", "icon": "🟩", "value": 250},
+        {"name": "Emerald", "icon": "💚", "value": 1700},
+        {"name": "Enchanted Book", "icon": "📗", "value": 3700},
+        {"name": "Totem", "icon": "🗿", "value": 7800},
+        {"name": "Beacon", "icon": "✨", "value": 17500},
+    ],
+    "nether": [
+        {"name": "Netherrack", "icon": "🟥", "value": 300},
+        {"name": "Blaze Rod", "icon": "🔥", "value": 2200},
+        {"name": "Magma Cream", "icon": "🟠", "value": 4500},
+        {"name": "Ancient Debris", "icon": "🧱", "value": 9600},
+        {"name": "Nether Star", "icon": "🌟", "value": 25000},
+    ],
+}
+
+def case_battle_drops(case_type, rounds, player_wins):
+    """Produce visual duel rounds whose final loot scores match the settled bet."""
+    pool = CASE_BATTLE_POOLS[case_type]
+    drops = []
+    for _ in range(30):
+        drops = [{"player": secrets.choice(pool), "bot": secrets.choice(pool)}
+                 for _ in range(rounds)]
+        player_score = sum(r["player"]["value"] for r in drops)
+        bot_score = sum(r["bot"]["value"] for r in drops)
+        if player_score != bot_score:
+            break
+    if player_score == bot_score:
+        drops[-1] = {"player": pool[-1], "bot": pool[0]}
+        player_score = sum(r["player"]["value"] for r in drops)
+        bot_score = sum(r["bot"]["value"] for r in drops)
+    # House odds are resolved independently of the cosmetic loot reveal.
+    if (player_score > bot_score) != player_wins:
+        drops = [{"player": r["bot"], "bot": r["player"]} for r in drops]
+        player_score, bot_score = bot_score, player_score
+    return drops, player_score, bot_score
+
 class Handler(BaseHTTPRequestHandler):
     def send_json(self, status, payload, cookie=None):
         data = json.dumps(payload, ensure_ascii=False, default=str).encode("utf-8")
@@ -931,7 +978,7 @@ class Handler(BaseHTTPRequestHandler):
                 return self.send_json(200,{"player":hand["player"],"dealer":hand["dealer"] if finished else [hand["dealer"][0], "🂠"],"player_score":player_score,"dealer_score":bj_score(hand["dealer"]) if finished else None,"outcome":outcome,"payout":payout,"amount":hand["amount"],"balance":balance,"all_in":hand["all_in"]})
         if path == "/api/game":
             game, amount, choice = data.get("game"), data.get("amount"), data.get("choice")
-            if game not in ("coinflip", "dice", "slots", "wheel"):
+            if game not in ("coinflip", "dice", "slots", "wheel", "casebattle"):
                 return self.fail(400, "Invalid game")
             if type(amount) is not int or not 1 <= amount <= MAX_BET:
                 return self.fail(400, "Bet must be between 1 and 3B")
@@ -939,6 +986,12 @@ class Handler(BaseHTTPRequestHandler):
                 return self.fail(400, "Choose Sonic or Tails")
             if game == "wheel" and choice not in ("red", "black"):
                 return self.fail(400, "Choose red or black")
+            case_type, rounds = data.get("case"), data.get("rounds")
+            if game == "casebattle":
+                if case_type not in CASE_BATTLE_POOLS:
+                    return self.fail(400, "Choose a valid case")
+                if type(rounds) is not int or rounds not in (1, 3, 5):
+                    return self.fail(400, "Choose 1, 3 or 5 rounds")
             with LOCK, db_open() as db:
                 row = db.execute("SELECT balance FROM users WHERE id=?", (user["id"],)).fetchone()
                 if not row or amount > row["balance"]:
@@ -955,6 +1008,10 @@ class Handler(BaseHTTPRequestHandler):
                     if not win and reels == ["7", "7", "7"]:
                         reels[2] = "⭐"
                     details = {"reels": reels}
+                elif game == "casebattle":
+                    drops, player_score, bot_score = case_battle_drops(case_type, rounds, win)
+                    details = {"case": case_type, "rounds": rounds, "drops": drops,
+                               "player_score": player_score, "bot_score": bot_score}
                 else:
                     result = choice if win else ("black" if choice == "red" else "red")
                     details = {"result": result}
