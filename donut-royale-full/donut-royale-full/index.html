@@ -513,10 +513,174 @@ body.cashier-open{overflow:hidden}
 .cashier-open-link{display:inline-block;background:none;border:0;color:#83c3ff;padding:8px 0;font-weight:750}
 @media(max-width:540px){.cashier-overlay{padding:5px}.cashier-dialog{width:100%;max-height:calc(100dvh - 10px);padding:18px 15px 20px;border-radius:11px}.cashier-form{padding:13px 12px}.cashier-info-card{padding:12px 10px}.cashier-info-card strong{font-size:16px}.cashier-card-label{font-size:11px}.cashier-settings-main{font-size:11px}}
 
+
+/* CHRISTMAS WONDERLAND 2026 — decorative layer, no game or wallet changes */
+:root{--xmas-cream:#fff8e3;--xmas-red:#e74655;--xmas-pine:#0f664d;--xmas-gold:#ffd780}
+body{
+  background:radial-gradient(ellipse at 85% -3%,#8b2a3b52,transparent 37%),
+             radial-gradient(ellipse at 5% 20%,#145c5259,transparent 40%),
+             linear-gradient(140deg,#081b22,#0b1821 47%,#161225);
+}
+header{
+  background:linear-gradient(100deg,#0c2d2aee,#151d2aee 55%,#3b182cee);
+  border-bottom:1px solid #e9c77d77;
+  box-shadow:0 5px 32px #07110fac;
+}
+.logo span{color:var(--xmas-gold);text-shadow:0 0 17px #ffdd8b7d}
+header>div:last-child{border-color:#c9a8717a;background:#102e34}
+aside{
+  background:radial-gradient(circle at 45% 0%,#1c624d89,transparent 42%),
+             linear-gradient(165deg,#102e2a,#111d2b 70%,#25182d);
+  border-right:1px solid #8a845f80;
+}
+aside .side-brand{color:#ffe6a3}
+aside .nav-lobby{background:linear-gradient(95deg,#166c50,#335044);border-color:#81c1a0;box-shadow:0 0 18px #13a67e4b}
+aside button:hover,aside a:hover{background:#245046}
+aside .winter{
+  padding:18px 14px;margin:25px 5px 0;border:1px solid #d4b16f9c;border-radius:14px;
+  color:#fef3c2;line-height:1.8;font-size:13px;font-weight:850;
+  background:linear-gradient(145deg,#174a3a,#491d34);text-align:center;
+  box-shadow:inset 0 0 20px #ffffff0b;
+}
+aside .winter small{color:#d0eeda;letter-spacing:1.3px;font-size:10px}
+.hero{
+  isolation:isolate;min-height:340px;padding-top:55px;padding-bottom:48px;
+  border:1px solid #d7b567;
+  background:radial-gradient(circle at 82% 50%,#238d6380,transparent 38%),
+             radial-gradient(circle at 99% 0%,#a02b4a65,transparent 48%),
+             linear-gradient(112deg,#10372f,#143c40 48%,#422137);
+  box-shadow:inset 0 0 80px #8edabb18,0 14px 45px #0005;
+}
+.hero::after{
+  content:"";position:absolute;inset:auto -5% -30px -5%;height:80px;z-index:0;
+  background:radial-gradient(ellipse at 15% 100%,#dff7ef7a 0 38%,transparent 39%),
+             radial-gradient(ellipse at 54% 100%,#ecfff099 0 42%,transparent 43%),
+             radial-gradient(ellipse at 93% 100%,#e7fbef8f 0 40%,transparent 41%);
+  pointer-events:none;
+}
+.hero-copy{z-index:3}
+.hero .eyebrow{color:#aef8d7;text-shadow:0 0 12px #29dca966}
+.hero h1{max-width:720px;font-size:clamp(35px,4.5vw,63px)}
+.hero h1 span{color:#ffe49a;text-shadow:0 0 30px #eeb55b99}
+.hero p:not(.eyebrow){color:#e5f5ed;max-width:510px}
+.hero .primary{
+  background:linear-gradient(115deg,#db3a4d,#a6223a);
+  border:1px solid #ffbc91;box-shadow:0 7px 27px #e9315377;
+}
+.xmas-hero-cta{display:flex;align-items:center;gap:14px;flex-wrap:wrap}
+.xmas-hero-stamp{
+  border:1px solid #ecdd9a99;border-radius:999px;background:#061d1cb5;
+  padding:10px 13px;font-size:11px;font-weight:950;letter-spacing:1.1px;color:#ffe8a4
+}
+.xmas-lights{
+  position:absolute;top:0;left:15px;right:15px;height:33px;z-index:5;
+  display:flex;align-items:flex-start;justify-content:space-around;pointer-events:none
+}
+.xmas-lights::before{
+  content:"";position:absolute;top:-15px;left:0;right:0;height:37px;
+  border-bottom:2px solid #b9caa2;border-radius:0 0 50% 50%;opacity:.75
+}
+.xmas-bulb{
+  position:relative;margin-top:17px;width:12px;height:19px;flex:0 0 12px;
+  border-radius:45% 45% 53% 53%;background:#ffdf83;box-shadow:0 0 19px 5px #ffdf8366;
+  animation:xmasTwinkle 2.1s ease-in-out infinite alternate
+}
+.xmas-bulb::before{content:"";position:absolute;top:-5px;left:3px;width:6px;height:6px;background:#748978;border-radius:2px}
+.xmas-bulb:nth-child(3n + 2){background:#fd6574;box-shadow:0 0 18px 4px #ff5b7566;animation-delay:-.7s}
+.xmas-bulb:nth-child(3n){background:#7eecc3;box-shadow:0 0 18px 4px #79ffc966;animation-delay:-1.5s}
+@keyframes xmasTwinkle{to{opacity:.45;filter:brightness(.8)}}
+.hero-art.festive-hero-art{right:3%;width:37%;overflow:visible;filter:drop-shadow(0 0 18px #50e7a270)}
+.xmas-hero-tree{font-size:clamp(120px,17vw,245px);transform:rotate(-6deg);animation:xmasFloat 4s ease-in-out infinite}
+.xmas-hero-present{position:absolute;font-size:clamp(45px,7vw,96px);bottom:23px;left:6%;transform:rotate(-15deg)}
+.xmas-hero-present.second{left:auto;right:9%;bottom:12px;font-size:clamp(37px,5vw,68px);transform:rotate(12deg)}
+.xmas-hero-star{position:absolute;top:9px;right:14%;font-size:53px;color:#ffed98;text-shadow:0 0 25px #fddd74}
+@keyframes xmasFloat{50%{transform:translateY(-12px) rotate(1deg)}}
+.xmas-event{
+  position:relative;margin:0 0 25px;padding:25px 29px;overflow:hidden;
+  background:radial-gradient(circle at 95% 15%,#b549424f,transparent 40%),
+             linear-gradient(115deg,#123b32,#132b31 58%,#402238);
+  border:1px solid #d4b16c;border-radius:20px;
+  box-shadow:0 8px 28px #0004,inset 0 1px #fff2;
+  display:grid;grid-template-columns:minmax(0,1fr) auto;gap:16px 26px;align-items:center;
+}
+.xmas-event::before{
+  content:"❄";position:absolute;right:4%;bottom:-70px;font-size:240px;opacity:.055;
+  pointer-events:none
+}
+.xmas-event-main,.xmas-event-side{position:relative;z-index:1}
+.xmas-event-kicker{font-size:11px;font-weight:950;letter-spacing:2.4px;color:#a9efd5}
+.xmas-event h2{margin:8px 0;font-size:clamp(23px,3vw,35px);color:#fff4ca}
+.xmas-event p{margin:7px 0;color:#cfe4df;line-height:1.55;font-size:13px;max-width:610px}
+.xmas-event-side{text-align:center;min-width:235px}
+.xmas-countdown-label{font-size:10px;letter-spacing:1.4px;font-weight:900;color:#bcecdc}
+.xmas-countdown{
+  display:block;margin:9px 0 15px;font-size:clamp(17px,2.5vw,24px);
+  font-weight:950;color:#ffe4a0;letter-spacing:.4px;
+}
+.xmas-event-actions{display:flex;gap:8px;justify-content:center;flex-wrap:wrap}
+.xmas-event-actions button{
+  color:#fff;border-radius:10px;padding:10px 12px;font-size:11px;font-weight:900;
+  background:#224b47;border:1px solid #7fae93
+}
+.xmas-event-actions #xmasGift{background:linear-gradient(115deg,#c23349,#a32339);border-color:#ffb492}
+.xmas-event-actions button:focus-visible{outline:3px solid #fff0af;outline-offset:3px}
+.xmas-event .xmas-message{
+  grid-column:1/-1;padding:12px 15px;border-radius:11px;border:1px solid #f3dca3;
+  background:#60412595;color:#fff4d3;font-weight:800;font-size:13px;
+}
+.xmas-event .xmas-fine-print{display:block;margin-top:12px;color:#afd0c2;font-size:11px}
+.stats .panel{border-color:#496c65;background:linear-gradient(145deg,#173734,#171b2d)}
+#gamesHeading{color:#ffe6ad}
+.rules-note{border-color:#567e6c;background:#122922;color:#dfebe2}
+.game-card{box-shadow:inset 0 0 38px #0008,0 7px 23px #0006,0 0 14px #b3e8ad37}
+.game-card .game-live{background:#1d7457;border:1px solid #b8efb0}
+.xmas-game-snow{
+  position:absolute;right:12px;top:11px;z-index:6;font-size:22px;
+  filter:drop-shadow(0 0 7px #e9ffff);pointer-events:none
+}
+.game-card.card-blackjack .xmas-game-snow{right:10px;top:auto;bottom:42px;font-size:16px}
+#auth .auth-modal{border-color:#d8b46c;box-shadow:0 27px 90px #000e,0 0 36px #ab9c4c36}
+.auth-bonus{background:#194132;border-color:#b3a465;color:#ffecbd}
+.auth-brand span{color:#ffdb82}
+.xmas-snow{
+  position:fixed;inset:0;overflow:hidden;z-index:6;pointer-events:none;user-select:none
+}
+.xmas-snowflake{
+  position:absolute;left:0;top:0;display:block;line-height:1;
+  color:#e5fffa;text-shadow:0 0 8px #b3fffbb8;
+  animation:xmasFall var(--xmas-duration,12s) linear var(--xmas-delay,0s) infinite;
+  will-change:transform
+}
+@keyframes xmasFall{
+  0%{transform:translate3d(0,-11vh,0) rotate(0deg)}
+  100%{transform:translate3d(var(--xmas-drift,30px),112vh,0) rotate(360deg)}
+}
+@media(max-width:980px){
+  .xmas-event{grid-template-columns:1fr}
+  .xmas-event-side{text-align:left}
+  .xmas-event-actions{justify-content:flex-start}
+}
+@media(max-width:700px){
+  .hero{padding:57px 22px 40px;min-height:290px}
+  .hero-art.festive-hero-art{right:-12%;width:50%;opacity:.33}
+  .hero h1{font-size:clamp(34px,8vw,48px)}
+  .xmas-hero-stamp{font-size:10px}
+  .xmas-event{padding:20px 17px;margin-bottom:17px;gap:18px}
+  .xmas-event h2{font-size:25px}
+  .xmas-event-side{min-width:0}
+  .xmas-bulb:nth-child(even){display:none}
+  .xmas-game-snow{font-size:18px}
+}
+@media(prefers-reduced-motion:reduce){
+  .xmas-snow{display:none!important}
+  .xmas-bulb,.xmas-hero-tree{animation:none!important}
+}
+
 </style>
 </head>
 
 <body>
+<div class="xmas-snow" id="xmasSnow" aria-hidden="true"></div>
 
 <header>
   <div class="logo">🍩 <em>Donut<span>Royale</span></em></div><button type="button" id="walletNav" class="wallet-nav">💸 WITHDRAW <span> / DEPOSIT</span></button>
@@ -539,7 +703,7 @@ body.cashier-open{overflow:hidden}
   <a href="#admin" id="adminNav" hidden>🛡️ Admin Panel</a>
   <a href="#addRanks" id="ranksNav" hidden>🏅 Add Ranks</a>
   <a href="#adminChat" id="adminChatNav" hidden>💬 Admin Chat <span id="adminChatBadge" hidden style="background:#e238a9;color:white;border-radius:12px;padding:2px 7px;font-size:12px">0</span></a>
-  <div class="winter">🍩 DONUT ROYALE</div>
+  <div class="winter">🎄 WINTER WONDERLAND<br><small>❄️ CHRISTMAS EDITION ❄️</small></div>
 </aside>
 
 <main>
@@ -558,16 +722,35 @@ body.cashier-open{overflow:hidden}
 </section>
 <div id="chatNotification" hidden role="status" style="position:fixed;top:18px;right:18px;z-index:99999;max-width:min(340px,calc(100vw - 36px));padding:16px 18px;border:1px solid #b769ff;border-radius:14px;background:#20112f;color:white;box-shadow:0 12px 40px #0009;cursor:pointer;font-weight:700"></div>
 <section id="adminChatPage" hidden><div class="panel ranks-page-panel"><h1>💬 ADMIN CHAT</h1><p>Private chat for admins and owner. Separate from tickets.</p><div id="adminChatMessages" style="min-height:180px;max-height:380px;overflow-y:auto;text-align:left;margin:20px 0"></div><form id="adminChatForm"><input id="adminChatInput" maxlength="1000" placeholder="Write a message..." required style="width:100%"><button class="primary" type="submit" style="margin-top:12px">SEND MESSAGE</button></form><p id="adminChatStatus" role="status"></p><button type="button" id="adminChatRefresh">↻ REFRESH CHAT</button></div></section>
-<section class="hero">
+<section class="hero christmas-hero">
+  <div class="xmas-lights" aria-hidden="true"><i class="xmas-bulb"></i><i class="xmas-bulb"></i><i class="xmas-bulb"></i><i class="xmas-bulb"></i><i class="xmas-bulb"></i><i class="xmas-bulb"></i><i class="xmas-bulb"></i><i class="xmas-bulb"></i><i class="xmas-bulb"></i><i class="xmas-bulb"></i><i class="xmas-bulb"></i><i class="xmas-bulb"></i></div>
   <div class="hero-copy">
-    <p class="eyebrow">✦ DONUTSMP INSPIRED CASINO</p>
-    <h1>WELCOME TO<br><span>DONUT ROYALE.</span></h1>
-    <p>Spin, flip, roll and win. A Minecraft-inspired arcade with private tickets and player accounts.</p>
-    <button class="primary" id="heroPlay">🎮 EXPLORE GAMES</button>
+    <p class="eyebrow">❄️ DONUT ROYALE · WINTER WONDERLAND</p>
+    <h1>IT'S A <span>ROYALE CHRISTMAS!</span></h1>
+    <p>The lobby is dressed for the holidays! Enjoy falling snow, glowing lights, festive games and a little winter surprise. Same games, same rules, more Christmas magic.</p>
+    <div class="xmas-hero-cta"><button class="primary" id="heroPlay">🎮 EXPLORE GAMES</button><span class="xmas-hero-stamp">🎄 HOLIDAY EDITION</span></div>
   </div>
-  <div class="hero-art" aria-hidden="true"><div class="hero-crown">👑</div><div class="hero-donut">🍩</div><div class="hero-spark">✦</div></div>
+  <div class="hero-art festive-hero-art" aria-hidden="true"><span class="xmas-hero-tree">🎄</span><span class="xmas-hero-present">🎁</span><span class="xmas-hero-present second">🎁</span><span class="xmas-hero-star">✦</span></div>
 </section>
 <div id="dashboard" hidden>
+
+  <section class="xmas-event" aria-labelledby="xmasEventTitle">
+    <div class="xmas-event-main">
+      <div class="xmas-event-kicker">🎄 THE CHRISTMAS UPDATE IS HERE</div>
+      <h2 id="xmasEventTitle">Welcome to Winter Wonderland ❄️</h2>
+      <p>Santa brought a fresh holiday look to the whole arcade: winter colors, cozy lights, snowy game cards and a festive message just for you.</p>
+      <small class="xmas-fine-print">Visual holiday event only. Games, odds, balances and demo credits are unchanged.</small>
+    </div>
+    <div class="xmas-event-side">
+      <div class="xmas-countdown-label" id="xmasCountdownLabel">COUNTDOWN TO CHRISTMAS EVE</div>
+      <strong class="xmas-countdown" id="xmasCountdown" role="timer">❄️ COUNTING DOWN...</strong>
+      <div class="xmas-event-actions">
+        <button type="button" id="xmasGift">🎁 OPEN A MESSAGE</button>
+        <button type="button" id="xmasSnowToggle" aria-pressed="true">❄️ SNOW: ON</button>
+      </div>
+    </div>
+    <p class="xmas-message" id="xmasGiftMessage" role="status" aria-live="polite" hidden></p>
+  </section>
 
   <div class="stats">
     <div class="panel">
@@ -591,11 +774,11 @@ body.cashier-open{overflow:hidden}
   <div class="rules-note">Game rules: 40% win chance, 60% loss chance. Winning bets return 2×. Only betting your entire balance (all-in) automatically loses. Maximum bet: 3B.</div>
 
   <div class="game-grid">
-    <button class="game-card card-coinflip" data-game="coinflip"><span class="game-live">● LIVE</span><span class="game-art art-coin" aria-hidden="true"><span>🪙</span><span>⚡</span></span><span class="game-title">COINFLIP</span><span class="game-subtitle">SONIC VS TAILS</span><span class="game-play">PLAY NOW ↗</span></button>
-    <button class="game-card card-dice" data-game="dice"><span class="game-live">● LIVE</span><span class="game-art art-dice" aria-hidden="true"><span class="thumbnail-die">⚄</span><span class="thumbnail-die second">⚅</span></span><span class="game-title">LUCKY DICE</span><span class="game-subtitle">ROLL THE DICE</span><span class="game-play">PLAY NOW ↗</span></button>
-    <button class="game-card card-slots" data-game="slots"><span class="game-live">● LIVE</span><span class="game-art art-slots" aria-hidden="true"><span>7</span><span>7</span><span>7</span></span><span class="game-title">TRIPLE SEVENS</span><span class="game-subtitle">JACKPOT SLOTS</span><span class="game-play">PLAY NOW ↗</span></button>
-    <button class="game-card card-blackjack" data-game="blackjack"><span class="game-live">● LIVE</span><span class="game-art art-blackjack" aria-hidden="true"><img class="minecraft-dealer" src="https://mc-heads.net/body/Technoblade/220" alt=""><span class="dealer-glow"></span><span class="dealer-hand">✊</span><span class="dealer-cards"><span class="playing-card card-j"><small>J<br>♣</small><strong>♣</strong></span><span class="playing-card card-a"><small>A<br>♠</small><strong>♠</strong></span></span></span><span class="game-title">BLACKJACK</span><span class="game-subtitle">GET 21 · HIT / STAND</span><span class="game-play">PLAY NOW ↗</span></button>
-    <button class="game-card card-wheel" data-game="wheel"><span class="game-live">● LIVE</span><span class="game-art art-wheel" aria-hidden="true"><span>🎯</span><span class="thumbnail-wheel"></span></span><span class="game-title">COLOR WHEEL</span><span class="game-subtitle">RED OR BLACK</span><span class="game-play">PLAY NOW ↗</span></button>
+    <button class="game-card card-coinflip" data-game="coinflip"><span class="xmas-game-snow" aria-hidden="true">❄</span><span class="game-live">● LIVE</span><span class="game-art art-coin" aria-hidden="true"><span>🪙</span><span>⚡</span></span><span class="game-title">COINFLIP</span><span class="game-subtitle">SONIC VS TAILS</span><span class="game-play">PLAY NOW ↗</span></button>
+    <button class="game-card card-dice" data-game="dice"><span class="xmas-game-snow" aria-hidden="true">❄</span><span class="game-live">● LIVE</span><span class="game-art art-dice" aria-hidden="true"><span class="thumbnail-die">⚄</span><span class="thumbnail-die second">⚅</span></span><span class="game-title">LUCKY DICE</span><span class="game-subtitle">ROLL THE DICE</span><span class="game-play">PLAY NOW ↗</span></button>
+    <button class="game-card card-slots" data-game="slots"><span class="xmas-game-snow" aria-hidden="true">❄</span><span class="game-live">● LIVE</span><span class="game-art art-slots" aria-hidden="true"><span>7</span><span>7</span><span>7</span></span><span class="game-title">TRIPLE SEVENS</span><span class="game-subtitle">JACKPOT SLOTS</span><span class="game-play">PLAY NOW ↗</span></button>
+    <button class="game-card card-blackjack" data-game="blackjack"><span class="xmas-game-snow" aria-hidden="true">❄</span><span class="game-live">● LIVE</span><span class="game-art art-blackjack" aria-hidden="true"><img class="minecraft-dealer" src="https://mc-heads.net/body/Technoblade/220" alt=""><span class="dealer-glow"></span><span class="dealer-hand">✊</span><span class="dealer-cards"><span class="playing-card card-j"><small>J<br>♣</small><strong>♣</strong></span><span class="playing-card card-a"><small>A<br>♠</small><strong>♠</strong></span></span></span><span class="game-title">BLACKJACK</span><span class="game-subtitle">GET 21 · HIT / STAND</span><span class="game-play">PLAY NOW ↗</span></button>
+    <button class="game-card card-wheel" data-game="wheel"><span class="xmas-game-snow" aria-hidden="true">❄</span><span class="game-live">● LIVE</span><span class="game-art art-wheel" aria-hidden="true"><span>🎯</span><span class="thumbnail-wheel"></span></span><span class="game-title">COLOR WHEEL</span><span class="game-subtitle">RED OR BLACK</span><span class="game-play">PLAY NOW ↗</span></button>
   </div>
 
   <section class="cashier-overlay" id="ticketSection" hidden role="dialog" aria-modal="true" aria-labelledby="cashierTitle">
@@ -1872,6 +2055,91 @@ setMode("register");
 document.body.classList.add("auth-locked");
 $("dashboard").hidden=false;
 refresh().catch(err=>toast(err.message));
+
+// Winter Wonderland: purely client-side holiday decorations.
+(() => {
+  const snow = $("xmasSnow");
+  const toggle = $("xmasSnowToggle");
+  const gift = $("xmasGift");
+  const message = $("xmasGiftMessage");
+  const count = $("xmasCountdown");
+  const countLabel = $("xmasCountdownLabel");
+  if (!snow || !toggle || !gift || !message || !count || !countLabel) return;
+
+  const reducedMotion = window.matchMedia &&
+    window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+  let snowOn = !reducedMotion;
+  try {
+    if (localStorage.getItem("donut-royale-snow") === "off") snowOn = false;
+  } catch (_) { /* Private browsing may block storage. */ }
+
+  // Small fixed number of decorative flakes; never intercept clicks.
+  const flakes = document.createDocumentFragment();
+  for (let i = 0; i < 38; i++) {
+    const flake = document.createElement("span");
+    flake.className = "xmas-snowflake";
+    flake.textContent = i % 6 === 0 ? "✧" : "❄";
+    flake.style.left = (Math.random() * 100).toFixed(1) + "%";
+    flake.style.fontSize = (7 + Math.random() * 13).toFixed(0) + "px";
+    flake.style.opacity = (0.23 + Math.random() * 0.57).toFixed(2);
+    flake.style.setProperty("--xmas-duration", (10 + Math.random() * 11).toFixed(1) + "s");
+    flake.style.setProperty("--xmas-delay", (-Math.random() * 20).toFixed(1) + "s");
+    flake.style.setProperty("--xmas-drift", (-40 + Math.random() * 80).toFixed(0) + "px");
+    flakes.appendChild(flake);
+  }
+  snow.appendChild(flakes);
+
+  function syncSnow() {
+    snow.hidden = !snowOn || !!reducedMotion;
+    toggle.setAttribute("aria-pressed", String(snowOn && !reducedMotion));
+    toggle.textContent = reducedMotion ? "❄️ SNOW: OFF (MOTION)" :
+      (snowOn ? "❄️ SNOW: ON" : "❄️ SNOW: OFF");
+    toggle.disabled = !!reducedMotion;
+  }
+  toggle.addEventListener("click", () => {
+    snowOn = !snowOn;
+    try { localStorage.setItem("donut-royale-snow", snowOn ? "on" : "off"); }
+    catch (_) { /* Decorative preference is optional. */ }
+    syncSnow();
+  });
+  syncSnow();
+
+  function updateChristmasCountdown() {
+    const now = new Date();
+    let year = now.getFullYear();
+    const thisChristmas = new Date(year, 11, 24);
+    const afterChristmas = new Date(year, 11, 27);
+    if (now >= thisChristmas && now < afterChristmas) {
+      count.textContent = "🎅 MERRY CHRISTMAS!";
+      countLabel.textContent = "HAPPY HOLIDAYS FROM DONUT ROYALE";
+      return;
+    }
+    if (now >= afterChristmas) year += 1;
+    const remaining = Math.max(0, new Date(year, 11, 24) - now);
+    const days = Math.floor(remaining / 86400000);
+    const hours = Math.floor(remaining / 3600000) % 24;
+    const minutes = Math.floor(remaining / 60000) % 60;
+    count.textContent = "🎄 " + days + "D · " + hours + "H · " + minutes + "M";
+    countLabel.textContent = "COUNTDOWN TO CHRISTMAS EVE";
+  }
+  updateChristmasCountdown();
+  setInterval(updateChristmasCountdown, 60000);
+
+  gift.addEventListener("click", () => {
+    const wishes = [
+      "May your holidays be full of cozy moments and great adventures! 🎄",
+      "Sending you snowflakes, warm cocoa and a lot of Christmas cheer! ☕",
+      "A tiny Christmas wish: have fun with friends and enjoy the season! ✨",
+      "You're on Santa's nice list of arcade explorers! 🎅",
+      "Wishing you a peaceful winter and a brilliant new year! ❄️",
+      "The best holiday loot is time with people you care about. 🎁"
+    ];
+    message.textContent = "🎁 " + wishes[new Date().getDate() % wishes.length];
+    message.hidden = false;
+    gift.textContent = "🎁 MESSAGE UNWRAPPED";
+  });
+})();
+
 </script>
 
 </body>
