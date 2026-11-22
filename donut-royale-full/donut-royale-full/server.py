@@ -483,11 +483,21 @@ def log_game(db, user_id, game, stake, payout, outcome, details=None):
 
 # Mines uses actual 5x5 probability rather than a flat 30% coin-toss win rate.
 MINES_TILES = 25
+MINES_MAX_COUNT = 20  # Leave at least 5 safe tiles; no one-click auto-wins.
 MINES_MAX_PAYOUT = 1_000_000_000_000
+MINES_FIRST_PICK_PERCENT = 50
+MINES_SECOND_PICK_PERCENT = 80
 
 def mines_payout(bet, mine_count, opened):
     if not 1 <= opened <= 25 - mine_count:
         return 0
+    # Early cashouts must not create easy profits on huge stakes.
+    # 1B bet -> 500M after one safe tile, or 800M after two.
+    if opened == 1:
+        return min(MINES_MAX_PAYOUT, bet * MINES_FIRST_PICK_PERCENT // 100)
+    if opened == 2:
+        return min(MINES_MAX_PAYOUT, bet * MINES_SECOND_PICK_PERCENT // 100)
+    # From the third safe pick onward, use the true board odds at 94% RTP.
     numerator, denominator = 1, 1
     for i in range(opened):
         numerator *= 25 - i
@@ -672,7 +682,9 @@ class Handler(BaseHTTPRequestHandler):
                                      (user["id"],)).fetchone()
             return self.send_json(200, {"round":mines_state(current),
                                         "max_bet":MAX_BET,
-                                        "max_payout":MINES_MAX_PAYOUT, "return_percent":94})
+                                        "max_payout":MINES_MAX_PAYOUT, "return_percent":94,
+                                        "first_pick_percent":MINES_FIRST_PICK_PERCENT,
+                                        "second_pick_percent":MINES_SECOND_PICK_PERCENT})
         if path == "/api/admin/bot-auto-deposit-preview":
             if user["role"] not in ("owner", "admin"):
                 return self.fail(403, "Staff only")
@@ -1059,8 +1071,8 @@ class Handler(BaseHTTPRequestHandler):
                     bet, count = data.get("amount"), data.get("mines")
                     if type(bet) is not int or not 1 <= bet <= MAX_BET:
                         return self.fail(400, "Bet must be from 1 to 3B credits")
-                    if type(count) is not int or not 1 <= count <= 24:
-                        return self.fail(400, "Choose 1 to 24 mines")
+                    if type(count) is not int or not 1 <= count <= MINES_MAX_COUNT:
+                        return self.fail(400, "Choose 1 to 20 mines")
                     if bet > wallet["balance"]:
                         return self.fail(400, "Not enough credits")
                     db.execute("UPDATE users SET balance=balance-? WHERE id=?",(bet,user["id"]))

@@ -3019,7 +3019,6 @@ header>div.header-account:last-child{
             <option value="10">10 mines</option>
             <option value="15">15 mines · high risk</option>
             <option value="20">20 mines</option>
-            <option value="24">24 mines · extreme</option>
           </select>
           <div class="mines-metrics">
             <div><span>BET</span><b id="minesBetStat">10K</b></div>
@@ -3030,8 +3029,8 @@ header>div.header-account:last-child{
           <button class="mines-cashout-btn" type="button" id="minesCashout" disabled>💰 CASH OUT</button>
           <div class="mines-info">
             <strong>HOW IT WORKS</strong>
-            <p>Each safe tile raises your payout. TNT ends the round with zero payout. Cash out after at least one diamond.</p>
-            <p>94% theoretical return before the maximum payout cap. Mines has variable odds, not a fixed 30% win chance. ALL IN always loses under the site's current rules. Maximum payout: 1T credits.</p>
+            <p>First safe tile: 0.50× payout (you lose half your stake). Second safe tile: 0.80× payout. You can cash out after one diamond, or keep revealing tiles to earn higher multipliers. TNT loses your whole stake.</p>
+            <p>From 3 safe tiles, payouts follow the 94% theoretical return formula before the payout cap. New rounds allow 1–20 mines. ALL IN always loses under the site's current rules. Maximum payout: 1T credits.</p>
           </div>
         </div>
       </div>
@@ -4061,7 +4060,7 @@ async function minesStart(){
  try{
   amount=parseAmount($("minesBet").value);
   if(amount<1||amount>3000000000)throw Error("Bet must be between 1 and 3B");
-  if(!Number.isInteger(count)||count<1||count>24)throw Error("Invalid mine count");
+  if(!Number.isInteger(count)||count<1||count>20)throw Error("Choose 1 to 20 mines");
   if(!me||amount>me.balance)throw Error("Not enough credits");
   if(amount===me.balance&&!confirm("ALL IN ALWAYS LOSES. You will lose your entire balance. Continue?"))return;
  }catch(e){minesMessage(e.message,true);toast(e.message);return;}
