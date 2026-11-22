@@ -1552,6 +1552,28 @@ async function loadUsers(){
   });
 }
 
+// Keep player balances and deposit ticket status in sync after bot credits a payment.
+let depositSyncInProgress=false;
+setInterval(async()=>{
+  if(!me || document.hidden || depositSyncInProgress)return;
+  depositSyncInProgress=true;
+  try{
+    const result=await api("me");
+    if(!result.user)return;
+    const updated=Number(result.user.balance);
+    if(!Number.isSafeInteger(updated) || updated===Number(me.balance))return;
+    me.balance=updated;
+    $("balance").textContent=fmt(updated);
+    $("topBalance").textContent=fmt(updated);
+    await loadTickets();
+    if(["admin","owner"].includes(me.role))await loadUsers();
+  }catch(err){
+    // Network interruptions should not disturb gameplay.
+  }finally{
+    depositSyncInProgress=false;
+  }
+},10000);
+
 updateTicketForm();
 setMode("register");
 document.body.classList.add("auth-locked");
