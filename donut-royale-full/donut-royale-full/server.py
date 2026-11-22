@@ -209,14 +209,8 @@ def auto_credit_deposit(db, event_id, player, amount, raw_message):
             return "needs_review"
     except (InvalidOperation, ValueError):
         return "needs_review"
-    # Payment receipts have no server-issued unique transaction ID.
-    # Identical payer/amount within 24 hours stays manual to avoid replay credits.
-    others = db.execute(
-        "SELECT created FROM bot_payment_events WHERE lower(player)=lower(?) AND amount=? AND event_id!=?",
-        (player, amount, event_id)).fetchall()
-    if any(abs((_deposit_time(event["created"]) - _deposit_time(row["created"])).total_seconds()) < 86400
-           for row in others):
-        return "needs_review"
+    # Repeated payments of the same amount by the same player are legitimate.
+    # Still allow only one credit per event ID and per deposit ticket.
     tickets = db.execute(
         "SELECT id,user_id,amount,message,created FROM tickets WHERE kind='deposit' AND status='open' AND amount=?",
         (amount,)).fetchall()
