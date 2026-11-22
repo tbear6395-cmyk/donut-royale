@@ -1686,6 +1686,71 @@ header>div.header-account:last-child{
   .game-card.card-coinflip.has-hd-coinflip{transition:none!important}
 }
 
+/* Sharp high-resolution Lucky Dice banner, with a separate mobile dice-only crop. */
+.game-card.card-dice.has-hd-dice{
+  --accent:#5ce9de;
+  background:#051d22;
+  border:2px solid #a1ebda;
+  padding:0;
+  isolation:isolate;
+  overflow:hidden;
+  box-shadow:0 12px 26px #0008,0 0 12px #25b5a45a;
+}
+.game-card.card-dice.has-hd-dice::before,
+.game-card.card-dice.has-hd-dice::after{display:none!important}
+.game-card.card-dice.has-hd-dice .dice-hd-art{
+  position:absolute;inset:0;z-index:1;
+  display:block;width:100%;height:100%;
+  pointer-events:none;overflow:hidden;
+}
+.game-card.card-dice.has-hd-dice .dice-hd-art img{
+  display:block;width:100%;height:100%;object-fit:fill;
+  image-rendering:auto;filter:none!important;transform:none!important;
+  transition:none!important;
+}
+.game-card.card-dice.has-hd-dice .game-title,
+.game-card.card-dice.has-hd-dice .game-subtitle,
+.game-card.card-dice.has-hd-dice .game-play,
+.game-card.card-dice.has-hd-dice .game-live,
+.game-card.card-dice.has-hd-dice .game-index,
+.game-card.card-dice.has-hd-dice .xmas-game-snow{display:none!important}
+@media(max-width:1100px){
+  .game-card.card-dice.has-hd-dice::after{
+    display:block!important;z-index:2!important;
+    background:linear-gradient(180deg,#06151a45 0%,transparent 26%,#07131e18 41%,#06121de9 100%)!important;
+  }
+  .game-card.card-dice.has-hd-dice .dice-hd-art img{
+    object-fit:cover;object-position:center center;
+  }
+  .game-card.card-dice.has-hd-dice .game-title,
+  .game-card.card-dice.has-hd-dice .game-subtitle,
+  .game-card.card-dice.has-hd-dice .game-play,
+  .game-card.card-dice.has-hd-dice .game-live,
+  .game-card.card-dice.has-hd-dice .game-index,
+  .game-card.card-dice.has-hd-dice .xmas-game-snow{
+    display:block!important;z-index:8!important;
+  }
+  .game-card.card-dice.has-hd-dice .game-title{
+    top:auto!important;bottom:51px!important;left:18px!important;
+    right:10px!important;text-align:left!important;transform:none!important;
+    font-family:Impact,"Arial Black",sans-serif!important;
+    font-size:clamp(27px,3vw,38px)!important;
+    color:#fff!important;text-shadow:2px 3px #071c1b,0 0 18px #000!important;
+  }
+  .game-card.card-dice.has-hd-dice .game-subtitle{
+    bottom:20px!important;left:18px!important;color:#cefff3!important;
+    font-size:10px!important;text-shadow:0 2px 5px #000!important;
+  }
+  .game-card.card-dice.has-hd-dice .game-play{
+    right:14px!important;bottom:15px!important;
+    background:#fff3cd!important;color:#172321!important;
+    border:1px solid #fff7df!important;font-size:9px!important;
+  }
+}
+@media(prefers-reduced-motion:reduce){
+  .game-card.card-dice.has-hd-dice{transition:none!important}
+}
+
 </style>
 </head>
 
@@ -1848,7 +1913,7 @@ header>div.header-account:last-child{
 
   <div class="game-grid">
     <button type="button" class="game-card card-coinflip has-hd-coinflip" data-game="coinflip" aria-label="Open Coinflip"><picture class="coinflip-hd-art" aria-hidden="true"><source media="(max-width: 1100px)" srcset="/coinflip-thumbnail-mobile.webp"><img src="/coinflip-thumbnail-hd.webp" alt="" width="1700" height="567" decoding="async"></picture><span class="game-index" aria-hidden="true">01 / 05</span><span class="xmas-game-snow" aria-hidden="true">❄</span><span class="game-live">✦ WINTER GAME</span><span class="game-title">COINFLIP</span><span class="game-subtitle">SONIC VS TAILS</span><span class="game-play">PLAY NOW ↗</span></button>
-    <button type="button" class="game-card card-dice" data-game="dice" aria-label="Open Lucky Dice"><span class="game-index" aria-hidden="true">02 / 05</span><span class="xmas-game-snow" aria-hidden="true">❄</span><span class="game-live">✦ WINTER GAME</span><span class="game-art art-dice" aria-hidden="true"><span class="thumbnail-die">⚄</span><span class="thumbnail-die second">⚅</span></span><span class="game-title">LUCKY DICE</span><span class="game-subtitle">ROLL THE DICE</span><span class="game-play">PLAY NOW ↗</span></button>
+    <button type="button" class="game-card card-dice has-hd-dice" data-game="dice" aria-label="Open Lucky Dice"><picture class="dice-hd-art" aria-hidden="true"><source media="(max-width: 1100px)" srcset="/lucky-dice-thumbnail-mobile.webp"><img src="/lucky-dice-thumbnail-hd.webp" alt="" width="2020" height="778" decoding="async"></picture><span class="game-index" aria-hidden="true">02 / 05</span><span class="xmas-game-snow" aria-hidden="true">❄</span><span class="game-live">✦ WINTER GAME</span><span class="game-title">LUCKY DICE</span><span class="game-subtitle">ROLL THE DICE</span><span class="game-play">PLAY NOW ↗</span></button>
     <button type="button" class="game-card card-slots" data-game="slots" aria-label="Open Triple Sevens"><span class="game-index" aria-hidden="true">03 / 05</span><span class="xmas-game-snow" aria-hidden="true">❄</span><span class="game-live">✦ WINTER GAME</span><span class="game-art art-slots" aria-hidden="true"><span>7</span><span>7</span><span>7</span></span><span class="game-title">TRIPLE SEVENS</span><span class="game-subtitle">JACKPOT SLOTS</span><span class="game-play">PLAY NOW ↗</span></button>
     <button type="button" class="game-card card-blackjack" data-game="blackjack" aria-label="Open Blackjack"><span class="game-index" aria-hidden="true">04 / 05</span><span class="xmas-game-snow" aria-hidden="true">❄</span><span class="game-live">✦ WINTER GAME</span><span class="game-art art-blackjack" aria-hidden="true"><img class="minecraft-dealer" src="https://mc-heads.net/body/Technoblade/220" alt=""><span class="dealer-glow"></span><span class="dealer-hand">✊</span><span class="dealer-cards"><span class="playing-card card-j"><small>J<br>♣</small><strong>♣</strong></span><span class="playing-card card-a"><small>A<br>♠</small><strong>♠</strong></span></span></span><span class="game-title">BLACKJACK</span><span class="game-subtitle">GET 21 · HIT / STAND</span><span class="game-play">PLAY NOW ↗</span></button>
     <button type="button" class="game-card card-wheel has-roulette-thumbnail" data-game="wheel" aria-label="Open Roulette"><span class="game-index" aria-hidden="true">05 / 05</span><span class="xmas-game-snow" aria-hidden="true">❄</span><span class="game-live">✦ WINTER GAME</span><svg class="roulette-thumb-art" viewBox="0 0 860 480" preserveAspectRatio="xMidYMid slice" focusable="false" aria-hidden="true" xmlns="http://www.w3.org/2000/svg">
