@@ -1059,12 +1059,18 @@ class Handler(BaseHTTPRequestHandler):
                                 {"case":case_id,"before":before,"after":price})
                     return self.send_json(200,{"ok":True,"case":case_id,"price":price})
                 target_id=data.get("user_id")
-                if type(target_id) is not int or target_id<1:
-                    return self.fail(400, "Valid player required")
-                target=db.execute("SELECT id,username,role,balance,suspended FROM users WHERE id=?",
-                                  (target_id,)).fetchone()
+                username=data.get("username")
+                if type(target_id) is int and target_id>0:
+                    target=db.execute("SELECT id,username,role,balance,suspended FROM users WHERE id=?",
+                                      (target_id,)).fetchone()
+                elif path=="/api/staff/credit" and isinstance(username,str) and re.fullmatch(r"\\.?[A-Za-z0-9_]{3,16}",username.strip()):
+                    target=db.execute("SELECT id,username,role,balance,suspended FROM users WHERE lower(username)=lower(?)",
+                                      (username.strip(),)).fetchone()
+                else:
+                    return self.fail(400, "Enter a valid registered player nickname or account ID")
                 if not target:
-                    return self.fail(404,"Player not found")
+                    return self.fail(404,"Player not found. Check the registered nickname or ID.")
+                target_id=target["id"]
                 if path=="/api/staff/suspend":
                     suspended=data.get("suspended")
                     reason=data.get("reason")
