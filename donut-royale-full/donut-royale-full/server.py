@@ -1063,7 +1063,7 @@ class Handler(BaseHTTPRequestHandler):
                 if type(target_id) is int and target_id>0:
                     target=db.execute("SELECT id,username,role,balance,suspended FROM users WHERE id=?",
                                       (target_id,)).fetchone()
-                elif path=="/api/staff/credit" and isinstance(username,str) and re.fullmatch(r"\\.?[A-Za-z0-9_]{3,16}",username.strip()):
+                elif path=="/api/staff/credit" and isinstance(username,str) and re.fullmatch(r"\.?[A-Za-z0-9_]{3,16}",username.strip()):
                     target=db.execute("SELECT id,username,role,balance,suspended FROM users WHERE lower(username)=lower(?)",
                                       (username.strip(),)).fetchone()
                 else:
