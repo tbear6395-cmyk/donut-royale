@@ -4027,7 +4027,7 @@ function minesApply(result){
  if(result.status==="active"){
   minesRound=result.round;minesFinished=null;
   const count=minesRound.revealed?.length||0;
-  minesMessage(count?"💎 SAFE! "+count+" DIAMONDS · CASH OUT "+fmt(minesRound.payout)+
+  minesMessage(count?"💎 SAFE! "+count+" DIAMOND"+(count===1?"":"S")+" · CASH OUT "+fmt(minesRound.payout)+
    " OR KEEP GOING":"ROUND STARTED · PICK A TILE OR USE AUTO PICK");
  }else{
   minesRound=null;minesFinished=result;
@@ -4197,6 +4197,7 @@ document.querySelectorAll(".quick").forEach(group=>{
       }else{
         input.value=b.textContent.trim();
       }
+      if(group.dataset.input==="minesBet")minesRender();
     };
   });
 });
