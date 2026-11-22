@@ -323,49 +323,75 @@ def bj_score(cards):
 
 # Case Battle collectible drops are round scores only; they are not withdrawable items.
 # The credit stake and 2x winner payout remain server-authoritative.
-CASE_BATTLE_POOLS = {
-    "iron": [
-        {"name": "Coal", "icon": "⚫", "value": 150},
-        {"name": "Iron Ingot", "icon": "🩶", "value": 700},
-        {"name": "Gold Ingot", "icon": "🟨", "value": 1500},
-        {"name": "Diamond", "icon": "💎", "value": 4900},
-        {"name": "Netherite", "icon": "🛡️", "value": 12000},
-    ],
-    "emerald": [
-        {"name": "Green Dye", "icon": "🟩", "value": 250},
-        {"name": "Emerald", "icon": "💚", "value": 1700},
-        {"name": "Enchanted Book", "icon": "📗", "value": 3700},
-        {"name": "Totem", "icon": "🗿", "value": 7800},
-        {"name": "Beacon", "icon": "✨", "value": 17500},
-    ],
-    "nether": [
-        {"name": "Netherrack", "icon": "🟥", "value": 300},
-        {"name": "Blaze Rod", "icon": "🔥", "value": 2200},
-        {"name": "Magma Cream", "icon": "🟠", "value": 4500},
-        {"name": "Ancient Debris", "icon": "🧱", "value": 9600},
-        {"name": "Nether Star", "icon": "🌟", "value": 25000},
-    ],
+# Case Battle: a case has a fixed, server-validated price per spin.
+# Loot is a virtual round score; final credit settlement is a 2x payout on a win.
+CASE_BATTLE_ROUNDS = (1, 3, 5, 10)
+CASE_BATTLE_CASES = {
+    "dirt": {"name": "Dirt Pouch", "price": 10_000_000, "accent": "#a8895d", "preview": "dirt",
+             "items": [("Dirt", "dirt"), ("Bread", "bread"), ("Iron Ingot", "iron_ingot"),
+                       ("Golden Apple", "golden_apple"), ("Diamond", "diamond")]},
+    "clover": {"name": "Lucky Clover", "price": 10_000_000, "accent": "#81c792", "preview": "emerald",
+               "items": [("Wheat", "wheat"), ("Slimeball", "slime_ball"), ("Emerald", "emerald"),
+                         ("Enchanted Book", "enchanted_book"), ("Totem", "totem_of_undying")]},
+    "wooden": {"name": "Wooden Crate", "price": 25_000_000, "accent": "#d8b17f", "preview": "oak_log",
+               "items": [("Wooden Sword", "wooden_sword"), ("Leather", "leather"), ("Iron Pickaxe", "iron_pickaxe"),
+                         ("Gold Ingot", "gold_ingot"), ("Diamond Pickaxe", "diamond_pickaxe")]},
+    "cobble": {"name": "Cobble Chest", "price": 50_000_000, "accent": "#c4c9cd", "preview": "cobblestone",
+               "items": [("Flint", "flint"), ("Coal", "coal"), ("Iron Ingot", "iron_ingot"),
+                         ("Diamond", "diamond"), ("Netherite Ingot", "netherite_ingot")]},
+    "coin": {"name": "Coin Toss", "price": 50_000_000, "accent": "#ebcc63", "preview": "gold_ingot",
+             "items": [("Gold Nugget", "gold_nugget"), ("Iron Ingot", "iron_ingot"), ("Gold Ingot", "gold_ingot"),
+                       ("Golden Apple", "golden_apple"), ("Enchanted Golden Apple", "enchanted_golden_apple")]},
+    "coal": {"name": "Coal Mine", "price": 100_000_000, "accent": "#8c99a4", "preview": "coal",
+             "items": [("Coal", "coal"), ("Raw Iron", "raw_iron"), ("Gold Ingot", "gold_ingot"),
+                       ("Diamond", "diamond"), ("Netherite Scrap", "netherite_scrap")]},
+    "donut": {"name": "Donut Box", "price": 100_000_000, "accent": "#f6a5d6", "preview": "cake",
+              "items": [("Cookie", "cookie"), ("Honey Bottle", "honey_bottle"), ("Cake", "cake"),
+                        ("Golden Carrot", "golden_carrot"), ("Enchanted Golden Apple", "enchanted_golden_apple")]},
+    "creeper": {"name": "Creeper Blast", "price": 250_000_000, "accent": "#67da87", "preview": "creeper_head",
+                "items": [("Gunpowder", "gunpowder"), ("TNT", "tnt"), ("Ender Pearl", "ender_pearl"),
+                          ("Diamond Sword", "diamond_sword"), ("Nether Star", "nether_star")]},
+    "diamond": {"name": "Diamond Mine", "price": 250_000_000, "accent": "#86eaf6", "preview": "diamond",
+                "items": [("Raw Iron", "raw_iron"), ("Lapis Lazuli", "lapis_lazuli"), ("Diamond", "diamond"),
+                          ("Diamond Chestplate", "diamond_chestplate"), ("Netherite Ingot", "netherite_ingot")]},
+    "emerald": {"name": "Emerald Village", "price": 10_000_000, "accent": "#71e7b0", "preview": "emerald",
+                "items": [("Potato", "potato"), ("Wheat", "wheat"), ("Emerald", "emerald"),
+                          ("Golden Carrot", "golden_carrot"), ("Totem", "totem_of_undying")]},
+    "gold": {"name": "Gold Rush", "price": 1_000_000, "accent": "#ffce55", "preview": "gold_ingot",
+             "items": [("Gold Nugget", "gold_nugget"), ("Copper Ingot", "copper_ingot"), ("Gold Ingot", "gold_ingot"),
+                       ("Golden Carrot", "golden_carrot"), ("Golden Apple", "golden_apple")]},
+    "nether": {"name": "Nether Fortress", "price": 50_000_000, "accent": "#e78068", "preview": "blaze_rod",
+               "items": [("Nether Brick", "nether_brick"), ("Magma Cream", "magma_cream"), ("Blaze Rod", "blaze_rod"),
+                         ("Ancient Debris", "ancient_debris"), ("Nether Star", "nether_star")]},
 }
+CASE_BATTLE_SCORE_FACTORS = (35, 75, 150, 300, 700)
+CASE_BATTLE_RARITIES = ("common", "uncommon", "rare", "epic", "legendary")
+
+def case_battle_pool(case_type):
+    case = CASE_BATTLE_CASES[case_type]
+    return [
+        {"name": name, "texture": texture,
+         "value": case["price"] * CASE_BATTLE_SCORE_FACTORS[i] // 100,
+         "rarity": CASE_BATTLE_RARITIES[i]}
+        for i, (name, texture) in enumerate(case["items"])
+    ]
 
 def case_battle_drops(case_type, rounds, player_wins):
-    """Produce visual duel rounds whose final loot scores match the settled bet."""
-    pool = CASE_BATTLE_POOLS[case_type]
-    drops = []
-    for _ in range(30):
+    """Generate loot reveal scores consistent with the settled server outcome."""
+    pool = case_battle_pool(case_type)
+    for _ in range(60):
         drops = [{"player": secrets.choice(pool), "bot": secrets.choice(pool)}
                  for _ in range(rounds)]
-        player_score = sum(r["player"]["value"] for r in drops)
-        bot_score = sum(r["bot"]["value"] for r in drops)
+        player_score = sum(drop["player"]["value"] for drop in drops)
+        bot_score = sum(drop["bot"]["value"] for drop in drops)
         if player_score != bot_score:
             break
     if player_score == bot_score:
-        # Guaranteed non-tie fallback; every round uses distinct item values.
-        drops = [{"player": pool[-1], "bot": pool[0]} for _ in range(rounds)]
-        player_score = sum(r["player"]["value"] for r in drops)
-        bot_score = sum(r["bot"]["value"] for r in drops)
-    # House odds are resolved independently of the cosmetic loot reveal.
+        drops = [{"player": pool[4], "bot": pool[0]} for _ in range(rounds)]
+        player_score = sum(drop["player"]["value"] for drop in drops)
+        bot_score = sum(drop["bot"]["value"] for drop in drops)
     if (player_score > bot_score) != player_wins:
-        drops = [{"player": r["bot"], "bot": r["player"]} for r in drops]
+        drops = [{"player": drop["bot"], "bot": drop["player"]} for drop in drops]
         player_score, bot_score = bot_score, player_score
     return drops, player_score, bot_score
 
@@ -494,6 +520,17 @@ class Handler(BaseHTTPRequestHandler):
             return
         if path == "/api/me":
             return self.send_json(200, {"user": self.me()})
+        if path == "/api/casebattle/catalog":
+            return self.send_json(200, {
+                "cases": [
+                    {"id": case_id, "name": case["name"], "price": case["price"],
+                     "accent": case["accent"], "preview": case["preview"],
+                     "pool": case_battle_pool(case_id)}
+                    for case_id, case in CASE_BATTLE_CASES.items()
+                ],
+                "rounds": list(CASE_BATTLE_ROUNDS), "max_bet": MAX_BET,
+                "payout_multiplier": 2, "win_chance_percent": 40
+            })
         if path == "/api/rules":
             return self.send_json(200, {"max_bet": MAX_BET, "win_chance_percent": 40,
                                         "loss_chance_percent": 60, "payout_multiplier": 2,
@@ -981,18 +1018,20 @@ class Handler(BaseHTTPRequestHandler):
             game, amount, choice = data.get("game"), data.get("amount"), data.get("choice")
             if game not in ("coinflip", "dice", "slots", "wheel", "casebattle"):
                 return self.fail(400, "Invalid game")
+            case_type, rounds = data.get("case"), data.get("rounds")
+            if game == "casebattle":
+                if not isinstance(case_type, str) or case_type not in CASE_BATTLE_CASES:
+                    return self.fail(400, "Choose a valid case")
+                if type(rounds) is not int or rounds not in CASE_BATTLE_ROUNDS:
+                    return self.fail(400, "Choose 1, 3, 5 or 10 rounds")
+                # Never trust a stake sent by the browser. The server computes the full cost.
+                amount = CASE_BATTLE_CASES[case_type]["price"] * rounds
             if type(amount) is not int or not 1 <= amount <= MAX_BET:
-                return self.fail(400, "Bet must be between 1 and 3B")
+                return self.fail(400, "Total stake must be between 1 and 3B")
             if game == "coinflip" and choice not in ("heads", "tails"):
                 return self.fail(400, "Choose Sonic or Tails")
             if game == "wheel" and choice not in ("red", "black"):
                 return self.fail(400, "Choose red or black")
-            case_type, rounds = data.get("case"), data.get("rounds")
-            if game == "casebattle":
-                if not isinstance(case_type, str) or case_type not in CASE_BATTLE_POOLS:
-                    return self.fail(400, "Choose a valid case")
-                if type(rounds) is not int or rounds not in (1, 3, 5):
-                    return self.fail(400, "Choose 1, 3 or 5 rounds")
             with LOCK, db_open() as db:
                 row = db.execute("SELECT balance FROM users WHERE id=?", (user["id"],)).fetchone()
                 if not row or amount > row["balance"]:
@@ -1011,8 +1050,10 @@ class Handler(BaseHTTPRequestHandler):
                     details = {"reels": reels}
                 elif game == "casebattle":
                     drops, player_score, bot_score = case_battle_drops(case_type, rounds, win)
-                    details = {"case": case_type, "rounds": rounds, "drops": drops,
-                               "player_score": player_score, "bot_score": bot_score}
+                    details = {"case": case_type, "case_name": CASE_BATTLE_CASES[case_type]["name"],
+                               "case_price": CASE_BATTLE_CASES[case_type]["price"],
+                               "rounds": rounds, "amount": amount, "payout": amount * 2 if win else 0,
+                               "drops": drops, "player_score": player_score, "bot_score": bot_score}
                 else:
                     result = choice if win else ("black" if choice == "red" else "red")
                     details = {"result": result}
