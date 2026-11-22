@@ -191,6 +191,14 @@ def auto_credit_deposit(db, event_id, player, amount, raw_message):
     event = db.execute("SELECT created FROM bot_payment_events WHERE event_id=?", (event_id,)).fetchone()
     if not event or _deposit_time(event["created"]) < cutoff:
         return "unverified"
+    # Bound automatic credit risk. Larger events require manual verification.
+    try:
+        limit = int(os.getenv("AUTO_DEPOSIT_MAX_AMOUNT", "1000000"))
+        daily_limit = int(os.getenv("AUTO_DEPOSIT_DAILY_LIMIT", "5000000"))
+    except ValueError:
+        return "needs_review"
+    if limit < 1 or daily_limit < 1 or amount > limit:
+        return "needs_review"
     receipt = re.fullmatch(r"(\.?[A-Za-z0-9_]{3,16}) paid you \$\s*([0-9,]+(?:\.[0-9]+)?)\s*([KMBT])?", raw_message, re.I)
     if not receipt or receipt.group(1).casefold() != player.casefold():
         return "needs_review"
@@ -201,12 +209,12 @@ def auto_credit_deposit(db, event_id, player, amount, raw_message):
             return "needs_review"
     except (InvalidOperation, ValueError):
         return "needs_review"
-    # If the same payer and amount appeared within 10 minutes, manual review
-    # is safer than treating a replay as another payment.
+    # Payment receipts have no server-issued unique transaction ID.
+    # Identical payer/amount within 24 hours stays manual to avoid replay credits.
     others = db.execute(
         "SELECT created FROM bot_payment_events WHERE lower(player)=lower(?) AND amount=? AND event_id!=?",
         (player, amount, event_id)).fetchall()
-    if any(abs((_deposit_time(event["created"]) - _deposit_time(row["created"])).total_seconds()) < 600
+    if any(abs((_deposit_time(event["created"]) - _deposit_time(row["created"])).total_seconds()) < 86400
            for row in others):
         return "needs_review"
     tickets = db.execute(
@@ -217,11 +225,18 @@ def auto_credit_deposit(db, event_id, player, amount, raw_message):
         nick = re.search(r"\[MINECRAFT NICK\]\s+(\.?[A-Za-z0-9_]{3,16})(?![A-Za-z0-9_])",
                          ticket["message"])
         if (nick and nick.group(1).casefold() == player.casefold()
-                and cutoff <= _deposit_time(ticket["created"]) <= _deposit_time(event["created"])):
+                and cutoff <= _deposit_time(ticket["created"]) <= _deposit_time(event["created"])
+                and (_deposit_time(event["created"]) - _deposit_time(ticket["created"])).total_seconds() <= 1800):
             matches.append(ticket)
     if len(matches) != 1:
         return "needs_review"
     ticket = matches[0]
+    previous = db.execute(
+        "SELECT amount,created FROM bot_deposit_credits WHERE user_id=?",
+        (ticket["user_id"],)).fetchall()
+    if amount + sum(p["amount"] for p in previous
+                    if 0 <= (now() - _deposit_time(p["created"])).total_seconds() < 86400) > daily_limit:
+        return "needs_review"
     if db.execute("SELECT event_id FROM bot_deposit_credits WHERE event_id=? OR ticket_id=?",
                   (event_id, ticket["id"])).fetchone():
         return "needs_review"
