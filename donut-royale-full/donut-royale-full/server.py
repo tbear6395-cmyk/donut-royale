@@ -431,7 +431,7 @@ class Handler(BaseHTTPRequestHandler):
             return self.send_json(200, {"ok": True, "service": "donut-royale-bot"})
         if path == "/":
             path = "/index.html"
-        if path in ("/index.html", "/favicon.svg", "/game-thumbnails.webp", "/coin-heads.png", "/coin-tails.png", "/style.css", "/app.js", "/coin-sonic-hd.svg", "/coin-tails-hd.svg", "/bot-client-v3.js"):
+        if path in ("/index.html", "/favicon.svg", "/game-thumbnails.webp", "/coinflip-thumbnail-hd.webp", "/coinflip-thumbnail-mobile.webp", "/coin-heads.png", "/coin-tails.png", "/style.css", "/app.js", "/coin-sonic-hd.svg", "/coin-tails-hd.svg", "/bot-client-v3.js"):
             file = BASE / path.lstrip("/")
             if not file.is_file():
                 return self.fail(404, "File not found")
