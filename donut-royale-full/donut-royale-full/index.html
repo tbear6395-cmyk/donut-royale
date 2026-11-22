@@ -2805,7 +2805,17 @@ async function refresh(){
   if(!me){
     chatInitializedFor=null;chatLatestId=0;chatUnread=0;updateChatBadge();$("chatNotification").hidden=true;
     $("topBalance").textContent = "•••";
-    staffLoaded=false;staffSelectedPlayer=null;
+    staffLoaded=false;staffSelectedPlayer=null;staffCurrentTab="overview";
+    $("staffPage").hidden=true;
+    $("staffAuditList").replaceChildren();$("staffCasePrices").replaceChildren();
+    $("staffKpis").replaceChildren();$("staffPlayerList").replaceChildren();
+    $("staffPlayerNotes").replaceChildren();$("staffPlayerDetail").hidden=true;
+    document.querySelectorAll("#staffPage [data-staff-tab]").forEach(b=>{
+      const active=b.dataset.staffTab==="overview";
+      b.classList.toggle("active",active);b.setAttribute("aria-pressed",String(active));
+    });
+    for(const name of ["Overview","Players","History","Support","Bot","Owner"])
+      $("staffView"+name).hidden=name!=="Overview";
     if(["#staff","#addRanks","#adminChat"].includes(location.hash))location.hash="#dashboard";
     walletClose();
     walletNickUser=null;
@@ -2834,6 +2844,7 @@ async function refresh(){
   $("balance").textContent = fmt(me.balance);
   $("topBalance").textContent = fmt(me.balance);
   updateWalletBalances();
+  void staffRefreshPublicRules();
   $("displayName").textContent = me.username;
   $("role").textContent = me.role.toUpperCase();
 
