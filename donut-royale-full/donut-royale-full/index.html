@@ -1751,6 +1751,120 @@ header>div.header-account:last-child{
   .game-card.card-dice.has-hd-dice{transition:none!important}
 }
 
+/* CASE BATTLE: responsive full-width arcade card and two-sided case opening arena. */
+.game-card.card-casebattle{
+  grid-column:span 12;min-height:255px;height:255px;padding:0;
+  --accent:#71efbf;--base:#0e3534;
+  border:2px solid #c6c77e;background:
+    radial-gradient(ellipse at 64% 44%,#1da38372,transparent 45%),
+    radial-gradient(ellipse at 38% 80%,#6f276f74,transparent 52%),
+    repeating-conic-gradient(from 8deg at 58% 55%,#92ffcf08 0deg 8deg,transparent 9deg 22deg),
+    linear-gradient(120deg,#061e24,#17313a 58%,#101b2b);
+  isolation:isolate;
+}
+.game-card.card-casebattle .game-title{font-size:clamp(33px,3.2vw,53px);bottom:70px;left:36px;color:#fff;text-shadow:3px 4px #061721,0 0 22px #000b}
+.game-card.card-casebattle .game-subtitle{bottom:39px;left:38px;color:#dcfdef;letter-spacing:1.4px}
+.game-card.card-casebattle .game-play{right:30px;bottom:33px;font-size:12px;padding:12px 18px;z-index:10}
+.game-card.card-casebattle .game-live{top:21px;left:30px}
+.game-card.card-casebattle .game-index{top:22px;right:30px}
+.game-card.card-casebattle .xmas-game-snow{right:31px;top:73px}
+.game-card.card-casebattle .cb-banner-art{position:absolute;z-index:2;left:46%;right:14%;top:8px;bottom:8px;display:flex;align-items:center;justify-content:space-around;pointer-events:none}
+.game-card.card-casebattle .cb-banner-chest{position:relative;font-size:100px;line-height:1;filter:drop-shadow(0 0 17px #f3d66d85) drop-shadow(0 12px 18px #0009);transform:rotate(-12deg)}
+.game-card.card-casebattle .cb-banner-chest-two{transform:rotate(13deg);filter:drop-shadow(0 0 17px #9e79ff9e) drop-shadow(0 12px 18px #0009)}
+.game-card.card-casebattle .cb-banner-chest i{font-style:normal;font-size:42px;position:absolute;right:-9px;top:-12px;filter:drop-shadow(0 0 10px #fff9)}
+.game-card.card-casebattle .cb-banner-vs{display:grid;place-items:center;width:70px;height:70px;border:2px solid #9af2c2;border-radius:50%;background:#042f2ecf;color:#f3f9da;font:900 28px Impact,Arial,sans-serif;box-shadow:0 0 22px #54ebad88}
+@media(max-width:1100px){.game-card.card-casebattle{grid-column:span 2}.game-card.card-casebattle .cb-banner-art{left:39%;right:19%}}
+@media(max-width:580px){
+  .game-card.card-casebattle{grid-column:1;min-height:232px;height:232px}
+  .game-card.card-casebattle .cb-banner-art{left:20%;right:10%;top:12px;bottom:36px;opacity:.82}
+  .game-card.card-casebattle .cb-banner-chest{font-size:65px}
+  .game-card.card-casebattle .cb-banner-chest i{font-size:27px}
+  .game-card.card-casebattle .cb-banner-vs{width:46px;height:46px;font-size:20px}
+  .game-card.card-casebattle .game-title{left:18px;bottom:55px;font-size:33px}
+  .game-card.card-casebattle .game-subtitle{left:18px;bottom:20px;font-size:9px}
+  .game-card.card-casebattle .game-play{right:12px;bottom:16px;padding:9px;font-size:9px}
+  .game-card.card-casebattle .game-live{top:12px;left:14px}
+  .game-card.card-casebattle .game-index{top:15px;right:15px}
+}
+.game-window:has(#screen-casebattle:not([hidden])){width:min(1080px,100%);max-height:calc(100dvh - 24px);overflow-y:auto;padding:clamp(12px,2.1vw,25px)}
+#screen-casebattle{color:#e8f5f0;text-align:left}
+#screen-casebattle .cb-heading{display:flex;justify-content:space-between;align-items:flex-start;gap:10px;margin:11px 0 19px}
+#screen-casebattle .cb-kicker{font-size:10px;letter-spacing:1.8px;color:#92dba9;font-weight:900}
+#screen-casebattle h2{font:900 clamp(30px,4vw,51px) Impact,"Arial Black",sans-serif;letter-spacing:1.3px;color:#f6f7ed;margin:5px 0;text-shadow:3px 3px #040f16}
+#screen-casebattle h2 em{font-style:normal;color:#87e3a9}
+#screen-casebattle .cb-heading p{color:#a7b9b5;font-size:12px;line-height:1.5}
+#screen-casebattle .cb-season{white-space:nowrap;color:#a6dabc;border:1px solid #5b897f;padding:7px 10px;border-radius:7px;font-size:10px;font-weight:900}
+#screen-casebattle .cb-setup{display:grid;grid-template-columns:1.15fr 1fr 1.05fr;gap:11px;margin:12px 0}
+#screen-casebattle .cb-field{display:flex;flex-direction:column;gap:8px;font-size:10px;font-weight:950;letter-spacing:1.5px;color:#b5d8cc}
+#screen-casebattle .cb-field input,#screen-casebattle .cb-field select{display:block;width:100%;height:45px;border-radius:8px;border:1px solid #567b77;background:#111d24;color:#f8fff8;font:800 15px Arial,sans-serif;padding:0 12px;margin:0;max-width:none}
+#screen-casebattle .cb-round-choices{display:flex;height:45px;gap:5px}
+#screen-casebattle .cb-round-choices button{flex:1;min-width:0;border:1px solid #50716e;background:#172b2c;color:#e5f2eb;border-radius:8px;cursor:pointer;font-weight:900}
+#screen-casebattle .cb-round-choices button.selected{background:#2e916c;border-color:#8aefc4;color:#fff;box-shadow:0 0 10px #2ae6a84e}
+#screen-casebattle .cb-quick{display:flex;gap:8px;flex-wrap:wrap;justify-content:flex-start;margin:8px 0 18px}
+#screen-casebattle .cb-quick button{min-width:70px;margin:0;border-radius:7px;font-size:11px;padding:9px 12px}
+#screen-casebattle .cb-progress{background:#121c24;border:1px solid #354d50;border-radius:11px 11px 0 0;padding:13px 17px;display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap;font-size:11px;letter-spacing:.6px}
+#screen-casebattle .cb-progress strong{color:#fff1aa;font-weight:900}
+#screen-casebattle .cb-progress span{color:#b7ded2;font-weight:750}
+#screen-casebattle .cb-progress .cb-progress-odds{font-size:10px;color:#9dafa8}
+#screen-casebattle .cb-arena{display:grid;grid-template-columns:minmax(0,1fr) 64px minmax(0,1fr);background:#0a141b;border:1px solid #34494e;border-top:0;border-radius:0 0 12px 12px;overflow:hidden;min-height:285px}
+#screen-casebattle .cb-side{min-width:0;padding:15px 14px;background:radial-gradient(ellipse at 50% 43%,#17434b59,transparent 75%)}
+#screen-casebattle .cb-house{background:radial-gradient(ellipse at 55% 45%,#43315a61,transparent 75%)}
+#screen-casebattle .cb-persona{display:flex;align-items:center;gap:10px;margin-bottom:13px;min-height:41px}
+#screen-casebattle .cb-avatar{font-size:27px;background:#1a3d3b;border-radius:10px;width:39px;height:39px;display:grid;place-items:center}
+#screen-casebattle .cb-house .cb-avatar{background:#3c2d47}
+#screen-casebattle .cb-persona div{display:grid;gap:4px;min-width:0}
+#screen-casebattle .cb-persona small{font-size:9px;font-weight:850;letter-spacing:1px;color:#a7bcb8}
+#screen-casebattle .cb-persona strong{font-size:13px;font-weight:1000;color:#f2fff6;text-overflow:ellipsis;overflow:hidden;max-width:145px;white-space:nowrap}
+#screen-casebattle .cb-persona b{margin-left:auto;color:#f8da74;font-size:20px}
+#screen-casebattle .cb-reel{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:4px;height:155px;background:linear-gradient(#0d151b,#142527 48%,#0b161e);border:1px solid #344b4f;border-radius:10px;overflow:hidden;position:relative}
+#screen-casebattle .cb-reel::before,#screen-casebattle .cb-reel::after{content:"";position:absolute;z-index:2;left:0;right:0;height:34px;pointer-events:none}
+#screen-casebattle .cb-reel::before{top:0;background:linear-gradient(#0b151b,transparent)}
+#screen-casebattle .cb-reel::after{bottom:0;background:linear-gradient(transparent,#0b151b)}
+#screen-casebattle .cb-idle-box{font-size:57px}
+#screen-casebattle .cb-reel>small{color:#9caaa6;letter-spacing:2px;font-weight:900}
+#screen-casebattle .cb-drop{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:7px;min-width:0;max-width:100%}
+#screen-casebattle .cb-drop-icon{font-size:50px;line-height:1.1;filter:drop-shadow(0 0 13px #89ffe881)}
+#screen-casebattle .cb-house .cb-drop-icon{filter:drop-shadow(0 0 13px #bf9bff90)}
+#screen-casebattle .cb-drop strong{font-size:12px;max-width:100%;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+#screen-casebattle .cb-drop small{font-weight:900;color:#f2da7e;font-size:13px}
+#screen-casebattle .cb-reel.is-rolling .cb-drop-icon{animation:cbBump .12s infinite alternate}
+@keyframes cbBump{from{transform:translateY(-8px) scale(.95);opacity:.7}to{transform:translateY(8px) scale(1.05);opacity:1}}
+#screen-casebattle .cb-duel-mark{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:8px;border-left:1px solid #34484b;border-right:1px solid #34484b;background:#0d1d22}
+#screen-casebattle .cb-duel-mark span{font-size:29px;color:#c6e8c0}
+#screen-casebattle .cb-duel-mark b{border:2px solid #529c82;border-radius:50%;width:46px;height:46px;display:grid;place-items:center;background:#0c302f;color:#bff3cf;font:900 22px Impact,Arial,sans-serif}
+#screen-casebattle .cb-history{display:flex;flex-direction:column;gap:5px;margin-top:10px;max-height:165px;overflow-y:auto}
+#screen-casebattle .cb-history>span{font-size:10px;color:#849d97;text-align:center;padding:8px}
+#screen-casebattle .cb-history-row{display:flex;align-items:center;gap:8px;padding:7px 10px;background:#172b2a;border:1px solid #254748;border-radius:7px;font-size:11px}
+#screen-casebattle .cb-house .cb-history-row{background:#252233;border-color:#4a384e}
+#screen-casebattle .cb-history-row b{margin-left:auto;color:#f0d583}
+#screen-casebattle .cb-bottom{display:flex;flex-direction:column;align-items:center;gap:6px;margin:17px 0 0}
+#screen-casebattle #cbStart{width:100%;max-width:none;padding:16px;font-weight:1000;letter-spacing:1.5px;border-radius:11px;background:linear-gradient(105deg,#1f915c,#49b67d);color:#fafff9;box-shadow:0 4px 18px #13c57e42}
+#screen-casebattle #cbStart:disabled{opacity:.65;cursor:wait}
+#screen-casebattle #cbResult{text-align:center;min-height:24px;margin:7px 0;font-size:15px;color:#e3f7e8;font-weight:850}
+#screen-casebattle .cb-disclaimer{text-align:center;font-size:10px;color:#97aaa6;margin:3px 0;line-height:1.5}
+@media(max-width:580px){
+  #screen-casebattle .cb-heading{margin-top:7px}
+  #screen-casebattle .cb-season{display:none}
+  #screen-casebattle .cb-setup{grid-template-columns:1fr 1fr}
+  #screen-casebattle .cb-field:first-child{grid-column:1/-1}
+  #screen-casebattle .cb-arena{grid-template-columns:minmax(0,1fr) 32px minmax(0,1fr)}
+  #screen-casebattle .cb-side{padding:9px 6px}
+  #screen-casebattle .cb-duel-mark b{width:28px;height:28px;font-size:13px;border-width:1px}
+  #screen-casebattle .cb-duel-mark span{font-size:17px}
+  #screen-casebattle .cb-persona{gap:4px}
+  #screen-casebattle .cb-avatar{width:27px;height:27px;font-size:20px}
+  #screen-casebattle .cb-persona strong{font-size:10px;max-width:80px}
+  #screen-casebattle .cb-persona small{font-size:7px}
+  #screen-casebattle .cb-persona b{font-size:12px}
+  #screen-casebattle .cb-reel{height:146px}
+  #screen-casebattle .cb-drop-icon{font-size:40px}
+  #screen-casebattle .cb-drop strong{font-size:10px}
+  #screen-casebattle .cb-history-row{font-size:9px;padding:6px 5px;gap:4px}
+  #screen-casebattle .cb-progress{padding:9px;font-size:10px}
+  #screen-casebattle .cb-progress-odds{display:none}
+  #screen-casebattle .cb-quick button{min-width:52px;padding:8px;font-size:10px}
+}
+
 </style>
 </head>
 
@@ -1778,6 +1892,7 @@ header>div.header-account:last-child{
   <button data-game="slots">🎰 Triple Sevens</button>
   <button data-game="wheel">🎰 Roulette</button>
   <button data-game="blackjack">🃏 Blackjack</button>
+  <button data-game="casebattle">📦 Case Battle</button>
   <h4>WALLET</h4>
   <button type="button" id="walletSide">💸 Deposit / Withdraw</button>
   <a href="#myTickets">📋 Transaction Requests</a>
@@ -1906,17 +2021,17 @@ header>div.header-account:last-child{
   </div>
 
   <div class="royale-section-heading">
-    <div><span class="section-kicker">✦ THE ARCADE COLLECTION</span><h2 id="gamesHeading">FIVE GAMES. <em>ONE LOBBY.</em></h2><p>Explore the full lineup in its winter festival outfit.</p></div>
-    <div class="game-collection-count" aria-label="Five available games"><b>05</b><small>GAME MODES</small></div>
+    <div><span class="section-kicker">✦ THE ARCADE COLLECTION</span><h2 id="gamesHeading">SIX GAMES. <em>ONE LOBBY.</em></h2><p>Explore the full lineup in its winter festival outfit.</p></div>
+    <div class="game-collection-count" aria-label="Six available games"><b>06</b><small>GAME MODES</small></div>
   </div>
   <div class="rules-note"><strong>✧ PLAY WITH THE RULES IN MIND</strong><span>Game rules: 40% win chance, 60% loss chance. Winning bets return 2×. Maximum bet: 3B. 18+ · Play responsibly and take breaks.</span></div>
 
   <div class="game-grid">
-    <button type="button" class="game-card card-coinflip has-hd-coinflip" data-game="coinflip" aria-label="Open Coinflip"><picture class="coinflip-hd-art" aria-hidden="true"><source media="(max-width: 1100px)" srcset="/coinflip-thumbnail-mobile.webp"><img src="/coinflip-thumbnail-hd.webp" alt="" width="1700" height="567" decoding="async"></picture><span class="game-index" aria-hidden="true">01 / 05</span><span class="xmas-game-snow" aria-hidden="true">❄</span><span class="game-live">✦ WINTER GAME</span><span class="game-title">COINFLIP</span><span class="game-subtitle">SONIC VS TAILS</span><span class="game-play">PLAY NOW ↗</span></button>
-    <button type="button" class="game-card card-dice has-hd-dice" data-game="dice" aria-label="Open Lucky Dice"><picture class="dice-hd-art" aria-hidden="true"><source media="(max-width: 1100px)" srcset="/lucky-dice-thumbnail-mobile.webp"><img src="/lucky-dice-thumbnail-hd.webp" alt="" width="2020" height="778" decoding="async"></picture><span class="game-index" aria-hidden="true">02 / 05</span><span class="xmas-game-snow" aria-hidden="true">❄</span><span class="game-live">✦ WINTER GAME</span><span class="game-title">LUCKY DICE</span><span class="game-subtitle">ROLL THE DICE</span><span class="game-play">PLAY NOW ↗</span></button>
-    <button type="button" class="game-card card-slots" data-game="slots" aria-label="Open Triple Sevens"><span class="game-index" aria-hidden="true">03 / 05</span><span class="xmas-game-snow" aria-hidden="true">❄</span><span class="game-live">✦ WINTER GAME</span><span class="game-art art-slots" aria-hidden="true"><span>7</span><span>7</span><span>7</span></span><span class="game-title">TRIPLE SEVENS</span><span class="game-subtitle">JACKPOT SLOTS</span><span class="game-play">PLAY NOW ↗</span></button>
-    <button type="button" class="game-card card-blackjack" data-game="blackjack" aria-label="Open Blackjack"><span class="game-index" aria-hidden="true">04 / 05</span><span class="xmas-game-snow" aria-hidden="true">❄</span><span class="game-live">✦ WINTER GAME</span><span class="game-art art-blackjack" aria-hidden="true"><img class="minecraft-dealer" src="https://mc-heads.net/body/Technoblade/220" alt=""><span class="dealer-glow"></span><span class="dealer-hand">✊</span><span class="dealer-cards"><span class="playing-card card-j"><small>J<br>♣</small><strong>♣</strong></span><span class="playing-card card-a"><small>A<br>♠</small><strong>♠</strong></span></span></span><span class="game-title">BLACKJACK</span><span class="game-subtitle">GET 21 · HIT / STAND</span><span class="game-play">PLAY NOW ↗</span></button>
-    <button type="button" class="game-card card-wheel has-roulette-thumbnail" data-game="wheel" aria-label="Open Roulette"><span class="game-index" aria-hidden="true">05 / 05</span><span class="xmas-game-snow" aria-hidden="true">❄</span><span class="game-live">✦ WINTER GAME</span><svg class="roulette-thumb-art" viewBox="0 0 860 480" preserveAspectRatio="xMidYMid slice" focusable="false" aria-hidden="true" xmlns="http://www.w3.org/2000/svg">
+    <button type="button" class="game-card card-coinflip has-hd-coinflip" data-game="coinflip" aria-label="Open Coinflip"><picture class="coinflip-hd-art" aria-hidden="true"><source media="(max-width: 1100px)" srcset="/coinflip-thumbnail-mobile.webp"><img src="/coinflip-thumbnail-hd.webp" alt="" width="1700" height="567" decoding="async"></picture><span class="game-index" aria-hidden="true">01 / 06</span><span class="xmas-game-snow" aria-hidden="true">❄</span><span class="game-live">✦ WINTER GAME</span><span class="game-title">COINFLIP</span><span class="game-subtitle">SONIC VS TAILS</span><span class="game-play">PLAY NOW ↗</span></button>
+    <button type="button" class="game-card card-dice has-hd-dice" data-game="dice" aria-label="Open Lucky Dice"><picture class="dice-hd-art" aria-hidden="true"><source media="(max-width: 1100px)" srcset="/lucky-dice-thumbnail-mobile.webp"><img src="/lucky-dice-thumbnail-hd.webp" alt="" width="2020" height="778" decoding="async"></picture><span class="game-index" aria-hidden="true">02 / 06</span><span class="xmas-game-snow" aria-hidden="true">❄</span><span class="game-live">✦ WINTER GAME</span><span class="game-title">LUCKY DICE</span><span class="game-subtitle">ROLL THE DICE</span><span class="game-play">PLAY NOW ↗</span></button>
+    <button type="button" class="game-card card-slots" data-game="slots" aria-label="Open Triple Sevens"><span class="game-index" aria-hidden="true">03 / 06</span><span class="xmas-game-snow" aria-hidden="true">❄</span><span class="game-live">✦ WINTER GAME</span><span class="game-art art-slots" aria-hidden="true"><span>7</span><span>7</span><span>7</span></span><span class="game-title">TRIPLE SEVENS</span><span class="game-subtitle">JACKPOT SLOTS</span><span class="game-play">PLAY NOW ↗</span></button>
+    <button type="button" class="game-card card-blackjack" data-game="blackjack" aria-label="Open Blackjack"><span class="game-index" aria-hidden="true">04 / 06</span><span class="xmas-game-snow" aria-hidden="true">❄</span><span class="game-live">✦ WINTER GAME</span><span class="game-art art-blackjack" aria-hidden="true"><img class="minecraft-dealer" src="https://mc-heads.net/body/Technoblade/220" alt=""><span class="dealer-glow"></span><span class="dealer-hand">✊</span><span class="dealer-cards"><span class="playing-card card-j"><small>J<br>♣</small><strong>♣</strong></span><span class="playing-card card-a"><small>A<br>♠</small><strong>♠</strong></span></span></span><span class="game-title">BLACKJACK</span><span class="game-subtitle">GET 21 · HIT / STAND</span><span class="game-play">PLAY NOW ↗</span></button>
+    <button type="button" class="game-card card-wheel has-roulette-thumbnail" data-game="wheel" aria-label="Open Roulette"><span class="game-index" aria-hidden="true">05 / 06</span><span class="xmas-game-snow" aria-hidden="true">❄</span><span class="game-live">✦ WINTER GAME</span><svg class="roulette-thumb-art" viewBox="0 0 860 480" preserveAspectRatio="xMidYMid slice" focusable="false" aria-hidden="true" xmlns="http://www.w3.org/2000/svg">
 <defs>
 <radialGradient id="rtBg"><stop stop-color="#b22c32" offset="0"/><stop stop-color="#6d1726" offset=".44"/><stop stop-color="#21111d" offset="1"/></radialGradient>
 <linearGradient id="rtGold" x1="0" y1="0" x2="1" y2="1"><stop stop-color="#fff0a8"/><stop offset=".2" stop-color="#ffdd56"/><stop offset=".52" stop-color="#da8117"/><stop offset=".78" stop-color="#ffcc56"/><stop offset="1" stop-color="#805018"/></linearGradient>
@@ -1959,6 +2074,20 @@ header>div.header-account:last-child{
 <circle cx="502" cy="362" r="15" fill="url(#rtBall)" stroke="#f2f4f3" stroke-width="2"/>
 <path d="M0 325 L860 325 860 480 0 480 Z" fill="url(#rtFade)"/>
 </svg><span class="game-title">ROULETTE</span><span class="game-subtitle">RED OR BLACK</span><span class="game-play">PLAY NOW ↗</span></button>
+    <button type="button" class="game-card card-casebattle" data-game="casebattle" aria-label="Open Case Battle">
+      <span class="game-index" aria-hidden="true">06 / 06</span>
+      <span class="xmas-game-snow" aria-hidden="true">❄</span>
+      <span class="game-live">✦ WINTER GAME</span>
+      <span class="cb-banner-art" aria-hidden="true">
+        <span class="cb-banner-chest cb-banner-chest-one">📦<i>💎</i></span>
+        <span class="cb-banner-vs">VS</span>
+        <span class="cb-banner-chest cb-banner-chest-two">📦<i>🌟</i></span>
+      </span>
+      <span class="game-title">CASE BATTLE</span>
+      <span class="game-subtitle">OPEN CASES · 1V1 ROYAL BOT</span>
+      <span class="game-play">PLAY NOW ↗</span>
+    </button>
+
   </div>
 
   <section class="royale-guide" aria-labelledby="royaleGuideHeading">
@@ -2223,6 +2352,58 @@ header>div.header-account:last-child{
           <p class="result roulette-result" id="wheelResult" role="status" aria-live="polite"></p>
           <p class="roulette-fine-print">In-game credits only · Maximum bet 3B · 18+ · Take breaks</p>
         </div>
+      </div>
+    </section>
+
+    <section class="game-screen" id="screen-casebattle" hidden>
+      <div class="cb-heading">
+        <div><span class="cb-kicker">✦ DONUT ROYALE · 1V1 BOT DUEL</span><h2>📦 CASE <em>BATTLE</em></h2><p>Open matching cases round by round. Highest total item score wins the battle.</p></div>
+        <span class="cb-season">❄ WINTER EVENT</span>
+      </div>
+      <div class="cb-setup">
+        <label class="cb-field">CHOOSE CASE
+          <select id="cbCase" aria-label="Choose case">
+            <option value="iron">🩶 IRON RUSH</option>
+            <option value="emerald">💚 EMERALD VAULT</option>
+            <option value="nether">🔥 NETHER TREASURE</option>
+          </select>
+        </label>
+        <div class="cb-field">ROUNDS
+          <div class="cb-round-choices" role="group" aria-label="Case Battle rounds">
+            <button type="button" data-cb-rounds="1" aria-pressed="false">1</button>
+            <button type="button" class="selected" data-cb-rounds="3" aria-pressed="true">3</button>
+            <button type="button" data-cb-rounds="5" aria-pressed="false">5</button>
+          </div>
+        </div>
+        <label class="cb-field">TOTAL BET
+          <input id="cbBet" value="50000" inputmode="decimal" aria-label="Total Case Battle bet">
+        </label>
+      </div>
+      <div class="quick cb-quick" data-input="cbBet" aria-label="Quick Case Battle bet amounts">
+        <button type="button" data-value="10000">10K</button>
+        <button type="button" data-value="50000">50K</button>
+        <button type="button" data-value="100000">100K</button>
+        <button type="button" data-value="1000000">1M</button>
+        <button type="button" data-all-in="true" title="Bet your full available balance" aria-label="ALL IN — use full balance">ALL IN</button>
+      </div>
+      <div class="cb-progress"><strong id="cbRoundLabel">ROUND 0 / 3</strong><span id="cbStageLabel">READY FOR BATTLE</span><span class="cb-progress-odds">WIN CHANCE 40% · PAYOUT 2×</span></div>
+      <div class="cb-arena">
+        <div class="cb-side cb-you">
+          <div class="cb-persona"><span class="cb-avatar" aria-hidden="true">👑</span><div><small>CHALLENGER</small><strong id="cbPlayerName">YOU</strong></div><b id="cbPlayerScore">0</b></div>
+          <div class="cb-reel" id="cbPlayerReel"><span class="cb-idle-box">📦</span><small>YOUR CASE</small></div>
+          <div class="cb-history" id="cbPlayerHistory"><span>Case drops appear here</span></div>
+        </div>
+        <div class="cb-duel-mark" aria-hidden="true"><span>⚔</span><b>VS</b></div>
+        <div class="cb-side cb-house">
+          <div class="cb-persona"><span class="cb-avatar" aria-hidden="true">🤖</span><div><small>OPPONENT · BOT</small><strong>ROYAL BOT</strong></div><b id="cbBotScore">0</b></div>
+          <div class="cb-reel" id="cbBotReel"><span class="cb-idle-box">📦</span><small>BOT CASE</small></div>
+          <div class="cb-history" id="cbBotHistory"><span>Case drops appear here</span></div>
+        </div>
+      </div>
+      <div class="cb-bottom">
+        <button type="button" class="primary" id="cbStart">⚔ START CASE BATTLE</button>
+        <p class="result" id="cbResult" role="status" aria-live="polite">Pick your case, rounds and total bet.</p>
+        <p class="cb-disclaimer">1V1 against a bot · Item drops are virtual round scores, not withdrawable items · Total stake max 3B · 18+</p>
       </div>
     </section>
     <section class="game-screen" id="screen-blackjack" hidden><h2>🃏 BLACKJACK</h2><p>Get as close to 21 as possible without going over! Over 21 means you lose (22 is too much). Ace = 1 or 11, J/Q/K = 10.</p><h3>DEALER</h3><div class="bj-cards" id="bjDealer">🂠</div><h3>YOUR HAND <span id="bjScore"></span></h3><div class="bj-cards" id="bjPlayer">🃏</div><input id="bjBet" value="1000"><div class="quick" data-input="bjBet"><button data-value="1000000">1M</button><button data-value="10000000">10M</button><button data-value="100000000">100M</button><button type="button" data-all-in="true" title="Bet your full available balance" aria-label="ALL IN — use full balance">ALL IN</button></div><div class="choices"><button class="primary" id="bjDeal">DEAL CARDS</button><button id="bjHit" disabled>HIT</button><button id="bjStand" disabled>STAND</button></div><p class="result" id="bjResult"></p></section>
@@ -2970,6 +3151,141 @@ $("slotsPlay").onclick = ()=>play(
 $("wheelPlay").onclick = ()=>play(
   "wheel","wheelBet","wheelResult","wheelPlay",{choice:color}
 );
+
+
+/* Case Battle: the backend resolves wins and credit movements. Item reels are visuals. */
+const caseBattleVisualItems={
+  iron:[["⚫","Coal",150],["🩶","Iron Ingot",700],["🟨","Gold Ingot",1500],["💎","Diamond",4900],["🛡️","Netherite",12000]],
+  emerald:[["🟩","Green Dye",250],["💚","Emerald",1700],["📗","Enchanted Book",3700],["🗿","Totem",7800],["✨","Beacon",17500]],
+  nether:[["🟥","Netherrack",300],["🔥","Blaze Rod",2200],["🟠","Magma Cream",4500],["🧱","Ancient Debris",9600],["🌟","Nether Star",25000]]
+};
+let caseBattleRounds=3;
+document.querySelectorAll("#screen-casebattle [data-cb-rounds]").forEach(b=>{
+  b.onclick=()=>{
+    if(playing)return;
+    caseBattleRounds=Number(b.dataset.cbRounds);
+    document.querySelectorAll("#screen-casebattle [data-cb-rounds]").forEach(x=>{
+      const selected=x===b;
+      x.classList.toggle("selected",selected);
+      x.setAttribute("aria-pressed",selected?"true":"false");
+    });
+    $("cbRoundLabel").textContent="ROUND 0 / "+caseBattleRounds;
+  };
+});
+function cbVisualItem(item){
+  const root=document.createElement("div");
+  root.className="cb-drop";
+  const icon=document.createElement("span");
+  icon.className="cb-drop-icon";
+  icon.textContent=item.icon;
+  const title=document.createElement("strong");
+  title.textContent=item.name;
+  const value=document.createElement("small");
+  value.textContent=fmt(item.value)+" SCORE";
+  root.append(icon,title,value);
+  return root;
+}
+function cbDrawReel(id,item){
+  $(id).replaceChildren(cbVisualItem(item));
+}
+function cbHistoryRow(id,item){
+  const row=document.createElement("div");
+  row.className="cb-history-row";
+  const icon=document.createElement("span");
+  icon.textContent=item.icon;
+  const title=document.createElement("span");
+  title.textContent=item.name;
+  const points=document.createElement("b");
+  points.textContent="+"+fmt(item.value);
+  row.append(icon,title,points);
+  $(id).append(row);
+}
+async function cbSpinRound(playerItem,botItem,caseName){
+  const items=caseBattleVisualItems[caseName];
+  const left=$("cbPlayerReel"),right=$("cbBotReel");
+  left.classList.add("is-rolling");right.classList.add("is-rolling");
+  const randomItem=()=>{
+    const item=items[Math.floor(Math.random()*items.length)];
+    return {icon:item[0],name:item[1],value:item[2]};
+  };
+  const timer=setInterval(()=>{
+    cbDrawReel("cbPlayerReel",randomItem());
+    cbDrawReel("cbBotReel",randomItem());
+  },75);
+  try{
+    await sleep(1250);
+  }finally{
+    clearInterval(timer);
+    left.classList.remove("is-rolling");right.classList.remove("is-rolling");
+  }
+  cbDrawReel("cbPlayerReel",playerItem);
+  cbDrawReel("cbBotReel",botItem);
+  await sleep(420);
+}
+async function caseBattleStart(){
+  if(playing)return;
+  let amount;
+  try{
+    amount=parseAmount($("cbBet").value);
+    if(amount<1||amount>3000000000)throw Error("Bet must be between 1 and 3B");
+    if(!me||amount>me.balance)throw Error("Not enough credits");
+  }catch(err){toast(err.message);return;}
+  const caseName=$("cbCase").value;
+  if(!caseBattleVisualItems[caseName]){toast("Select a case");return;}
+  playing=true;
+  const button=$("cbStart");
+  button.disabled=true;
+  $("cbCase").disabled=true;
+  $("cbBet").readOnly=true;
+  document.querySelectorAll("#screen-casebattle [data-cb-rounds],#screen-casebattle .cb-quick button").forEach(b=>b.disabled=true);
+  $("cbPlayerName").textContent=me.username;
+  $("cbPlayerScore").textContent="0";
+  $("cbBotScore").textContent="0";
+  $("cbPlayerHistory").replaceChildren();
+  $("cbBotHistory").replaceChildren();
+  $("cbResult").textContent="Opening cases...";
+  $("cbStageLabel").textContent="BATTLE IS LIVE";
+  $("cbRoundLabel").textContent="ROUND 0 / "+caseBattleRounds;
+  $("cbPlayerReel").textContent="📦";
+  $("cbBotReel").textContent="📦";
+  try{
+    const result=await api("game",{game:"casebattle",amount,case:caseName,rounds:caseBattleRounds});
+    if(!result||result.case!==caseName||result.rounds!==caseBattleRounds||!Array.isArray(result.drops)||result.drops.length!==caseBattleRounds){
+      throw Error("Invalid Case Battle result from server");
+    }
+    let playerScore=0,botScore=0;
+    for(let i=0;i<result.drops.length;i++){
+      const round=result.drops[i];
+      if(!round.player||!round.bot||typeof round.player.value!=="number"||typeof round.bot.value!=="number")throw Error("Invalid case drop");
+      $("cbRoundLabel").textContent="ROUND "+(i+1)+" / "+caseBattleRounds;
+      $("cbStageLabel").textContent="OPENING CASE "+(i+1);
+      await cbSpinRound(round.player,round.bot,caseName);
+      playerScore+=round.player.value;
+      botScore+=round.bot.value;
+      $("cbPlayerScore").textContent=fmt(playerScore);
+      $("cbBotScore").textContent=fmt(botScore);
+      cbHistoryRow("cbPlayerHistory",round.player);
+      cbHistoryRow("cbBotHistory",round.bot);
+      $("cbStageLabel").textContent="CASE "+(i+1)+" OPENED";
+    }
+    if(playerScore!==result.player_score||botScore!==result.bot_score||(playerScore>botScore)!==result.win)throw Error("Case Battle scores do not match the result");
+    $("cbStageLabel").textContent=result.win?"YOU WIN THE BATTLE":"ROYAL BOT WINS";
+    $("cbRoundLabel").textContent="FINAL · "+caseBattleRounds+" ROUNDS";
+    $("cbResult").textContent=result.win?"🏆 YOU WIN! +"+fmt(result.profit):"ROYAL BOT WINS · -"+fmt(amount);
+    await refresh();
+  }catch(err){
+    $("cbResult").textContent="Battle interrupted — check your credit balance.";
+    toast(err.message);
+    try{await refresh();}catch(_){}
+  }finally{
+    playing=false;
+    button.disabled=false;
+    $("cbCase").disabled=false;
+    $("cbBet").readOnly=false;
+    document.querySelectorAll("#screen-casebattle [data-cb-rounds],#screen-casebattle .cb-quick button").forEach(b=>b.disabled=false);
+  }
+}
+$("cbStart").onclick=caseBattleStart;
 
 const DEPOSIT_BEDROCK_NICK = ".LeXimJames7858";
 let walletBot = {checked:false, online:false, withdraw_automatic:false, deposit_automatic:false};
