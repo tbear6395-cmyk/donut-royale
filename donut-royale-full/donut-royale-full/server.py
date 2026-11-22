@@ -454,7 +454,7 @@ class Handler(BaseHTTPRequestHandler):
                                          WHERE t.status='open' ORDER BY t.id DESC""").fetchall()
                 else:
                     rows = db.execute("""SELECT t.*,u.username FROM tickets t JOIN users u ON u.id=t.user_id
-                                         WHERE t.status='open' AND t.user_id=? ORDER BY t.id DESC""",
+                                         WHERE t.user_id=? ORDER BY t.id DESC LIMIT 100""",
                                       (user["id"],)).fetchall()
             return self.send_json(200, {"tickets": [dict(r) for r in rows]})
         if path == "/api/admin-chat":
