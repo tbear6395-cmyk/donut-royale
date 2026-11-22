@@ -1479,9 +1479,10 @@ class Handler(BaseHTTPRequestHandler):
             with LOCK, db_open() as db:
                 db.execute("INSERT INTO admin_chat(user_id,message) VALUES(?,?)", (user["id"], message))
             return self.send_json(200, {"ok": True})
-        if path == "/api/ranks/remove-admin":
+        if path in ("/api/ranks/remove-admin", "/api/ranks/remove-creator"):
             if not staff_owner_access(user):
                 return self.fail(403, "Owner only")
+            rank = path.rsplit("-", 1)[1]
             username = str(data.get("username", "")).strip()
             with LOCK, db_open() as db:
                 target = db.execute("SELECT id,role,username FROM users WHERE lower(username)=lower(?)", (username,)).fetchone()
@@ -1489,14 +1490,15 @@ class Handler(BaseHTTPRequestHandler):
                     return self.fail(404, "Player not found")
                 if target["role"] == "owner":
                     return self.fail(403, "Owner rank cannot be removed")
-                if target["role"] != "admin":
-                    return self.fail(409, "Player is not an admin")
-                db.execute("UPDATE users SET role='player' WHERE id=? AND role='admin'", (target["id"],))
+                if target["role"] != rank:
+                    return self.fail(409, f"Player does not have the {rank.upper()} rank")
+                db.execute("UPDATE users SET role='player' WHERE id=? AND role=?", (target["id"], rank))
                 staff_audit(db,user["id"],"role.demote",target["id"],{"role":"player"})
             return self.send_json(200, {"ok": True, "username": target["username"]})
-        if path == "/api/ranks/add-admin":
+        if path in ("/api/ranks/add-admin", "/api/ranks/add-creator"):
             if not staff_owner_access(user):
                 return self.fail(403, "Owner only")
+            rank = path.rsplit("-", 1)[1]
             username = str(data.get("username", "")).strip()
             if not username or len(username) > 32:
                 return self.fail(400, "Enter a valid player nickname")
@@ -1506,11 +1508,13 @@ class Handler(BaseHTTPRequestHandler):
                     return self.fail(404, "Player not found. They must register first.")
                 if target["role"] == "owner":
                     return self.fail(403, "Owner role cannot be changed")
+                if target["role"] == rank:
+                    return self.fail(409, f"This player already has the {rank.upper()} rank")
                 if target["role"] == "admin":
-                    return self.fail(409, "This player is already an admin")
-                db.execute("UPDATE users SET role='admin' WHERE id=? AND role='player'", (target["id"],))
-                staff_audit(db,user["id"],"role.promote",target["id"],{"role":"admin"})
-            return self.send_json(200, {"ok": True, "username": target["username"], "role": "admin"})
+                    return self.fail(409, "Remove the ADMIN rank first")
+                db.execute("UPDATE users SET role=? WHERE id=? AND role=?", (rank, target["id"], target["role"]))
+                staff_audit(db,user["id"],"role.promote",target["id"],{"role":rank})
+            return self.send_json(200, {"ok": True, "username": target["username"], "role": rank})
         if path == "/api/role":
             if not staff_owner_access(user):
                 return self.fail(403, "Only owner can change roles")

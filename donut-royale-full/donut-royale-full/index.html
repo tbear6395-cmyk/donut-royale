@@ -2614,11 +2614,11 @@ aside .winter{box-shadow:inset 0 1px #fff2,0 10px 30px #0005,0 0 19px #e1bd7226}
     <h1>ADD RANKS</h1>
     <p>Enter a player's Minecraft nickname.</p>
     <label for="rankPlayerNick">PLAYER NICKNAME</label>
-    <div id="rankAdminForm"><input id="rankPlayerNick" list="registeredRankPlayers" type="text" placeholder="Enter player nickname" maxlength="32" autocomplete="off"><datalist id="registeredRankPlayers"></datalist><p class="ranks-help" id="rankPlayerHint">Loading registered players...</p><div style="margin-top:20px"><button class="primary" type="button" id="rankSuccessButton">SUCCESS — GIVE ADMIN</button></div></div>
-    <p class="ranks-help" id="rankResult" role="status">Press SUCCESS to grant the ADMIN rank to this player.</p>
+    <div id="rankAdminForm"><input id="rankPlayerNick" list="registeredRankPlayers" type="text" placeholder="Enter player nickname" maxlength="32" autocomplete="off"><datalist id="registeredRankPlayers"></datalist><p class="ranks-help" id="rankPlayerHint">Loading registered players...</p><div style="margin-top:20px"><button class="primary" type="button" id="rankSuccessButton">SUCCESS — GIVE ADMIN</button> <button class="primary" type="button" id="rankCreatorButton">GIVE CREATOR</button></div></div>
+    <p class="ranks-help" id="rankResult" role="status">Choose ADMIN or CREATOR for this player.</p>
   </div>
-  <div class="panel ranks-page-panel" style="margin-top:20px"><h2>🗑️ REMOVE RANKS</h2><p>Select an admin to remove their rank.</p><select id="removeRankNick" style="width:100%;padding:13px;border-radius:10px;background:#171222;color:white;border:1px solid #6d558b"></select><div style="margin-top:16px"><button class="primary" type="button" id="removeRankButton">REMOVE ADMIN</button></div><p id="removeRankResult" role="status"></p></div>
-  <div class="panel ranks-page-panel" style="margin-top:20px"><h2>🛡️ ALL ADMINS</h2><div id="rankAdminList">Loading...</div></div>
+  <div class="panel ranks-page-panel" style="margin-top:20px"><h2>🗑️ REMOVE RANKS</h2><p>Select an admin or creator to remove their rank.</p><select id="removeRankNick" style="width:100%;padding:13px;border-radius:10px;background:#171222;color:white;border:1px solid #6d558b"></select><div style="margin-top:16px"><button class="primary" type="button" id="removeRankButton">REMOVE RANK</button></div><p id="removeRankResult" role="status"></p></div>
+  <div class="panel ranks-page-panel" style="margin-top:20px"><h2>🏅 ADMINS AND CREATORS</h2><div id="rankAdminList">Loading...</div></div>
 </section>
 <div id="chatNotification" hidden role="status" style="position:fixed;top:18px;right:18px;z-index:99999;max-width:min(340px,calc(100vw - 36px));padding:16px 18px;border:1px solid #b769ff;border-radius:14px;background:#20112f;color:white;box-shadow:0 12px 40px #0009;cursor:pointer;font-weight:700"></div>
 <section id="adminChatPage" hidden><div class="panel ranks-page-panel"><h1>💬 ADMIN CHAT</h1><p>Private chat for admins and owner. Separate from tickets.</p><div id="adminChatMessages" style="min-height:180px;max-height:380px;overflow-y:auto;text-align:left;margin:20px 0"></div><form id="adminChatForm"><input id="adminChatInput" maxlength="1000" placeholder="Write a message..." required style="width:100%"><button class="primary" type="submit" style="margin-top:12px">SEND MESSAGE</button></form><p id="adminChatStatus" role="status"></p><button type="button" id="adminChatRefresh">↻ REFRESH CHAT</button></div></section>
@@ -3433,26 +3433,32 @@ async function refresh(){
   syncRanksPage();
 }
 
-$("rankSuccessButton").onclick=async ()=>{
-  if(!me || !["admin","owner"].includes(me.role)){toast("Access denied");return;}
+async function grantRank(rank){
+  if(!me?.can_manage_staff){toast("Access denied");return;}
+  const label=rank.toUpperCase();
   const username=$("rankPlayerNick").value.trim();
   if(!username){$("rankResult").textContent="❌ Enter a player nickname first.";toast("Enter a player nickname");return;}
-  if(!confirm("Grant ADMIN rank to "+username+"?"))return;
-  const btn=$("rankSuccessButton");
-  btn.disabled=true;
-  $("rankResult").textContent="⏳ Granting ADMIN rank to "+username+"...";
+  if(!confirm("Grant "+label+" rank to "+username+"?"))return;
+  $("rankSuccessButton").disabled=true;
+  $("rankCreatorButton").disabled=true;
+  $("rankResult").textContent="⏳ Granting "+label+" rank to "+username+"...";
   try{
-    const result=await api("ranks/add-admin",{username});
-    $("rankResult").textContent="✅ SUCCESS! "+result.username+" is now an ADMIN.";
-    toast(result.username+" is now an admin!");
+    const result=await api("ranks/add-"+rank,{username});
+    $("rankResult").textContent="✅ SUCCESS! "+result.username+" now has the "+label+" rank.";
+    toast(result.username+" now has the "+label+" rank.");
     $("rankPlayerNick").value="";
     await loadUsers();
     await loadRankPlayers();
   }catch(err){
     $("rankResult").textContent="❌ "+err.message+(err.message.includes("Player not found")?" Check the registered nicknames in the suggestions above.":"");
     toast(err.message);
-  }finally{btn.disabled=false;}
-};
+  }finally{
+    $("rankSuccessButton").disabled=false;
+    $("rankCreatorButton").disabled=false;
+  }
+}
+$("rankSuccessButton").onclick=()=>grantRank("admin");
+$("rankCreatorButton").onclick=()=>grantRank("creator");
 $("rankPlayerNick").addEventListener("keydown",e=>{if(e.key==="Enter"){$("rankSuccessButton").click();}});
 
 async function loadRankPlayers(){
@@ -3463,13 +3469,13 @@ async function loadRankPlayers(){
     list.replaceChildren();
     players.forEach(u=>{const option=document.createElement("option");option.value=u.username;list.append(option);});
     $("rankPlayerHint").textContent=players.length+" registered accounts found. Select a nickname from suggestions.";
-    const admins=players.filter(u=>u.role==="admin");
+    const rankedPlayers=players.filter(u=>["admin","creator"].includes(u.role));
     const select=$("removeRankNick");select.replaceChildren();
-    admins.forEach(u=>{const option=document.createElement("option");option.value=u.username;option.textContent=u.username;select.append(option);});
-    $("removeRankButton").disabled=!admins.length;
+    rankedPlayers.forEach(u=>{const option=document.createElement("option");option.value=u.username;option.dataset.rank=u.role;option.textContent=u.username+" — "+u.role.toUpperCase();select.append(option);});
+    $("removeRankButton").disabled=!rankedPlayers.length;
     const adminList=$("rankAdminList");adminList.replaceChildren();
-    if(!admins.length)adminList.textContent="No admins found.";
-    admins.forEach(u=>{const p=document.createElement("p");p.textContent="🛡️ "+u.username+" — ADMIN";adminList.append(p);});
+    if(!rankedPlayers.length)adminList.textContent="No admins or creators found.";
+    rankedPlayers.forEach(u=>{const p=document.createElement("p");p.textContent=u.username+" — "+u.role.toUpperCase();adminList.append(p);});
   }catch(err){$("rankPlayerHint").textContent="Could not load accounts: "+err.message;}
 }
 
@@ -3528,7 +3534,20 @@ async function loadAdminChat(){
 setInterval(()=>{if(me && ["admin","owner"].includes(me.role))loadAdminChat();},1000);
 $("adminChatForm").onsubmit=async e=>{e.preventDefault();const input=$("adminChatInput");const message=input.value.trim();if(!message)return;input.value="";$("adminChatStatus").textContent="";try{await api("admin-chat",{message});await loadAdminChat();}catch(err){input.value=message;$("adminChatStatus").textContent=err.message;}};
 $("adminChatRefresh").onclick=loadAdminChat;
-$("removeRankButton").onclick=async ()=>{const username=$("removeRankNick").value;if(!username)return;if(!confirm("Remove ADMIN rank from "+username+"?"))return;try{await api("ranks/remove-admin",{username});$("removeRankResult").textContent="✅ ADMIN rank removed from "+username;await loadRankPlayers();await loadUsers();}catch(err){$("removeRankResult").textContent="❌ "+err.message;}};
+$("removeRankButton").onclick=async ()=>{
+  const selected=$("removeRankNick").selectedOptions[0];
+  if(!selected)return;
+  const username=selected.value;
+  const rank=selected.dataset.rank;
+  const label=rank.toUpperCase();
+  if(!confirm("Remove "+label+" rank from "+username+"?"))return;
+  try{
+    await api("ranks/remove-"+rank,{username});
+    $("removeRankResult").textContent="✅ "+label+" rank removed from "+username;
+    await loadRankPlayers();
+    await loadUsers();
+  }catch(err){$("removeRankResult").textContent="❌ "+err.message;}
+};
 /* Royal Staff Panel client — every sensitive operation is independently checked server-side. */
 let staffLoaded=false;
 let staffLoading=false;
