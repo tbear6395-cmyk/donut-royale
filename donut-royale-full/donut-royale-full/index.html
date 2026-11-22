@@ -2951,6 +2951,331 @@ setInterval(()=>{if(me && ["admin","owner"].includes(me.role))loadAdminChat();},
 $("adminChatForm").onsubmit=async e=>{e.preventDefault();const input=$("adminChatInput");const message=input.value.trim();if(!message)return;input.value="";$("adminChatStatus").textContent="";try{await api("admin-chat",{message});await loadAdminChat();}catch(err){input.value=message;$("adminChatStatus").textContent=err.message;}};
 $("adminChatRefresh").onclick=loadAdminChat;
 $("removeRankButton").onclick=async ()=>{const username=$("removeRankNick").value;if(!username)return;if(!confirm("Remove ADMIN rank from "+username+"?"))return;try{await api("ranks/remove-admin",{username});$("removeRankResult").textContent="✅ ADMIN rank removed from "+username;await loadRankPlayers();await loadUsers();}catch(err){$("removeRankResult").textContent="❌ "+err.message;}};
+/* Royal Staff Panel client — every sensitive operation is independently checked server-side. */
+let staffLoaded=false;
+let staffLoading=false;
+let staffSelectedPlayer=null;
+let staffCurrentTab="overview";
+let staffPlayerOffset=0;
+let staffSettings={};
+function staffStatus(message,isError=false){
+  const el=$("staffStatus");
+  el.textContent=message||"";
+  el.style.color=isError?"#ffb4b4":"#ace9cb";
+}
+function staffNode(tag,value,cls){
+  const el=document.createElement(tag);
+  if(value!==undefined&&value!==null)el.textContent=String(value);
+  if(cls)el.className=cls;
+  return el;
+}
+function staffTable(headers,rows){
+  if(!rows.length)return staffNode("p","No records found.","staff-muted");
+  const table=staffNode("table",null,"staff-table"),head=staffNode("thead"),tr=staffNode("tr");
+  headers.forEach(name=>tr.append(staffNode("th",name)));
+  head.append(tr);table.append(head);
+  const body=staffNode("tbody");
+  rows.forEach(cells=>{
+    const row=staffNode("tr");
+    cells.forEach(value=>{
+      const cell=staffNode("td");
+      if(value instanceof Node)cell.append(value);
+      else cell.textContent=String(value??"—");
+      row.append(cell);
+    });
+    body.append(row);
+  });
+  table.append(body);return table;
+}
+function staffMoney(value){return fmt(Number(value)||0)}
+function staffTime(value){
+  if(!value)return"—";
+  const d=new Date(String(value).replace(" ","T")+(/[Zz]|[+-]\d\d:\d\d$/.test(String(value))?"":"Z"));
+  return Number.isFinite(d.getTime())?d.toLocaleString("en-GB",{hour12:false}):String(value);
+}
+function staffKpi(label,value,extra){
+  const c=staffNode("div",null,"staff-kpi");
+  c.append(staffNode("span",label),staffNode("strong",value),staffNode("small",extra));
+  return c;
+}
+function staffRenderOverview(data){
+  staffSettings=data.settings||{};
+  const economy=data.economy||{},tickets=data.tickets||[],games=data.games||[];
+  const pending=tickets.reduce((sum,x)=>sum+Number(x.n||0),0);
+  const staked=games.reduce((sum,x)=>sum+Number(x.staked||0),0);
+  const kpis=$("staffKpis");
+  kpis.replaceChildren(
+    staffKpi("REGISTERED PLAYERS",Number(economy.user_count||0).toLocaleString("en-US"),"Accounts on this server"),
+    staffKpi("CREDITS IN CIRCULATION",staffMoney(economy.credits),"Current sum of balances"),
+    staffKpi("OPEN REQUESTS",String(pending),"Support, deposits & withdrawals"),
+    staffKpi("STAKED SINCE TRACKING",staffMoney(staked),"Only games recorded after panel launch")
+  );
+  $("staffGamesSummary").replaceChildren(staffTable(
+    ["MINIGAME","ROUNDS","TOTAL STAKED","PAID OUT","NET TO HOUSE"],
+    games.map(g=>[String(g.game).toUpperCase(),Number(g.plays||0).toLocaleString("en-US"),staffMoney(g.staked),staffMoney(g.paid),staffMoney(g.house_net)])
+  ));
+  $("staffQueueOverview").replaceChildren(staffTable(["TYPE","PENDING","REQUESTED AMOUNT"],
+    tickets.map(t=>[String(t.kind).toUpperCase(),t.n,staffMoney(t.amount)])));
+  $("staffRecentGames").replaceChildren(staffTable(["PLAYER","GAME","NET"],
+    (data.recent||[]).map(t=>[t.username,t.game,(Number(t.net)>=0?"+":"")+staffMoney(t.net)])));
+  if(data.bot_online===false)staffStatus("Bot is currently offline or has not polled recently.");
+  $("staffWinChance").value=Number(staffSettings.win_chance)||30;
+  $("staffToggleGames").textContent=staffSettings.games_paused?"▶ RESUME GAMES":"⏸ PAUSE GAMES";
+  $("staffToggleGames").classList.toggle("staff-danger",!staffSettings.games_paused);
+  $("staffToggleWithdrawals").textContent=staffSettings.withdrawals_paused?"▶ RESUME PAYOUTS":"⏸ PAUSE PAYOUTS";
+  $("staffToggleWithdrawals").classList.toggle("staff-danger",!staffSettings.withdrawals_paused);
+}
+async function staffLoadPlayers(offset=0){
+  if(!me||!["owner","admin"].includes(me.role))return;
+  const q=$("staffPlayerSearch").value.trim();
+  const d=await api("staff/players?q="+encodeURIComponent(q)+"&offset="+offset);
+  const list=$("staffPlayerList");
+  if(offset===0){list.replaceChildren();staffPlayerOffset=0;}
+  const rows=(d.players||[]).map(p=>{
+    const choose=staffNode("button","OPEN","staff-btn");
+    choose.type="button";choose.onclick=()=>void staffSelectPlayer(p);
+    const role=staffNode("span",String(p.role).toUpperCase(),"staff-tag");
+    const status=staffNode("span",p.suspended?"SUSPENDED":"ACTIVE","staff-tag"+(p.suspended?" staff-tag-blocked":""));
+    return [p.username,role,staffMoney(p.balance),status,staffTime(p.last_login),choose];
+  });
+  let table=list.querySelector("table");
+  if(!table){
+    const created=staffTable(["PLAYER","ROLE","BALANCE","STATUS","LAST LOGIN","ACTION"],rows);
+    list.replaceChildren(created);
+  }else{
+    const body=table.querySelector("tbody");
+    rows.forEach(cells=>{
+      const tr=staffNode("tr");
+      cells.forEach(c=>{
+        const td=staffNode("td");
+        if(c instanceof Node)td.append(c);else td.textContent=String(c);
+        tr.append(td);
+      });
+      body.append(tr);
+    });
+  }
+  staffPlayerOffset=d.next_offset||0;
+  $("staffPlayersNext").hidden=!d.has_more;
+}
+async function staffSelectPlayer(player){
+  staffSelectedPlayer=player;
+  $("staffPlayerDetail").hidden=false;
+  $("staffSelectedPlayer").textContent="♙ "+player.username+" · "+String(player.role).toUpperCase();
+  $("staffPlayerMeta").textContent="ID #"+player.id+" · Balance "+staffMoney(player.balance)+
+    " · "+(player.suspended?"SUSPENDED":"ACTIVE")+" · Last login "+staffTime(player.last_login);
+  $("staffPlayerReason").value="";
+  $("staffNoteInput").value="";
+  if(me?.role==="owner")$("staffCreditUser").value=String(player.id);
+  const allowed=player.role!=="owner" && player.id!==me?.id &&
+    (player.role!=="admin"||me?.role==="owner");
+  $("staffSuspendButton").disabled=!allowed||!!player.suspended;
+  $("staffUnsuspendButton").disabled=!allowed||!player.suspended;
+  $("staffNoteButton").disabled=player.role==="owner"&&me?.role!=="owner";
+  const box=$("staffPlayerNotes");
+  box.textContent="Loading staff notes...";
+  try{
+    const r=await api("staff/notes?user_id="+encodeURIComponent(player.id));
+    if(staffSelectedPlayer?.id!==player.id)return;
+    box.replaceChildren();
+    if(!(r.notes||[]).length)box.append(staffNode("p","No staff notes yet.","staff-muted"));
+    (r.notes||[]).forEach(n=>{
+      const item=staffNode("div",n.note,"staff-note");
+      item.append(staffNode("small",n.author+" · "+staffTime(n.created)));
+      box.append(item);
+    });
+  }catch(err){box.textContent="Could not load staff notes: "+err.message;}
+}
+async function staffSetSuspended(suspended){
+  const p=staffSelectedPlayer;if(!p)return;
+  const reason=$("staffPlayerReason").value.trim();
+  if(reason.length<5){staffStatus("Enter a reason of at least 5 characters.",true);return;}
+  if(!confirm((suspended?"Suspend ":"Unsuspend ")+p.username+"?\nReason: "+reason))return;
+  try{
+    await api("staff/suspend",{user_id:p.id,suspended,reason});
+    staffStatus(p.username+" "+(suspended?"suspended.":"unsuspended."));
+    await staffLoadPlayers(0);
+    await staffSelectPlayer({...p,suspended:suspended?1:0});
+    await staffLoadAuditIfOwner();
+  }catch(err){staffStatus(err.message,true);toast(err.message);}
+}
+async function staffSaveNote(){
+  const p=staffSelectedPlayer;
+  if(!p){staffStatus("Select a player first.",true);return;}
+  const note=$("staffNoteInput").value.trim();
+  if(note.length<3){staffStatus("Enter a note of at least 3 characters.",true);return;}
+  try{
+    await api("staff/note",{user_id:p.id,note});
+    await staffSelectPlayer(p);
+    staffStatus("Staff note saved.");
+  }catch(err){staffStatus(err.message,true);}
+}
+async function staffLoadHistory(){
+  const r=await api("staff/game-history");
+  $("staffGameHistory").replaceChildren(staffTable(
+    ["DATE","PLAYER","GAME","STAKE","PAYOUT","NET","RESULT"],
+    (r.history||[]).map(g=>[
+      staffTime(g.created),g.username,String(g.game).toUpperCase(),staffMoney(g.stake),
+      staffMoney(g.payout),(Number(g.net)>=0?"+":"")+staffMoney(g.net),
+      String(g.outcome).toUpperCase()
+    ])
+  ));
+}
+async function staffLoadBot(){
+  const r=await api("staff/bot");
+  const box=$("staffBotStatus");box.replaceChildren();
+  const cells=[
+    ["MINECRAFT BOT",r.online?"ONLINE":"OFFLINE"],
+    ["AUTOMATIC PAYOUTS",r.withdrawals_paused?"PAUSED BY OWNER":r.automatic_withdrawals_configured?"CONFIGURED":"NOT CONFIGURED"],
+    ["RESERVED WITHDRAWALS",String(r.queue?.count||0)],
+    ["RESERVED TOTAL",staffMoney(r.queue?.amount)]
+  ];
+  (r.events||[]).forEach(x=>cells.push(["DEPOSITS · "+String(x.status).toUpperCase(),x.count]));
+  cells.forEach(([name,value])=>{
+    const el=staffNode("div",null,"staff-bot-item");
+    el.append(staffNode("small",name),staffNode("strong",value));box.append(el);
+  });
+}
+async function staffLoadCasePrices(){
+  const r=await api("casebattle/catalog");
+  const box=$("staffCasePrices");box.replaceChildren();
+  (r.cases||[]).forEach(c=>{
+    const el=staffNode("div",null,"staff-price-row");
+    const label=staffNode("strong",c.name);
+    const old=staffNode("small","Current price: "+staffMoney(c.price)+" / spin");
+    const input=staffNode("input");input.type="text";input.inputMode="decimal";
+    input.value=String(c.price);
+    input.setAttribute("aria-label",c.name+" new price");
+    const save=staffNode("button","SAVE PRICE","staff-btn");save.type="button";
+    save.onclick=async()=>{
+      let price;
+      try{price=parseAmount(input.value);if(!price||price>3000000000)throw Error("Price must be 1 to 3B");}
+      catch(err){staffStatus(err.message,true);return;}
+      if(price===Number(c.price))return;
+      if(!confirm("Set "+c.name+" to "+staffMoney(price)+" per opening?"))return;
+      save.disabled=true;
+      try{
+        await api("staff/case-price",{case:c.id,price});
+        cbCases=[];cbSelectedCaseId="";cbLoading=null;
+        await staffLoadCasePrices();await staffLoadAuditIfOwner();
+        staffStatus(c.name+" price changed to "+staffMoney(price)+".");
+      }catch(err){staffStatus(err.message,true);}
+      finally{save.disabled=false;}
+    };
+    el.append(label,old,input,save);box.append(el);
+  });
+}
+async function staffLoadAuditIfOwner(){
+  if(me?.role!=="owner")return;
+  const r=await api("staff/audit");
+  $("staffAuditList").replaceChildren(staffTable(
+    ["WHEN","ACTOR","ACTION","TARGET","DETAILS"],
+    (r.audit||[]).map(x=>[
+      staffTime(x.created),x.actor,x.action,x.target||"—",
+      String(x.details||"").slice(0,230)
+    ])
+  ));
+}
+async function staffLoadOwner(){
+  if(me?.role!=="owner")return;
+  await Promise.all([staffLoadCasePrices(),staffLoadAuditIfOwner()]);
+}
+async function staffRefreshPanel(){
+  if(!me||!["owner","admin"].includes(me.role))return;
+  if(staffLoading)return;
+  staffLoading=true;
+  staffStatus("Refreshing Royal Staff Panel...");
+  try{
+    const data=await api("staff/overview");
+    staffRenderOverview(data);
+    const work=[staffLoadPlayers(0),staffLoadHistory(),staffLoadBot()];
+    if(me.role==="owner")work.push(staffLoadOwner());
+    const results=await Promise.allSettled(work);
+    const failed=results.filter(r=>r.status==="rejected");
+    if(failed.length)staffStatus("Panel loaded with "+failed.length+" data error(s): "+failed[0].reason.message,true);
+    else staffStatus("✓ Staff data updated. Game history records rounds completed after tracking started.");
+  }finally{staffLoading=false;}
+}
+function staffSelectTab(tab){
+  if(!["overview","players","history","support","bot","owner"].includes(tab))return;
+  if(tab==="owner"&&me?.role!=="owner")return;
+  staffCurrentTab=tab;
+  document.querySelectorAll("#staffPage [data-staff-tab]").forEach(button=>{
+    const active=button.dataset.staffTab===tab;
+    button.classList.toggle("active",active);
+    button.setAttribute("aria-pressed",active?"true":"false");
+  });
+  for(const name of ["Overview","Players","History","Support","Bot","Owner"]){
+    $("staffView"+name).hidden=name.toLowerCase()!==tab;
+  }
+  if(tab==="support")void Promise.all([loadTickets(),loadUsers()]).catch(err=>staffStatus(err.message,true));
+  if(tab==="history")void staffLoadHistory().catch(err=>staffStatus(err.message,true));
+  if(tab==="bot")void staffLoadBot().catch(err=>staffStatus(err.message,true));
+  if(tab==="owner")void staffLoadOwner().catch(err=>staffStatus(err.message,true));
+}
+document.querySelectorAll("#staffPage [data-staff-tab]").forEach(btn=>{
+  btn.onclick=()=>staffSelectTab(btn.dataset.staffTab);
+});
+$("staffReload").onclick=()=>void staffRefreshPanel().catch(err=>staffStatus(err.message,true));
+$("staffSearchButton").onclick=()=>void staffLoadPlayers(0).catch(err=>staffStatus(err.message,true));
+$("staffPlayerSearch").addEventListener("keydown",event=>{
+  if(event.key==="Enter"){event.preventDefault();$("staffSearchButton").click();}
+});
+$("staffPlayersNext").onclick=()=>void staffLoadPlayers(staffPlayerOffset).catch(err=>staffStatus(err.message,true));
+$("staffSuspendButton").onclick=()=>void staffSetSuspended(true);
+$("staffUnsuspendButton").onclick=()=>void staffSetSuspended(false);
+$("staffNoteButton").onclick=()=>void staffSaveNote();
+$("staffOpenRanks").onclick=()=>{if(me?.role==="owner")location.hash="#addRanks";};
+async function staffAdjustCredits(sign){
+  if(me?.role!=="owner")return;
+  const user_id=Number($("staffCreditUser").value.trim());
+  const reason=$("staffCreditReason").value.trim();
+  let amount;
+  try{amount=parseAmount($("staffCreditAmount").value);}
+  catch(err){staffStatus(err.message,true);return;}
+  if(!Number.isSafeInteger(user_id)||user_id<1||amount<1||amount>1000000000||
+     reason.length<8){staffStatus("Enter a valid user ID, amount (1–1B) and reason (8+ characters).",true);return;}
+  const delta=amount*sign;
+  if(!confirm((sign>0?"ADD ":"REMOVE ")+staffMoney(amount)+" credits for player #"+user_id+
+              "?\nReason: "+reason+"\nThis is recorded in the audit log."))return;
+  try{
+    const r=await api("staff/credit",{user_id,delta,reason});
+    $("staffCreditAmount").value="";$("staffCreditReason").value="";
+    staffStatus("Saved: "+r.username+" now has "+staffMoney(r.balance)+" credits.");
+    await Promise.all([staffRefreshPanel(),staffLoadAuditIfOwner()]);
+  }catch(err){staffStatus(err.message,true);toast(err.message);}
+}
+$("staffCreditAdd").onclick=()=>void staffAdjustCredits(1);
+$("staffCreditRemove").onclick=()=>void staffAdjustCredits(-1);
+async function staffSaveSetting(key,value){
+  if(me?.role!=="owner")return;
+  const textValue=typeof value==="boolean"?(value?"ON":"OFF"):String(value);
+  if(!confirm("Change "+key.replaceAll("_"," ")+" to "+textValue+"? This affects live games."))return;
+  try{
+    await api("staff/setting",{key,value});
+    if(key==="win_chance")staffStatus("Player win chance is now "+value+"%. Public rules update automatically.");
+    else staffStatus(key.replaceAll("_"," ")+" updated to "+textValue+".");
+    await staffRefreshPanel();
+    await staffRefreshPublicRules();
+  }catch(err){staffStatus(err.message,true);}
+}
+$("staffSaveChance").onclick=()=>{
+  const chance=Number($("staffWinChance").value);
+  if(!Number.isInteger(chance)||chance<1||chance>50){staffStatus("Win chance must be 1–50%.",true);return;}
+  void staffSaveSetting("win_chance",chance);
+};
+$("staffToggleGames").onclick=()=>void staffSaveSetting("games_paused",!staffSettings.games_paused);
+$("staffToggleWithdrawals").onclick=()=>void staffSaveSetting("withdrawals_paused",!staffSettings.withdrawals_paused);
+async function staffRefreshPublicRules(){
+  try{
+    const r=await api("rules"),w=Number(r.win_chance_percent);
+    if(!Number.isInteger(w)||w<0||w>100)return;
+    $("publicGameRules").textContent="Game rules: "+w+"% win chance, "+(100-w)+"% loss chance. Winning bets return 2×. Maximum bet: 3B."+
+      (r.games_paused?" Games currently paused.":"")+" 18+ · Play responsibly and take breaks.";
+    $("rouletteWinPct").textContent=w+"%";
+    $("rouletteLossPct").textContent=(100-w)+"%";
+  }catch(_){} // Public rules are noncritical during network interruptions.
+}
+
 function syncRanksPage(){
   const allowed=!!me && ["admin","owner"].includes(me.role);
   const owner=!!me && me.role==="owner";
