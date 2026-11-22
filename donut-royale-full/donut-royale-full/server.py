@@ -259,6 +259,21 @@ class Handler(BaseHTTPRequestHandler):
         user = self.me()
         if not user:
             return self.fail(401, "Please log in")
+        if path == "/api/admin/bot-deposit-matches":
+            if user["role"] not in ("owner", "admin"):
+                return self.fail(403, "Staff only")
+            with db_open() as db:
+                rows = db.execute("""SELECT e.event_id,e.player,e.amount,e.status,e.created,
+                                            t.id AS ticket_id,t.user_id,u.username AS account_username
+                                     FROM bot_payment_events e
+                                     LEFT JOIN users u ON lower(u.username)=lower(e.player)
+                                     LEFT JOIN tickets t ON t.user_id=u.id
+                                          AND t.kind='deposit' AND t.status='open' AND t.amount=e.amount
+                                     WHERE e.status='unverified'
+                                     ORDER BY e.created DESC, e.event_id DESC, t.id DESC
+                                     LIMIT 100""").fetchall()
+            return self.send_json(200, {"candidates": [dict(r) for r in rows],
+                                        "warning": "Candidate match only; no payment or account ownership verification"})
         if path == "/api/admin/bot-payment-events":
             if user["role"] not in ("owner", "admin"):
                 return self.fail(403, "Staff only")
