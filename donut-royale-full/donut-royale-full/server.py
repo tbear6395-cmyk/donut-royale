@@ -296,7 +296,7 @@ class Handler(BaseHTTPRequestHandler):
             amount = data.get("amount")
             raw_message = data.get("raw_message")
             if (not isinstance(event_id, str) or not re.fullmatch(r"[a-f0-9-]{36}", event_id)
-                    or not isinstance(player, str) or not re.fullmatch(r"\\.?[A-Za-z0-9_]{3,16}", player)
+                    or not isinstance(player, str) or not re.fullmatch(r"\.?[A-Za-z0-9_]{3,16}", player)
                     or type(amount) is not int or not 1 <= amount <= 1_000_000_000_000
                     or not isinstance(raw_message, str) or not 1 <= len(raw_message) <= 500):
                 return self.fail(400, "Invalid payment event")
