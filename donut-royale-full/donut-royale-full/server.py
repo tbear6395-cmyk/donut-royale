@@ -224,7 +224,7 @@ def withdrawal_config():
         return None
 
 
-def auto_credit_deposit(db, event_id, player, amount, raw_message):
+def auto_credit_deposit(db, event_id, player, amount, raw_message, received_at=None):
     """Opt-in only. Requires independent validation of the payment source before enabling."""
     if os.getenv("AUTO_DEPOSIT_ENABLED") != "1" or not os.getenv("AUTO_DEPOSIT_START_UTC"):
         return "unverified"
@@ -237,6 +237,17 @@ def auto_credit_deposit(db, event_id, player, amount, raw_message):
     event = db.execute("SELECT created FROM bot_payment_events WHERE event_id=?", (event_id,)).fetchone()
     if not event or _deposit_time(event["created"]) < cutoff:
         return "unverified"
+    receipt_time = _deposit_time(event["created"])
+    if received_at is not None:
+        try:
+            if not isinstance(received_at, str) or len(received_at) > 40:
+                return "needs_review"
+            captured = _deposit_time(received_at)
+            if captured < cutoff or abs((receipt_time - captured).total_seconds()) > 60:
+                return "needs_review"
+            receipt_time = min(receipt_time, captured)
+        except (ValueError, TypeError, OverflowError):
+            return "needs_review"
     # Bound automatic credit risk. Larger events require manual verification.
     try:
         limit = int(os.getenv("AUTO_DEPOSIT_MAX_AMOUNT", "1000000"))
@@ -265,8 +276,8 @@ def auto_credit_deposit(db, event_id, player, amount, raw_message):
         nick = re.search(r"\[MINECRAFT NICK\]\s+(\.?[A-Za-z0-9_]{3,16})(?![A-Za-z0-9_])",
                          ticket["message"])
         if (nick and nick.group(1).casefold() == player.casefold()
-                and cutoff <= _deposit_time(ticket["created"]) <= _deposit_time(event["created"])
-                and (_deposit_time(event["created"]) - _deposit_time(ticket["created"])).total_seconds() <= 1800):
+                and cutoff <= _deposit_time(ticket["created"]) <= receipt_time
+                and (receipt_time - _deposit_time(ticket["created"])).total_seconds() <= 1800):
             matches.append(ticket)
     if len(matches) != 1:
         return "needs_review"
@@ -410,7 +421,7 @@ class Handler(BaseHTTPRequestHandler):
             return self.send_json(200, {"ok": True, "service": "donut-royale-bot"})
         if path == "/":
             path = "/index.html"
-        if path in ("/index.html", "/coin-heads.png", "/coin-tails.png", "/style.css", "/app.js", "/coin-sonic-hd.svg", "/coin-tails-hd.svg"):
+        if path in ("/index.html", "/coin-heads.png", "/coin-tails.png", "/style.css", "/app.js", "/coin-sonic-hd.svg", "/coin-tails-hd.svg", "/bot-client-v3.js"):
             file = BASE / path.lstrip("/")
             if not file.is_file():
                 return self.fail(404, "File not found")
@@ -651,7 +662,7 @@ class Handler(BaseHTTPRequestHandler):
                     return self.send_json(200, {"ok": True, "duplicate": True, "status": existing["status"]})
                 db.execute("INSERT INTO bot_payment_events(event_id,player,amount,raw_message) VALUES(?,?,?,?)",
                            (event_id, player, amount, raw_message))
-                status = auto_credit_deposit(db, event_id, player, amount, raw_message)
+                status = auto_credit_deposit(db, event_id, player, amount, raw_message, data.get("received_at"))
                 if status == "needs_review":
                     db.execute("UPDATE bot_payment_events SET status='needs_review' WHERE event_id=?", (event_id,))
             return self.send_json(201, {"ok": True, "duplicate": False, "status": status})
