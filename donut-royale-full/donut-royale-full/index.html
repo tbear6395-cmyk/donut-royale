@@ -1989,13 +1989,87 @@ header>div.header-account:last-child{
   <button type="button" id="walletSide">💸 Deposit / Withdraw</button>
   <a href="#myTickets">📋 Transaction Requests</a>
   <h4>ACCOUNT</h4>
-  <a href="#admin" id="adminNav" hidden>🛡️ Admin Panel</a>
+  <a href="#staff" id="adminNav" hidden>🛡️ Royal Staff Panel</a>
   <a href="#addRanks" id="ranksNav" hidden>🏅 Add Ranks</a>
   <a href="#adminChat" id="adminChatNav" hidden>💬 Admin Chat <span id="adminChatBadge" hidden style="background:#e238a9;color:white;border-radius:12px;padding:2px 7px;font-size:12px">0</span></a>
   <div class="winter"><span class="winter-sidebar-icon" aria-hidden="true">❄</span><strong>WINTER FESTIVAL</strong><small>THE SEASON OF MAGIC</small><span class="winter-sidebar-divider" aria-hidden="true">✦ ✦ ✦</span></div>
 </aside>
 
 <main>
+
+<section id="staffPage" class="royal-staff-page" hidden>
+  <div class="staff-heading">
+    <div><span class="staff-kicker">✦ DONUT ROYALE · ACCESS CONTROLLED</span><h1>ROYAL <em>STAFF PANEL</em></h1><p>Manage the lobby, support requests, game economy and bot operations.</p></div>
+    <div class="staff-heading-tools"><span class="staff-access" id="staffAccessBadge">STAFF</span><button type="button" id="staffReload" class="staff-btn">↻ REFRESH PANEL</button></div>
+  </div>
+  <div class="staff-kpi-grid" id="staffKpis" aria-label="Economy overview"><span>Loading economy overview...</span></div>
+  <nav class="staff-tabs" aria-label="Staff panel sections">
+    <button type="button" class="active" data-staff-tab="overview">▦ Overview</button>
+    <button type="button" data-staff-tab="players">♙ Players</button>
+    <button type="button" data-staff-tab="history">◷ Game History</button>
+    <button type="button" data-staff-tab="support">✉ Support</button>
+    <button type="button" data-staff-tab="bot">▣ Bot & Payouts</button>
+    <button type="button" data-staff-tab="owner" id="staffOwnerTab" hidden>♛ Owner Controls</button>
+  </nav>
+  <div class="staff-view" id="staffViewOverview">
+    <div class="staff-block"><div class="staff-block-title"><h2>Game Performance</h2><small>Recorded game rounds since Staff Panel installation</small></div><div class="staff-table-wrap" id="staffGamesSummary">Loading game data...</div></div>
+    <div class="staff-two-columns">
+      <div class="staff-block"><div class="staff-block-title"><h2>Pending Requests</h2></div><div id="staffQueueOverview">Loading tickets...</div></div>
+      <div class="staff-block"><div class="staff-block-title"><h2>Recent Rounds</h2></div><div id="staffRecentGames">Loading rounds...</div></div>
+    </div>
+  </div>
+  <div class="staff-view" id="staffViewPlayers" hidden>
+    <div class="staff-block">
+      <div class="staff-block-title"><h2>Player Management</h2><small>Search accounts, review roles, write notes and restrict access.</small></div>
+      <div class="staff-toolbar"><input id="staffPlayerSearch" type="search" maxlength="40" placeholder="Search by Minecraft nickname..." aria-label="Search player"><button id="staffSearchButton" type="button" class="staff-btn">SEARCH</button><button id="staffPlayersNext" class="staff-btn" type="button" hidden>MORE PLAYERS</button></div>
+      <div class="staff-table-wrap" id="staffPlayerList">Search to load players...</div>
+    </div>
+    <div class="staff-block" id="staffPlayerDetail" hidden>
+      <h2 id="staffSelectedPlayer">Selected player</h2><p id="staffPlayerMeta" class="staff-muted"></p>
+      <div class="staff-toolbar"><input id="staffPlayerReason" maxlength="250" placeholder="Reason for suspension / unsuspension (required)" aria-label="Reason"><button type="button" id="staffSuspendButton" class="staff-btn staff-danger">SUSPEND</button><button type="button" id="staffUnsuspendButton" class="staff-btn">UNSUSPEND</button></div>
+      <div class="staff-toolbar"><input id="staffNoteInput" maxlength="500" placeholder="Internal staff note..." aria-label="Internal staff note"><button type="button" id="staffNoteButton" class="staff-btn">SAVE NOTE</button></div>
+      <div class="staff-note-list" id="staffPlayerNotes">No notes loaded.</div>
+    </div>
+  </div>
+  <div class="staff-view" id="staffViewHistory" hidden>
+    <div class="staff-block"><div class="staff-block-title"><h2>Game History</h2><small>Most recent 120 completed rounds. Item scores are not wallet transactions.</small></div><div class="staff-table-wrap" id="staffGameHistory">Loading game history...</div></div>
+  </div>
+  <div class="staff-view" id="staffViewSupport" hidden>
+      <section class="panel" id="admin" hidden>
+    <h2>✉ Support & Transaction Queue</h2>
+    <h3>Transaction & Support Queue</h3>
+    <div id="adminTickets"></div>
+    <h3>Registered Users & Roles</h3>
+    <div id="users"></div>
+  </section>
+  </div>
+  <div class="staff-view" id="staffViewBot" hidden>
+    <div class="staff-block"><div class="staff-block-title"><h2>Minecraft Bot Monitor</h2><small>Live service status, pending payouts and deposit processing states.</small></div><div class="staff-bot-grid" id="staffBotStatus">Loading bot status...</div><p class="staff-muted">Pausing automatic payouts prevents new bot claims. It does not cancel an already claimed Minecraft transfer, settle a pending ticket or change credit balances.</p></div>
+  </div>
+  <div class="staff-view" id="staffViewOwner" hidden>
+    <div class="staff-two-columns">
+      <div class="staff-block">
+        <div class="staff-block-title"><h2>Credit Manager</h2><small>Owner only · All adjustments are recorded in Audit Log</small></div>
+        <label class="staff-label" for="staffCreditUser">PLAYER ACCOUNT ID</label><input id="staffCreditUser" inputmode="numeric" placeholder="Select a player in Player Management">
+        <label class="staff-label" for="staffCreditAmount">AMOUNT (1 to 1B)</label><input id="staffCreditAmount" inputmode="numeric" placeholder="e.g. 100K or 1M">
+        <label class="staff-label" for="staffCreditReason">REASON (REQUIRED)</label><textarea id="staffCreditReason" maxlength="250" placeholder="Why are credits being adjusted?"></textarea>
+        <div class="staff-toolbar"><button id="staffCreditAdd" class="staff-btn" type="button">+ ADD CREDITS</button><button id="staffCreditRemove" class="staff-btn staff-danger" type="button">− REMOVE CREDITS</button></div>
+      </div>
+      <div class="staff-block">
+        <div class="staff-block-title"><h2>Game & Bot Settings</h2><small>Live settings; server enforces every change.</small></div>
+        <label class="staff-label" for="staffWinChance">PLAYER WIN CHANCE (1–50%)</label>
+        <div class="staff-toolbar"><input id="staffWinChance" type="number" min="1" max="50" step="1" value="30"><button id="staffSaveChance" class="staff-btn" type="button">SAVE CHANCE</button></div>
+        <p class="staff-muted">Changes the win chance in Coinflip, Dice, Slots, Roulette and Case Battle. Blackjack is card-based. The current odds are always displayed to players.</p>
+        <div class="staff-setting-row"><div><strong>GAME MAINTENANCE</strong><small>Block new game rounds; allow active Blackjack hands to finish.</small></div><button id="staffToggleGames" class="staff-btn" type="button">LOADING...</button></div>
+        <div class="staff-setting-row"><div><strong>AUTOMATIC WITHDRAWALS</strong><small>Block new bot payout claims. Already claimed transfers require reconciliation.</small></div><button id="staffToggleWithdrawals" class="staff-btn" type="button">LOADING...</button></div>
+        <div class="staff-toolbar"><button id="staffOpenRanks" class="staff-btn" type="button">♛ MANAGE STAFF RANKS</button></div>
+      </div>
+    </div>
+    <div class="staff-block"><div class="staff-block-title"><h2>Case Battle Prices</h2><small>Set the cost of a single opening; total stake = price × rounds. Maximum total bet 3B.</small></div><div class="staff-case-prices" id="staffCasePrices">Loading case prices...</div></div>
+    <div class="staff-block"><div class="staff-block-title"><h2>Staff Audit Log</h2><small>Owner-only record of staff actions and changes.</small></div><div class="staff-table-wrap" id="staffAuditList">Loading audit events...</div></div>
+  </div>
+  <p class="staff-status" id="staffStatus" role="status" aria-live="polite"></p>
+</section>
 
 <section id="ranksPage" hidden>
   <div class="panel ranks-page-panel">
@@ -2268,13 +2342,7 @@ header>div.header-account:last-child{
     <div id="tickets"></div>
   </section>
 
-  <section class="panel" id="admin" hidden>
-    <h2>🛡️ Admin Panel</h2>
-    <h3>Transaction & Support Queue</h3>
-    <div id="adminTickets"></div>
-    <h3>Players & Roles</h3>
-    <div id="users"></div>
-  </section>
+
 
 </div>
 
