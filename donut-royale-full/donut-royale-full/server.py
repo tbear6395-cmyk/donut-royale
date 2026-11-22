@@ -559,6 +559,9 @@ class Handler(BaseHTTPRequestHandler):
                 return self.fail(401, "Unauthorized")
             BOT_POLL_STATE["last_seen"] = time.monotonic()
             with db_open() as db:
+                if staff_setting(db, "withdrawals_paused") == "1":
+                    return self.send_json(200, {"withdrawals": [], "mode": "owner_paused",
+                                                "auto_payout_enabled": False})
                 rows = db.execute(
                     """SELECT t.id,t.amount,t.message,r.status FROM withdraw_reservations r
                        JOIN tickets t ON t.id=r.ticket_id
@@ -854,6 +857,8 @@ class Handler(BaseHTTPRequestHandler):
                     return self.fail(404, "No reserved withdrawal")
                 attempt = db.execute("SELECT * FROM withdraw_attempts WHERE ticket_id=?", (tid,)).fetchone()
                 if path.endswith("/claim"):
+                    if staff_setting(db,"withdrawals_paused")=="1":
+                        return self.fail(409, "Owner has paused automatic payouts")
                     test_ticket = withdrawal_test_ticket()
                     config = withdrawal_config()
                     if attempt or ticket["status"] != "open" or ticket["reservation_status"] != "reserved":
@@ -1155,6 +1160,9 @@ class Handler(BaseHTTPRequestHandler):
                 ticket = db.execute("SELECT * FROM tickets WHERE id=?", (tid,)).fetchone()
                 if not ticket or ticket["status"] != "open":
                     return self.fail(409, "Ticket already handled")
+                # Financial approvals, refunds and manual payout confirmation are owner-only.
+                if ticket["kind"] != "support" and user["role"] != "owner":
+                    return self.fail(403, "Only owner can review financial tickets")
                 if ticket["kind"] == "withdraw":
                     attempt = db.execute("SELECT status,created FROM withdraw_attempts WHERE ticket_id=?", (tid,)).fetchone()
                     if attempt and attempt["status"] in ("claimed","needs_review"):
@@ -1203,6 +1211,11 @@ class Handler(BaseHTTPRequestHandler):
                     db.execute("UPDATE withdraw_attempts SET status='reconciled' WHERE ticket_id=?", (tid,))
                 db.execute("UPDATE tickets SET status=?,response=?,handled=? WHERE id=?",
                            (status, response, user["id"], tid))
+                staff_audit(db,user["id"],"ticket.review",ticket["user_id"],
+                            {"ticket_id":tid,"kind":ticket["kind"],"status":status,
+                             "verified_amount":verified_amount if ticket["kind"]=="deposit" else None,
+                             "payout_confirmed":data.get("payout_confirmed") is True,
+                             "response":response[:160]})
             return self.send_json(200, {"ok": True})
         if path == "/api/admin-chat":
             if user["role"] not in ("owner", "admin"):
@@ -1214,8 +1227,8 @@ class Handler(BaseHTTPRequestHandler):
                 db.execute("INSERT INTO admin_chat(user_id,message) VALUES(?,?)", (user["id"], message))
             return self.send_json(200, {"ok": True})
         if path == "/api/ranks/remove-admin":
-            if user["role"] not in ("owner", "admin"):
-                return self.fail(403, "Staff only")
+            if user["role"] != "owner":
+                return self.fail(403, "Owner only")
             username = str(data.get("username", "")).strip()
             with LOCK, db_open() as db:
                 target = db.execute("SELECT id,role,username FROM users WHERE lower(username)=lower(?)", (username,)).fetchone()
@@ -1226,10 +1239,11 @@ class Handler(BaseHTTPRequestHandler):
                 if target["role"] != "admin":
                     return self.fail(409, "Player is not an admin")
                 db.execute("UPDATE users SET role='player' WHERE id=? AND role='admin'", (target["id"],))
+                staff_audit(db,user["id"],"role.demote",target["id"],{"role":"player"})
             return self.send_json(200, {"ok": True, "username": target["username"]})
         if path == "/api/ranks/add-admin":
-            if user["role"] not in ("admin", "owner"):
-                return self.fail(403, "Admin or owner access required")
+            if user["role"] != "owner":
+                return self.fail(403, "Owner only")
             username = str(data.get("username", "")).strip()
             if not username or len(username) > 32:
                 return self.fail(400, "Enter a valid player nickname")
@@ -1242,6 +1256,7 @@ class Handler(BaseHTTPRequestHandler):
                 if target["role"] == "admin":
                     return self.fail(409, "This player is already an admin")
                 db.execute("UPDATE users SET role='admin' WHERE id=? AND role='player'", (target["id"],))
+                staff_audit(db,user["id"],"role.promote",target["id"],{"role":"admin"})
             return self.send_json(200, {"ok": True, "username": target["username"], "role": "admin"})
         if path == "/api/role":
             if user["role"] != "owner":
@@ -1254,6 +1269,10 @@ class Handler(BaseHTTPRequestHandler):
                 if not target or target["role"] == "owner":
                     return self.fail(403, "Cannot change owner")
                 db.execute("UPDATE users SET role=? WHERE id=?", (role, uid))
+                if role=="player":
+                    db.execute("DELETE FROM sessions WHERE user_id=?", (uid,))
+                staff_audit(db,user["id"],"role.set",uid,
+                            {"before":target["role"],"after":role})
             return self.send_json(200, {"ok": True})
         if path == "/api/blackjack":
             action=data.get("action")
