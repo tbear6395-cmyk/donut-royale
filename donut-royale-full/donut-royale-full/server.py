@@ -82,6 +82,10 @@ def setup_postgres():
         db.execute("""CREATE TABLE IF NOT EXISTS sessions (
             token_hash TEXT PRIMARY KEY, user_id BIGINT NOT NULL REFERENCES users(id),
             expires TEXT NOT NULL)""")
+        db.execute("""CREATE TABLE IF NOT EXISTS bot_payment_events (
+            event_id TEXT PRIMARY KEY, player TEXT NOT NULL, amount BIGINT NOT NULL,
+            raw_message TEXT NOT NULL, status TEXT NOT NULL DEFAULT 'unverified',
+            created TIMESTAMP DEFAULT CURRENT_TIMESTAMP)""")
         db.execute("UPDATE users SET approval='approved' WHERE approval IS NULL OR approval!='approved'")
         db.execute("CREATE TABLE IF NOT EXISTS mines_games (user_id BIGINT PRIMARY KEY REFERENCES users(id), bet BIGINT NOT NULL, mines INTEGER NOT NULL, bombs TEXT NOT NULL, revealed TEXT NOT NULL DEFAULT '[]', created TIMESTAMP DEFAULT CURRENT_TIMESTAMP)")
         # Retired Mines game: return any still-locked stakes once, then clear rounds.
@@ -123,6 +127,11 @@ def setup():
             handled INTEGER DEFAULT 0
         );
         CREATE TABLE IF NOT EXISTS admin_chat (id INTEGER PRIMARY KEY, user_id INTEGER NOT NULL, message TEXT NOT NULL, created TEXT DEFAULT CURRENT_TIMESTAMP);
+        CREATE TABLE IF NOT EXISTS bot_payment_events (
+            event_id TEXT PRIMARY KEY, player TEXT NOT NULL, amount INTEGER NOT NULL,
+            raw_message TEXT NOT NULL, status TEXT NOT NULL DEFAULT 'unverified',
+            created TEXT DEFAULT CURRENT_TIMESTAMP
+        );
         CREATE TABLE IF NOT EXISTS sessions (
             token_hash TEXT PRIMARY KEY, user_id INTEGER NOT NULL, expires TEXT NOT NULL
         );
@@ -276,6 +285,30 @@ class Handler(BaseHTTPRequestHandler):
 
     def do_POST(self):
         path = urlparse(self.path).path
+        if path == "/api/bot/payment-event":
+            expected = os.getenv("BOT_API_KEY", "")
+            provided = self.headers.get("X-Bot-Api-Key", "")
+            if not expected or not hmac.compare_digest(provided, expected):
+                return self.fail(401, "Unauthorized")
+            data = self.payload()
+            event_id = data.get("event_id")
+            player = data.get("player")
+            amount = data.get("amount")
+            raw_message = data.get("raw_message")
+            if (not isinstance(event_id, str) or not re.fullmatch(r"[a-f0-9-]{36}", event_id)
+                    or not isinstance(player, str) or not re.fullmatch(r"\\.?[A-Za-z0-9_]{3,16}", player)
+                    or type(amount) is not int or not 1 <= amount <= 1_000_000_000_000
+                    or not isinstance(raw_message, str) or not 1 <= len(raw_message) <= 500):
+                return self.fail(400, "Invalid payment event")
+            with LOCK, db_open() as db:
+                existing = db.execute("SELECT player,amount,raw_message FROM bot_payment_events WHERE event_id=?", (event_id,)).fetchone()
+                if existing:
+                    if (existing["player"], existing["amount"], existing["raw_message"]) != (player, amount, raw_message):
+                        return self.fail(409, "Event ID already used for different data")
+                    return self.send_json(200, {"ok": True, "duplicate": True, "status": "unverified"})
+                db.execute("INSERT INTO bot_payment_events(event_id,player,amount,raw_message) VALUES(?,?,?,?)",
+                           (event_id, player, amount, raw_message))
+            return self.send_json(201, {"ok": True, "duplicate": False, "status": "unverified"})
         data = self.payload()
         if path == "/api/register":
             username = str(data.get("username", "")).strip()
