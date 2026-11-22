@@ -1957,6 +1957,101 @@ header>div.header-account:last-child{
   box-shadow:0 0 0 3px #0b1920!important;
 }
 
+/* Royal Staff Panel — role-separated, responsive moderation and economy console. */
+.royal-staff-page{max-width:1220px;margin:12px auto 35px;color:#e8f4ef}
+.royal-staff-page .staff-heading{
+ display:flex;align-items:center;justify-content:space-between;gap:20px;flex-wrap:wrap;
+ padding:27px 30px;border:1px solid #679e8877;border-radius:18px;
+ background:radial-gradient(ellipse at 78% 0%,#277e6352,transparent 50%),linear-gradient(135deg,#12352f,#10232b 60%,#172336);
+ box-shadow:0 11px 28px #0004;
+}
+.royal-staff-page .staff-kicker{display:block;color:#9fe6bd;letter-spacing:1.7px;font-size:10px;font-weight:900}
+.royal-staff-page .staff-heading h1{margin:6px 0 3px;font:900 clamp(31px,4.2vw,49px) Impact,"Arial Black",sans-serif;letter-spacing:1.3px;color:#fff}
+.royal-staff-page .staff-heading h1 em{color:#e8ca88;font-style:normal}
+.royal-staff-page .staff-heading p{color:#a3c6b8;font-size:12px;line-height:1.5;margin:5px 0}
+.royal-staff-page .staff-heading-tools{display:flex;align-items:center;gap:10px;flex-wrap:wrap}
+.royal-staff-page .staff-access{border:1px solid #b0d8aa88;background:#204238;color:#c7ffe0;padding:10px 12px;font-size:10px;font-weight:950;letter-spacing:1.3px;border-radius:8px}
+.royal-staff-page.owner-view .staff-access{color:#ffedbd;border-color:#d9bb7a;background:#473822}
+.royal-staff-page .staff-btn{display:inline-flex;align-items:center;justify-content:center;text-align:center;gap:4px;min-height:36px;cursor:pointer;padding:9px 13px;font-size:11px;font-weight:900;letter-spacing:.3px;border:1px solid #669786;background:#173f3b;color:#e4f6ed;border-radius:9px;white-space:nowrap;transition:background .2s,border-color .2s}
+.royal-staff-page .staff-btn:hover{background:#216457;border-color:#a8dbb9}
+.royal-staff-page .staff-btn:disabled{opacity:.48;cursor:default}
+.royal-staff-page .staff-btn.staff-danger{color:#ffe2df;border-color:#9c4b55;background:#44242e}
+.royal-staff-page .staff-btn.staff-danger:hover{background:#683040}
+.royal-staff-page .staff-kpi-grid{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:11px;margin:16px 0}
+.royal-staff-page .staff-kpi{
+ border:1px solid #41655e;border-radius:13px;padding:16px 17px;
+ background:linear-gradient(140deg,#15322d,#11222c);display:flex;flex-direction:column;gap:10px
+}
+.royal-staff-page .staff-kpi span{font-size:10px;color:#9ac8b7;font-weight:850;letter-spacing:1.1px}
+.royal-staff-page .staff-kpi strong{font-size:clamp(19px,2.3vw,28px);font-weight:1000;color:#f7ecc8;word-break:break-word}
+.royal-staff-page .staff-kpi small{color:#7ea9a0;font-size:10px}
+.royal-staff-page .staff-tabs{display:flex;gap:5px;flex-wrap:wrap;border:1px solid #435f5b;background:#10252a;padding:7px;border-radius:12px;margin:15px 0}
+.royal-staff-page .staff-tabs button{
+ border:1px solid transparent;border-radius:8px;background:transparent;color:#b3c7c1;
+ padding:12px 15px;font-size:12px;font-weight:900;cursor:pointer
+}
+.royal-staff-page .staff-tabs button.active{background:#256a56;color:white;border-color:#86bda0;box-shadow:0 3px 9px #0005}
+.royal-staff-page.owner-view .staff-tabs button[data-staff-tab="owner"].active{background:#62512d;border-color:#deb878;color:#fff0c7}
+.royal-staff-page .staff-view{display:grid;gap:14px;min-width:0}
+.royal-staff-page .staff-block{background:linear-gradient(145deg,#132c30,#101b29);border:1px solid #41665e;border-radius:15px;padding:clamp(14px,2vw,22px);min-width:0}
+.royal-staff-page .staff-block-title{display:flex;align-items:baseline;justify-content:space-between;gap:9px;flex-wrap:wrap;margin:0 0 14px}
+.royal-staff-page .staff-block h2{margin:0;font-size:19px;color:#faf1d6;letter-spacing:.4px}
+.royal-staff-page .staff-block h3{margin:18px 0 10px;color:#c2e6d0}
+.royal-staff-page .staff-block-title small,.royal-staff-page .staff-muted{font-size:11px;color:#96b2ad;line-height:1.5}
+.royal-staff-page .staff-two-columns{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:14px}
+.royal-staff-page .staff-table-wrap{overflow:auto;max-height:420px;min-width:0;scrollbar-color:#668a7e transparent}
+.royal-staff-page .staff-table{width:100%;border-collapse:collapse;white-space:nowrap;table-layout:auto}
+.royal-staff-page .staff-table th{position:sticky;top:0;z-index:2;background:#26443d;color:#efffe9;text-align:left;font-size:10px;letter-spacing:.6px;padding:10px 12px}
+.royal-staff-page .staff-table td{padding:10px 12px;border-bottom:1px solid #ffffff13;color:#d9ece5;font-size:11px;vertical-align:middle}
+.royal-staff-page .staff-table tr:hover td{background:#27463a55}
+.royal-staff-page .staff-table td.staff-num{text-align:right;font-variant-numeric:tabular-nums}
+.royal-staff-page .staff-green{color:#9aebba!important;font-weight:900}
+.royal-staff-page .staff-red{color:#f0a9aa!important;font-weight:900}
+.royal-staff-page .staff-tag{font-size:9px;font-weight:900;letter-spacing:.5px;padding:4px 7px;border:1px solid #608e7b;border-radius:7px;color:#cfecd9;display:inline-flex}
+.royal-staff-page .staff-tag.staff-tag-blocked{color:#f6bdc5;border-color:#b3666c;background:#4c252b}
+.royal-staff-page .staff-toolbar{display:flex;gap:9px;align-items:center;flex-wrap:wrap;margin:9px 0 14px}
+.royal-staff-page .staff-toolbar input{flex:1;min-width:170px;margin:0}
+.royal-staff-page input,.royal-staff-page select,.royal-staff-page textarea{background:#0e2026;color:#e5f5ed;border:1px solid #527b71;border-radius:9px;padding:11px 12px;max-width:100%}
+.royal-staff-page input:focus,.royal-staff-page select:focus,.royal-staff-page textarea:focus{outline:2px solid #83dcb2;outline-offset:1px}
+.royal-staff-page textarea{resize:vertical;min-height:80px;width:100%;margin:0}
+.royal-staff-page .staff-label{display:block;color:#b5daca;margin:14px 0 5px;font-size:10px;font-weight:900;letter-spacing:.9px}
+.royal-staff-page .staff-setting-row{display:flex;justify-content:space-between;align-items:center;gap:12px;border-top:1px solid #45736744;padding:13px 0}
+.royal-staff-page .staff-setting-row div{display:flex;flex-direction:column;gap:5px}
+.royal-staff-page .staff-setting-row strong{font-size:11px;color:#e2efe5}
+.royal-staff-page .staff-setting-row small{font-size:10px;color:#91aa9f;max-width:340px;line-height:1.5}
+.royal-staff-page .staff-note-list{display:grid;gap:6px;margin:10px 0}
+.royal-staff-page .staff-note{border:1px solid #335c55;background:#142c2c;padding:11px;border-radius:9px;font-size:11px;line-height:1.5}
+.royal-staff-page .staff-note small{display:block;color:#8bbcac;margin-top:5px;font-size:10px}
+.royal-staff-page .staff-bot-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:10px}
+.royal-staff-page .staff-bot-item{display:flex;flex-direction:column;gap:8px;background:#152d32;border:1px solid #386459;padding:16px;border-radius:9px}
+.royal-staff-page .staff-bot-item small{font-size:10px;color:#a8c4bb;font-weight:850;letter-spacing:.5px}
+.royal-staff-page .staff-bot-item strong{font-size:22px;color:#f1e6b8}
+.royal-staff-page .staff-case-prices{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:10px}
+.royal-staff-page .staff-price-row{padding:12px;background:#14292c;border:1px solid #395e56;border-radius:9px;display:flex;flex-direction:column;gap:7px}
+.royal-staff-page .staff-price-row strong{font-size:12px}
+.royal-staff-page .staff-price-row small{font-size:10px;color:#a4c6b7}
+.royal-staff-page .staff-price-row input{width:100%;margin:0}
+.royal-staff-page .staff-price-row .staff-btn{align-self:stretch}
+.royal-staff-page #admin{display:block;margin:0;border:none;padding:0;background:none;box-shadow:none}
+.royal-staff-page #admin .item{margin:10px 0;padding:10px;border:1px solid #435750;border-radius:10px;background:#11272d}
+.royal-staff-page #admin .item button{font-size:10px;padding:8px 11px;margin:3px}
+.royal-staff-page .staff-status{margin:10px 0;text-align:center;color:#ace9cb;font-size:12px;min-height:20px}
+.royal-staff-page #staffViewSupport #admin>h2:first-child{font-size:21px}
+@media(max-width:960px){.royal-staff-page .staff-kpi-grid{grid-template-columns:repeat(2,minmax(0,1fr))}.royal-staff-page .staff-case-prices{grid-template-columns:repeat(2,minmax(0,1fr))}}
+@media(max-width:720px){
+ .royal-staff-page .staff-heading{padding:19px}
+ .royal-staff-page .staff-tabs button{flex:1 1 auto;padding:10px;font-size:11px}
+ .royal-staff-page .staff-two-columns{grid-template-columns:1fr}
+ .royal-staff-page .staff-bot-grid{grid-template-columns:1fr 1fr}
+ .royal-staff-page .staff-case-prices{grid-template-columns:1fr 1fr}
+}
+@media(max-width:420px){
+ .royal-staff-page .staff-kpi-grid,.royal-staff-page .staff-bot-grid,.royal-staff-page .staff-case-prices{grid-template-columns:1fr 1fr}
+ .royal-staff-page .staff-toolbar input{min-width:130px}
+ .royal-staff-page .staff-heading-tools{width:100%}
+ .royal-staff-page .staff-heading-tools .staff-btn{flex:1}
+}
+
 </style>
 </head>
 
