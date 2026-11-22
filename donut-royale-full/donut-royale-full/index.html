@@ -3344,11 +3344,11 @@ async function staffAdjustCredits(sign){
   try{
     const raw=$("staffCreditAmount").value.trim();
     // Allow 100K, 1.5M, 1000000 and 1 000 000 / 1,000,000 for common formats.
-    const normalized=/^\\d{1,3}(?:[ ,]\\d{3})+$/.test(raw)?raw.replace(/[ ,]/g,""):raw;
+    const normalized=/^\d{1,3}(?:[ ,]\d{3})+$/.test(raw)?raw.replace(/[ ,]/g,""):raw;
     amount=parseAmount(normalized);
   }catch(err){staffStatus("Invalid amount. Examples: 100K, 1M, 1000000.",true);return;}
-  const validId=/^[1-9]\\d*$/.test(recipient);
-  const validName=/^\\.?[A-Za-z0-9_]{3,16}$/.test(recipient);
+  const validId=/^[1-9]\d*$/.test(recipient);
+  const validName=/^\.?[A-Za-z0-9_]{3,16}$/.test(recipient);
   if(!recipient||(validId&&!Number.isSafeInteger(Number(recipient)))||(!validId&&!validName)){
     staffStatus("Enter a registered player nickname or numeric account ID.",true);return;
   }
