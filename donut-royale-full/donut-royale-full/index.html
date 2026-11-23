@@ -2540,6 +2540,17 @@ aside .winter{box-shadow:inset 0 1px #fff2,0 10px 30px #0005,0 0 19px #e1bd7226}
 }
 @media(max-width:580px){.support-ticket-row{align-items:flex-start}.staff-console-log{font-size:11px;padding:12px}}
 
+.header-account .invite-header,aside .invite-nav{font-weight:900;color:#ffdc92}
+.header-account .invite-header{padding:9px;border:1px solid #baa062;border-radius:8px;background:#343026;white-space:nowrap;font-size:12px}
+.invite-page{max-width:680px;margin:24px auto;padding:clamp(20px,4vw,48px);background:linear-gradient(130deg,#123d38,#152331);border:1px solid #a68d58;border-radius:20px}
+.invite-page h1{font-size:clamp(36px,6vw,64px);color:#ffdc92;margin:24px 0 12px}
+.invite-page p{line-height:1.6}
+.invite-page label{display:block;margin:25px 0 8px;font-weight:700}
+.invite-actions{display:flex;align-items:center;gap:12px;flex-wrap:wrap}
+.invite-actions input{width:12ch;color:#fff;letter-spacing:.1em;font:700 24px monospace;background:#0c2329;border:1px solid #688780;border-radius:8px;padding:10px}
+.invite-actions button{border:0;border-radius:8px;padding:12px 16px;background:#f4d399;color:#1d2529;font-weight:800}
+@media(max-width:580px){.header-account .invite-header{font-size:10px;padding:7px 5px}}
+@media(max-width:420px){#account>span{display:none}}
 </style>
 </head>
 
@@ -2555,12 +2566,13 @@ aside .winter{box-shadow:inset 0 1px #fff2,0 10px 30px #0005,0 0 19px #e1bd7226}
       <span id="botHeaderStatusText">CHECKING...</span>
     </span>
   </div>
-  <div class="header-account"><div class="balance-stack"><span class="balance-caption">YOUR CREDITS</span><span class="balance-line"><span aria-hidden="true">🪙</span> <span id="topBalance">0</span></span></div><span id="account"></span></div>
+  <div class="header-account"><a class="invite-header" href="#500k-free">500K FREE</a><div class="balance-stack"><span class="balance-caption">YOUR CREDITS</span><span class="balance-line"><span aria-hidden="true">🪙</span> <span id="topBalance">0</span></span></div><span id="account"></span></div>
 </header>
 
 <aside>
   <h2 class="side-brand"><span aria-hidden="true">✦</span> DONUT ROYALE <small>THE WINTER LOBBY</small></h2>
   <a class="nav-lobby" href="#dashboard">⌂ &nbsp; Lobby</a>
+  <a class="invite-nav" href="#500k-free"><span aria-hidden="true">🎁</span> 500K FREE</a>
   <h4>GAMES</h4>
   <button data-game="coinflip">🪙 Coinflip</button>
   <button data-game="dice">🎲 Lucky Dice</button>
@@ -2580,6 +2592,14 @@ aside .winter{box-shadow:inset 0 1px #fff2,0 10px 30px #0005,0 0 19px #e1bd7226}
 </aside>
 
 <main>
+<section id="500k-free" class="invite-page" aria-labelledby="inviteTitle" hidden>
+  <a href="#dashboard">← Lobby</a>
+  <h1 id="inviteTitle">500K FREE</h1>
+  <p>Share your code with a friend. When they enter it at registration, you earn 500,000 credits.</p>
+  <label for="profileInvite">Your one-time invite code</label>
+  <div class="invite-actions"><input id="profileInvite" readonly><button id="copyInvite" type="button">Copy code</button></div>
+  <p id="profileInviteStatus" role="status"></p>
+</section>
 
 <section id="staffPage" class="royal-staff-page" hidden>
   <div class="staff-heading">
@@ -2783,7 +2803,7 @@ aside .winter{box-shadow:inset 0 1px #fff2,0 10px 30px #0005,0 0 19px #e1bd7226}
     </div>
     <div class="panel royale-stat"><div class="royale-stat-top"><small>PLAYER PROFILE</small><span class="royale-stat-icon" aria-hidden="true">✧</span></div>
       <h2 id="displayName">Player</h2><p id="role">PLAYER</p>
-      <p>Invite code: <strong id="profileInvite"></strong></p><p id="profileInviteStatus"></p>
+      <a href="#500k-free">500K FREE ↗</a>
     </div>
     <div class="panel royale-stat"><div class="royale-stat-top"><small>YOUR REQUESTS</small><span class="royale-stat-icon" aria-hidden="true">✉</span></div>
       <h2>Support &amp; Wallet</h2><button type="button" id="ticketOpen" class="cashier-open-link">OPEN CASHIER <span aria-hidden="true">↗</span></button>
@@ -3501,8 +3521,9 @@ async function refresh(){
   $("topBalance").textContent = fmt(me.balance);
   updateWalletBalances();
   void staffRefreshPublicRules();
-  $("profileInvite").textContent = me.invite_code || "—";
-  $("profileInviteStatus").textContent = me.invite_used ? "Redeemed · 500K credited" : "Earn 500K when a friend registers with your code. One use.";
+  $("profileInvite").value = me.invite_code || "";
+  $("copyInvite").disabled = !me.invite_code || me.invite_used;
+  $("profileInviteStatus").textContent = me.invite_used ? "Redeemed · 500K credited" : "Available · Can be used once.";
   $("displayName").textContent = me.username;
   $("role").textContent = me.role.toUpperCase();
 
@@ -4061,7 +4082,9 @@ function syncRanksPage(){
   $("staffOwnerTab").hidden=!owner;
   $("staffPage").classList.toggle("owner-view",owner);
   $("staffAccessBadge").textContent=owner?"♛ OWNER ACCESS":"🛡 STAFF ACCESS";
-  const subpage=active||chatActive||staffActive;
+  const inviteActive=!!me && location.hash==="#500k-free";
+  $("500k-free").hidden=!inviteActive;
+  const subpage=active||chatActive||staffActive||inviteActive;
   document.querySelector(".hero").hidden=subpage;
   $("dashboard").hidden=subpage;
   document.querySelector("footer").hidden=subpage;
@@ -4073,6 +4096,17 @@ function syncRanksPage(){
   }
 }
 window.addEventListener("hashchange",syncRanksPage);
+$("copyInvite").onclick=async()=>{
+  const field=$("profileInvite");
+  try{
+    await navigator.clipboard.writeText(field.value);
+    toast("Invite code copied");
+  }catch{
+    field.focus();
+    field.select();
+    toast("Code selected. Use Copy to share it.");
+  }
+};
 
 
 
