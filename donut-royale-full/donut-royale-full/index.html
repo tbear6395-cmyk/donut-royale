@@ -2783,6 +2783,7 @@ aside .winter{box-shadow:inset 0 1px #fff2,0 10px 30px #0005,0 0 19px #e1bd7226}
     </div>
     <div class="panel royale-stat"><div class="royale-stat-top"><small>PLAYER PROFILE</small><span class="royale-stat-icon" aria-hidden="true">✧</span></div>
       <h2 id="displayName">Player</h2><p id="role">PLAYER</p>
+      <p>Invite code: <strong id="profileInvite"></strong></p><p id="profileInviteStatus"></p>
     </div>
     <div class="panel royale-stat"><div class="royale-stat-top"><small>YOUR REQUESTS</small><span class="royale-stat-icon" aria-hidden="true">✉</span></div>
       <h2>Support &amp; Wallet</h2><button type="button" id="ticketOpen" class="cashier-open-link">OPEN CASHIER <span aria-hidden="true">↗</span></button>
@@ -3023,6 +3024,9 @@ aside .winter{box-shadow:inset 0 1px #fff2,0 10px 30px #0005,0 0 19px #e1bd7226}
       </label>
       <label for="password">Password</label>
       <input id="password" type="password" required minlength="8" autocomplete="new-password" placeholder="Password (minimum 8 characters)">
+      <label id="inviteRow" for="inviteCode">Friend’s invite code (optional)
+        <input id="inviteCode" type="text" inputmode="numeric" pattern="[0-9]{8}" maxlength="8" placeholder="8 digits">
+      </label>
       <label class="auth-check" id="ageRow">
         <input id="ageCheck" type="checkbox" required>
         <span>I'm 18 or older and agree to the game rules.</span>
@@ -3398,6 +3402,8 @@ function setMode(mode){
   $("authSubmit").textContent=register?"CREATE ACCOUNT":"LOG IN";
   $("authHeading").textContent=register?"Join DONUT ROYALE":"Welcome Back";
   $("authEyebrow").textContent=register?"SIGN UP":"SIGN IN";
+  $("inviteRow").hidden=!register;
+  $("inviteCode").disabled=!register;
   $("ageRow").hidden=!register;
   $("ageCheck").required=register;
   $("password").autocomplete=register?"new-password":"current-password";
@@ -3426,9 +3432,11 @@ $("authForm").onsubmit = async e => {
   try{
     await api(authMode,{
       username:$("username").value.trim(),
-      password:$("password").value
+      password:$("password").value,
+      ...(authMode==="register" ? {invite_code:$("inviteCode").value.trim()} : {})
     });
 
+    $("inviteCode").value = "";
     $("password").value = "";
     await refresh();
     if(me){
@@ -3493,6 +3501,8 @@ async function refresh(){
   $("topBalance").textContent = fmt(me.balance);
   updateWalletBalances();
   void staffRefreshPublicRules();
+  $("profileInvite").textContent = me.invite_code || "—";
+  $("profileInviteStatus").textContent = me.invite_used ? "Redeemed · 500K credited" : "Earn 500K when a friend registers with your code. One use.";
   $("displayName").textContent = me.username;
   $("role").textContent = me.role.toUpperCase();
 

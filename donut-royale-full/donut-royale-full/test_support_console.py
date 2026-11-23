@@ -3,6 +3,7 @@
 Run from this directory with: python -m unittest test_support_console.py
 No external services or packages are required.
 """
+from concurrent.futures import ThreadPoolExecutor
 import json
 import os
 import tempfile
@@ -74,6 +75,32 @@ class SupportConsoleTests(unittest.TestCase):
             response = error
         with response:
             return response.status, json.loads(response.read().decode())
+
+    def test_one_time_signup_invite(self):
+        server.setup()  # Backfill players created before invites were available.
+        def profile():
+            return self.request("GET", "/api/me", "TicketPlayer")[1]["user"]
+
+        before = profile()
+        code = before["invite_code"]
+        self.assertRegex(code, r"^[0-9]{8}$")
+        def register(name):
+            return self.request("POST", "/api/register", body={
+                "username": name, "password": "test-password", "invite_code": code
+            })[0]
+
+        self.assertEqual(register("TicketPlayer"), 409)
+        with ThreadPoolExecutor(max_workers=2) as pool:
+            statuses = list(pool.map(register, ["InviteOne", "InviteTwo"]))
+        self.assertCountEqual(statuses, [200, 400])
+        self.assertEqual(profile()["balance"], before["balance"] + 500_000)
+        self.assertTrue(profile()["invite_used"])
+        with server.db_open() as db:
+            players = db.execute("""SELECT balance,code FROM users JOIN invites ON owner_id=id
+                                    WHERE username IN ('InviteOne','InviteTwo')""").fetchall()
+        self.assertEqual(len(players), 1)
+        self.assertEqual(players[0]["balance"], 100_000)
+        self.assertNotEqual(players[0]["code"], code)
 
     def test_private_thread_and_anonymous_staff_replies(self):
         code, created = self.request("POST", "/api/tickets", "TicketPlayer",

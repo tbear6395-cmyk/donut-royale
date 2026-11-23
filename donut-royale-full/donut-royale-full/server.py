@@ -63,6 +63,29 @@ def db_open():
     db.execute("PRAGMA busy_timeout=30000")
     return db
 
+def issue_invite(db, owner_id):
+    while True:
+        code = f"{secrets.randbelow(100_000_000):08d}"
+        inserted = db.execute("""INSERT INTO invites(owner_id,code) VALUES (?,?)
+                                 ON CONFLICT DO NOTHING""", (owner_id, code))
+        if inserted.rowcount or db.execute("SELECT 1 FROM invites WHERE owner_id=?", (owner_id,)).fetchone():
+            return
+
+
+def setup_invites(db):
+    db.execute("""CREATE TABLE IF NOT EXISTS invites (
+        owner_id BIGINT PRIMARY KEY REFERENCES users(id) ON DELETE CASCADE,
+        code TEXT NOT NULL UNIQUE, used INTEGER NOT NULL DEFAULT 0)""")
+    missing = db.execute("""SELECT id FROM users WHERE NOT EXISTS
+                            (SELECT 1 FROM invites WHERE owner_id=users.id)""").fetchall()
+    for user in missing:
+        issue_invite(db, user["id"])
+
+
+class InvalidInvite(ValueError):
+    pass
+
+
 def seed_extra_admin(db):
     """Create the configured staff account once; never reset an existing password or balance."""
     name = os.getenv("EXTRA_ADMIN_USERNAME", "").strip()
@@ -153,6 +176,7 @@ def setup_postgres():
         db.execute("CREATE TABLE IF NOT EXISTS mines_games (user_id BIGINT PRIMARY KEY REFERENCES users(id), bet BIGINT NOT NULL, mines INTEGER NOT NULL, bombs TEXT NOT NULL, revealed TEXT NOT NULL DEFAULT '[]', created TIMESTAMP DEFAULT CURRENT_TIMESTAMP)")
         seed_owner(db)
         seed_extra_admin(db)
+        setup_invites(db)
         db.execute("DELETE FROM sessions WHERE expires<=?", (now().isoformat(),))
 
 def seed_owner(db):
@@ -263,6 +287,7 @@ def setup():
                 db.execute("INSERT INTO users(username,salt,pw,role,balance,approval) VALUES(?,?,?,'owner',0,'approved')",
                            (name, salt, pw_hash(password, salt)))
         seed_extra_admin(db)
+        setup_invites(db)
         db.execute("DELETE FROM sessions WHERE expires<=?", (now().isoformat(),))
 
 def _deposit_time(value):
@@ -670,7 +695,13 @@ class Handler(BaseHTTPRequestHandler):
             self.wfile.write(data)
             return
         if path == "/api/me":
-            return self.send_json(200, {"user": self.me()})
+            user = self.me()
+            if user:
+                with db_open() as db:
+                    invite = db.execute("SELECT code,used FROM invites WHERE owner_id=?", (user["id"],)).fetchone()
+                if invite:
+                    user.update(invite_code=invite["code"], invite_used=bool(invite["used"]))
+            return self.send_json(200, {"user": user})
         if path == "/api/casebattle/catalog":
             with db_open() as db:
                 catalog = [
@@ -1112,15 +1143,29 @@ class Handler(BaseHTTPRequestHandler):
                 return self.fail(400, "Username must contain 3-16 letters, numbers or underscores, optionally starting with a dot for Bedrock")
             if not 8 <= len(password) <= 128:
                 return self.fail(400, "Password must contain 8-128 characters")
-            with LOCK, db_open() as db:
-                salt = secrets.token_hex(16)
-                try:
+            code = data.get("invite_code", "")
+            if not isinstance(code, str) or (code and not re.fullmatch(r"[0-9]{8}", code)):
+                return self.fail(400, "Enter the 8 digits of your friend's invite code")
+            salt = secrets.token_hex(16)
+            password_hash = pw_hash(password, salt)
+            try:
+                with LOCK, db_open() as db:
                     cursor = db.execute("""INSERT INTO users(username,salt,pw,role,balance,approval)
-                                           VALUES (?,?,?,'player',100000,'approved')""" + (" RETURNING id" if USE_POSTGRES else ""),
-                                        (username, salt, pw_hash(password, salt)))
-                except (sqlite3.IntegrityError, psycopg.IntegrityError if psycopg else sqlite3.IntegrityError):
-                    return self.fail(409, "Username already exists")
-                token = create_session(db, cursor.fetchone()['id'] if USE_POSTGRES else cursor.lastrowid)
+                        VALUES (?,?,?,'player',100000,'approved') ON CONFLICT DO NOTHING"""
+                        + (" RETURNING id" if USE_POSTGRES else ""), (username, salt, password_hash))
+                    if not cursor.rowcount:
+                        return self.fail(409, "Username already exists")
+                    user_id = cursor.fetchone()["id"] if USE_POSTGRES else cursor.lastrowid
+                    if code:
+                        claimed = db.execute("UPDATE invites SET used=1 WHERE code=? AND used=0", (code,))
+                        if claimed.rowcount != 1:
+                            raise InvalidInvite()
+                        db.execute("""UPDATE users SET balance=balance+500000
+                            WHERE id=(SELECT owner_id FROM invites WHERE code=?)""", (code,))
+                    issue_invite(db, user_id)
+                    token = create_session(db, user_id)
+            except InvalidInvite:
+                return self.fail(400, "This invite code is invalid or has already been used")
             return self.send_json(200, {"ok": True}, self.cookie(token))
         if path == "/api/login":
             username = str(data.get("username", "")).strip()
