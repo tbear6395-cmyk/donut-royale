@@ -9,6 +9,7 @@ except ImportError:
         subprocess.check_call([sys.executable, "-m", "pip", "install", "--disable-pip-version-check", "--no-input", "psycopg[binary]>=3.2,<4"])
         import psycopg
         from psycopg.rows import dict_row
+import spectate
 from pathlib import Path
 from datetime import datetime, timezone, timedelta
 from decimal import Decimal, InvalidOperation
@@ -710,7 +711,7 @@ class Handler(BaseHTTPRequestHandler):
             return self.send_json(200, {"ok": True, "service": "donut-royale-bot"})
         if path == "/":
             path = "/index.html"
-        if path in ("/index.html", "/favicon.svg", "/game-thumbnails.webp", "/coinflip-thumbnail-hd.webp", "/coinflip-thumbnail-mobile.webp", "/lucky-dice-thumbnail-hd.webp", "/lucky-dice-thumbnail-mobile.webp", "/coin-heads.png", "/coin-tails.png", "/style.css", "/app.js", "/coin-sonic-hd.svg", "/coin-tails-hd.svg", "/bot-client-v3.js"):
+        if path in ("/arcade-plus.js", "/arcade-plus.css", "/chess-rules.js", "/chess-worker.js", "/index.html", "/favicon.svg", "/game-thumbnails.webp", "/coinflip-thumbnail-hd.webp", "/coinflip-thumbnail-mobile.webp", "/lucky-dice-thumbnail-hd.webp", "/lucky-dice-thumbnail-mobile.webp", "/coin-heads.png", "/coin-tails.png", "/style.css", "/app.js", "/coin-sonic-hd.svg", "/coin-tails-hd.svg", "/bot-client-v3.js"):
             file = BASE / path.lstrip("/")
             if not file.is_file():
                 return self.fail(404, "File not found")
@@ -758,6 +759,11 @@ class Handler(BaseHTTPRequestHandler):
         user = self.me()
         if not user:
             return self.fail(401, "Please log in")
+        if path.startswith("/api/spectate/"):
+            game = path.rsplit("/", 1)[-1]
+            if game not in spectate.GAMES:
+                return self.fail(404, "Unknown table")
+            return self.send_json(200, {"tables": spectate.tables(game)})
         if path == "/api/mines/state":
             with db_open() as db:
                 current = db.execute("SELECT bet,mines,revealed FROM mines_games WHERE user_id=?",
@@ -1656,6 +1662,11 @@ class Handler(BaseHTTPRequestHandler):
                               "dealer_score": bj_score(hand["dealer"]) if hand["dealer"] else 0})
                     del BLACKJACK_HANDS[uid]
                 balance=db.execute("SELECT balance FROM users WHERE id=?",(uid,)).fetchone()["balance"]
+                hand["table"] = spectate.publish("blackjack", user["username"], {
+                    "stake": hand["amount"], "cards": list(hand["player"]),
+                    "dealer": list(hand["dealer"]) if finished else [hand["dealer"][0], "🂠"],
+                    "outcome": outcome
+                }, hand.get("table"))
                 return self.send_json(200,{"player":hand["player"],"dealer":hand["dealer"] if finished else [hand["dealer"][0], "🂠"],"player_score":player_score,"dealer_score":bj_score(hand["dealer"]) if finished else None,"outcome":outcome,"payout":payout,"amount":hand["amount"],"balance":balance,"all_in":hand["all_in"]})
         if path == "/api/game":
             game, amount, choice = data.get("game"), data.get("amount"), data.get("choice")
@@ -1713,6 +1724,10 @@ class Handler(BaseHTTPRequestHandler):
                          "win" if win else "lose",
                          {"case": case_type, "rounds": rounds} if game == "casebattle" else
                          {"choice": choice} if game in ("coinflip", "wheel") else {})
+            if game == "wheel":
+                spectate.publish(game, user["username"], {"stake": amount, "choice": choice, "result": result})
+            elif game == "casebattle":
+                spectate.publish(game, user["username"], {"stake": amount, "case": details["case_name"], "drops": drops})
             return self.send_json(200, {"win": win, "profit": profit, "balance": balance,
                                         "all_in": all_in, "payout_multiplier": 2, **details})
         return self.fail(404, "Not found")

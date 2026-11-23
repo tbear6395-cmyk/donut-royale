@@ -2552,6 +2552,7 @@ aside .winter{box-shadow:inset 0 1px #fff2,0 10px 30px #0005,0 0 19px #e1bd7226}
 @media(max-width:580px){.header-account .invite-header{font-size:10px;padding:7px 5px}}
 @media(max-width:420px){#account>span{display:none}}
 </style>
+<link rel="stylesheet" href="/arcade-plus.css">
 </head>
 
 <body>
@@ -2580,6 +2581,7 @@ aside .winter{box-shadow:inset 0 1px #fff2,0 10px 30px #0005,0 0 19px #e1bd7226}
   <button data-game="wheel">🎰 Roulette</button>
   <button data-game="blackjack">🃏 Blackjack</button>
   <button data-game="casebattle">📦 Case Battle</button>
+  <button data-game="chess">♞ Chess</button>
   <button data-game="mines">💎 Mines</button>
   <h4>WALLET</h4>
   <button type="button" id="walletSide">💸 Deposit / Withdraw</button>
@@ -2818,17 +2820,17 @@ aside .winter{box-shadow:inset 0 1px #fff2,0 10px 30px #0005,0 0 19px #e1bd7226}
   </div>
 
   <div class="royale-section-heading">
-    <div><span class="section-kicker">✦ THE ARCADE COLLECTION</span><h2 id="gamesHeading">SEVEN GAMES. <em>ONE LOBBY.</em></h2><p>Explore the full lineup in its winter festival outfit.</p></div>
-    <div class="game-collection-count" aria-label="Seven available games"><b>07</b><small>GAME MODES</small></div>
+    <div><span class="section-kicker">✦ THE ARCADE COLLECTION</span><h2 id="gamesHeading">EIGHT GAMES. <em>ONE LOBBY.</em></h2><p>Explore the full lineup in its winter festival outfit.</p></div>
+    <div class="game-collection-count" aria-label="Eight available games"><b>08</b><small>GAME MODES</small></div>
   </div>
   <div class="rules-note"><strong>✧ PLAY WITH THE RULES IN MIND</strong><span id="publicGameRules">Game rules: 30% win chance, 70% loss chance. Winning bets return 2×. Maximum bet: 3B. 18+ · Play responsibly and take breaks.</span></div>
 
   <div class="game-grid">
-    <button type="button" class="game-card card-coinflip has-hd-coinflip" data-game="coinflip" aria-label="Open Coinflip"><picture class="coinflip-hd-art" aria-hidden="true"><source media="(max-width: 1100px)" srcset="/coinflip-thumbnail-mobile.webp"><img src="/coinflip-thumbnail-hd.webp" alt="" width="1700" height="567" decoding="async"></picture><span class="game-index" aria-hidden="true">01 / 07</span><span class="xmas-game-snow" aria-hidden="true">❄</span><span class="game-live">✦ WINTER GAME</span><span class="game-title">COINFLIP</span><span class="game-subtitle">SONIC VS TAILS</span><span class="game-play">PLAY NOW ↗</span></button>
-    <button type="button" class="game-card card-dice has-hd-dice" data-game="dice" aria-label="Open Lucky Dice"><picture class="dice-hd-art" aria-hidden="true"><source media="(max-width: 1100px)" srcset="/lucky-dice-thumbnail-mobile.webp"><img src="/lucky-dice-thumbnail-hd.webp" alt="" width="2020" height="778" decoding="async"></picture><span class="game-index" aria-hidden="true">02 / 07</span><span class="xmas-game-snow" aria-hidden="true">❄</span><span class="game-live">✦ WINTER GAME</span><span class="game-title">LUCKY DICE</span><span class="game-subtitle">ROLL THE DICE</span><span class="game-play">PLAY NOW ↗</span></button>
-    <button type="button" class="game-card card-slots" data-game="slots" aria-label="Open Triple Sevens"><span class="game-index" aria-hidden="true">03 / 07</span><span class="xmas-game-snow" aria-hidden="true">❄</span><span class="game-live">✦ WINTER GAME</span><span class="game-art art-slots" aria-hidden="true"><span>7</span><span>7</span><span>7</span></span><span class="game-title">TRIPLE SEVENS</span><span class="game-subtitle">JACKPOT SLOTS</span><span class="game-play">PLAY NOW ↗</span></button>
-    <button type="button" class="game-card card-blackjack" data-game="blackjack" aria-label="Open Blackjack"><span class="game-index" aria-hidden="true">04 / 07</span><span class="xmas-game-snow" aria-hidden="true">❄</span><span class="game-live">✦ WINTER GAME</span><span class="game-art art-blackjack" aria-hidden="true"><span class="dealer-glow"></span><span class="dealer-cards"><span class="playing-card card-j"><small>J<br>♣</small><strong>♣</strong></span><span class="playing-card card-a"><small>A<br>♠</small><strong>♠</strong></span></span></span><span class="game-title">BLACKJACK</span><span class="game-subtitle">GET 21 · HIT / STAND</span><span class="game-play">PLAY NOW ↗</span></button>
-    <button type="button" class="game-card card-wheel has-roulette-thumbnail" data-game="wheel" aria-label="Open Roulette"><span class="game-index" aria-hidden="true">05 / 07</span><span class="xmas-game-snow" aria-hidden="true">❄</span><span class="game-live">✦ WINTER GAME</span><svg class="roulette-thumb-art" viewBox="0 0 860 480" preserveAspectRatio="xMidYMid slice" focusable="false" aria-hidden="true" xmlns="http://www.w3.org/2000/svg">
+    <button type="button" class="game-card card-coinflip has-hd-coinflip" data-game="coinflip" aria-label="Open Coinflip"><picture class="coinflip-hd-art" aria-hidden="true"><source media="(max-width: 1100px)" srcset="/coinflip-thumbnail-mobile.webp"><img src="/coinflip-thumbnail-hd.webp" alt="" width="1700" height="567" decoding="async"></picture><span class="game-index" aria-hidden="true">01 / 08</span><span class="xmas-game-snow" aria-hidden="true">❄</span><span class="game-live">✦ WINTER GAME</span><span class="game-title">COINFLIP</span><span class="game-subtitle">SONIC VS TAILS</span><span class="game-play">PLAY NOW ↗</span></button>
+    <button type="button" class="game-card card-dice has-hd-dice" data-game="dice" aria-label="Open Lucky Dice"><picture class="dice-hd-art" aria-hidden="true"><source media="(max-width: 1100px)" srcset="/lucky-dice-thumbnail-mobile.webp"><img src="/lucky-dice-thumbnail-hd.webp" alt="" width="2020" height="778" decoding="async"></picture><span class="game-index" aria-hidden="true">02 / 08</span><span class="xmas-game-snow" aria-hidden="true">❄</span><span class="game-live">✦ WINTER GAME</span><span class="game-title">LUCKY DICE</span><span class="game-subtitle">ROLL THE DICE</span><span class="game-play">PLAY NOW ↗</span></button>
+    <button type="button" class="game-card card-slots" data-game="slots" aria-label="Open Triple Sevens"><span class="game-index" aria-hidden="true">03 / 08</span><span class="xmas-game-snow" aria-hidden="true">❄</span><span class="game-live">✦ WINTER GAME</span><span class="game-art art-slots" aria-hidden="true"><span>7</span><span>7</span><span>7</span></span><span class="game-title">TRIPLE SEVENS</span><span class="game-subtitle">JACKPOT SLOTS</span><span class="game-play">PLAY NOW ↗</span></button>
+    <button type="button" class="game-card card-blackjack" data-game="blackjack" aria-label="Open Blackjack"><span class="game-index" aria-hidden="true">04 / 08</span><span class="xmas-game-snow" aria-hidden="true">❄</span><span class="game-live">✦ WINTER GAME</span><span class="game-art art-blackjack" aria-hidden="true"><span class="dealer-glow"></span><span class="dealer-cards"><span class="playing-card card-j"><small>J<br>♣</small><strong>♣</strong></span><span class="playing-card card-a"><small>A<br>♠</small><strong>♠</strong></span></span></span><span class="game-title">BLACKJACK</span><span class="game-subtitle">GET 21 · HIT / STAND</span><span class="game-play">PLAY NOW ↗</span></button>
+    <button type="button" class="game-card card-wheel has-roulette-thumbnail" data-game="wheel" aria-label="Open Roulette"><span class="game-index" aria-hidden="true">05 / 08</span><span class="xmas-game-snow" aria-hidden="true">❄</span><span class="game-live">✦ WINTER GAME</span><svg class="roulette-thumb-art" viewBox="0 0 860 480" preserveAspectRatio="xMidYMid slice" focusable="false" aria-hidden="true" xmlns="http://www.w3.org/2000/svg">
 <defs>
 <radialGradient id="rtBg"><stop stop-color="#b22c32" offset="0"/><stop stop-color="#6d1726" offset=".44"/><stop stop-color="#21111d" offset="1"/></radialGradient>
 <linearGradient id="rtGold" x1="0" y1="0" x2="1" y2="1"><stop stop-color="#fff0a8"/><stop offset=".2" stop-color="#ffdd56"/><stop offset=".52" stop-color="#da8117"/><stop offset=".78" stop-color="#ffcc56"/><stop offset="1" stop-color="#805018"/></linearGradient>
@@ -2872,7 +2874,7 @@ aside .winter{box-shadow:inset 0 1px #fff2,0 10px 30px #0005,0 0 19px #e1bd7226}
 <path d="M0 325 L860 325 860 480 0 480 Z" fill="url(#rtFade)"/>
 </svg><span class="game-title">ROULETTE</span><span class="game-subtitle">RED OR BLACK</span><span class="game-play">PLAY NOW ↗</span></button>
     <button type="button" class="game-card card-casebattle" data-game="casebattle" aria-label="Open Case Battle">
-      <span class="game-index" aria-hidden="true">06 / 07</span>
+      <span class="game-index" aria-hidden="true">06 / 08</span>
       <span class="xmas-game-snow" aria-hidden="true">❄</span>
       <span class="game-live">✦ WINTER GAME</span>
       <span class="cb-banner-art" aria-hidden="true">
@@ -2885,7 +2887,7 @@ aside .winter{box-shadow:inset 0 1px #fff2,0 10px 30px #0005,0 0 19px #e1bd7226}
       <span class="game-play">PLAY NOW ↗</span>
     </button>
     <button type="button" class="game-card card-mines" data-game="mines" aria-label="Open Mines">
-      <span class="game-index" aria-hidden="true">07 / 07</span>
+      <span class="game-index" aria-hidden="true">07 / 08</span>
       <span class="xmas-game-snow" aria-hidden="true">❄</span>
       <span class="game-live">✦ WINTER GAME</span>
       <span class="mines-card-art" aria-hidden="true">
@@ -2901,6 +2903,7 @@ aside .winter{box-shadow:inset 0 1px #fff2,0 10px 30px #0005,0 0 19px #e1bd7226}
       <span class="game-play">PLAY NOW ↗</span>
     </button>
 
+    <button type="button" class="game-card chess-cover" data-game="chess"><span class="chess-knight" aria-hidden="true">♞</span><span class="game-title">CHESS</span><span class="game-subtitle">STOCKFISH · ≈1600 ELO</span><span class="game-play">PLAY NOW ↗</span></button>
   </div>
 
   <section class="royale-guide" aria-labelledby="royaleGuideHeading">
@@ -3067,9 +3070,23 @@ aside .winter{box-shadow:inset 0 1px #fff2,0 10px 30px #0005,0 0 19px #e1bd7226}
   <div class="game-window">
     <div class="modal-top">
       <strong class="game-modal-brand"><img class="modal-logo-image" src="data:image/png;base64,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" alt="" width="64" height="64" decoding="async"> DONUT ROYALE</strong>
+      <button type="button" id="spectateOpen" hidden>◉ Spectate</button>
       <button id="closeGame">✕ CLOSE</button>
     </div>
 
+    <section id="screen-chess" class="game-screen" hidden>
+      <div class="plus-heading"><h2>Royal Chess</h2><span>Stockfish · ≈1600 Elo</span></div>
+      <div class="chess-layout"><div id="chessBoard" aria-label="Chessboard"></div><div class="chess-side">
+      <strong id="chessTurn" aria-live="polite">Loading board…</strong>
+      <p id="chessPromotion" hidden>Promote to <select aria-label="Promotion piece"><option value="q">Queen</option><option value="r">Rook</option><option value="b">Bishop</option><option value="n">Knight</option></select> <button type="button">Promote</button></p>
+      <p id="chessMoves" aria-label="Move history"></p>
+      <button id="chessNew" type="button">New game</button><button id="chessRetry" type="button" hidden>Retry engine</button>
+      <p><small><a href="https://registry.npmjs.org/stockfish/-/stockfish-17.1.0.tgz" target="_blank" rel="noopener">Stockfish.js source</a> · <a href="https://www.gnu.org/licenses/gpl-3.0.html" target="_blank" rel="noopener">GPLv3</a></small></p>
+      </div></div></section>
+    <section id="screen-spectate" class="game-screen" hidden>
+      <div class="plus-heading"><h2 id="watchTitle">Spectate</h2><button id="watchBack" type="button">Back to game</button></div>
+      <label id="watchPicker">Table <select id="watchTable"></select></label><div id="watchStage"></div>
+    </section>
     <section class="game-screen" id="screen-coinflip" hidden>
       <h2>🪙 COINFLIP</h2>
       <p>SONIC VS TAILS</p>
@@ -4475,6 +4492,9 @@ function openGame(game){
   document.querySelectorAll(".game-screen")
     .forEach(s=>s.hidden=true);
 
+  $("spectateOpen").hidden=!["casebattle","blackjack","wheel"].includes(game);
+  $("spectateOpen").dataset.tableGame=game;
+  if(game==="chess")import("/arcade-plus.js").then(m=>m.openChess()).catch(()=>{$("chessTurn").textContent="Board unavailable. Reopen to retry.";});
   $("screen-"+game).hidden = false;
   $("gameOverlay").hidden = false;
   if(game==="casebattle")void cbLoadCatalog().catch(err=>toast(err.message));
@@ -4495,6 +4515,19 @@ document.querySelectorAll("[data-game]").forEach(b=>{
   b.onclick = () => openGame(b.dataset.game);
 });
 
+$("spectateOpen").onclick=async()=>{
+  if(playing)return;
+  const game=$("spectateOpen").dataset.tableGame;
+  try{
+    const module=await import("/arcade-plus.js");
+    if(playing||$("gameOverlay").hidden||$("screen-"+game).hidden)return;
+    $("screen-"+game).hidden=true;
+    $("spectateOpen").hidden=true;
+    $("screen-spectate").hidden=false;
+    module.watch(game);
+  }catch{toast("Unable to load spectator mode.");}
+};
+$("watchBack").onclick=()=>openGame($("spectateOpen").dataset.tableGame);
 $("closeGame").onclick = closeGame;
 
 $("gameOverlay").onclick = e => {
