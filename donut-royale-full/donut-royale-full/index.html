@@ -3076,11 +3076,16 @@ aside .winter{box-shadow:inset 0 1px #fff2,0 10px 30px #0005,0 0 19px #e1bd7226}
 
     <section id="screen-chess" class="game-screen" hidden>
       <div class="plus-heading"><h2>Royal Chess</h2><span>Stockfish · ≈1600 Elo</span></div>
-      <div class="chess-layout"><div id="chessBoard" aria-label="Chessboard"></div><div class="chess-side">
+      <div class="chess-layout"><div class="chess-table"><canvas id="chessScene" aria-label="3D chessboard" hidden></canvas><div id="chessBoard" aria-label="Chessboard"></div><button type="button" id="chessView" hidden>Use 2D board</button></div><div class="chess-side">
       <strong id="chessTurn" aria-live="polite">Loading board…</strong>
       <p id="chessPromotion" hidden>Promote to <select aria-label="Promotion piece"><option value="q">Queen</option><option value="r">Rook</option><option value="b">Bishop</option><option value="n">Knight</option></select> <button type="button">Promote</button></p>
+      <div class="chess-stakes"><label for="chessStake">MATCH STAKE</label>
+      <input id="chessStake" type="text" inputmode="decimal" placeholder="1K" autocomplete="off">
+      <button type="button" id="chessBet" disabled>Play for credits</button>
+      <small>1–3B credits · Win returns 2× your stake. Draw returns your stake. Loss or resignation pays 0.</small>
+      <output id="chessBank" aria-live="polite"></output></div>
       <p id="chessMoves" aria-label="Move history"></p>
-      <button id="chessNew" type="button">New game</button><button id="chessRetry" type="button" hidden>Retry engine</button>
+      <button id="chessNew" type="button">New practice game</button><button id="chessRetry" type="button" hidden>Retry engine</button>
       <p><small><a href="https://registry.npmjs.org/stockfish/-/stockfish-17.1.0.tgz" target="_blank" rel="noopener">Stockfish.js source</a> · <a href="https://www.gnu.org/licenses/gpl-3.0.html" target="_blank" rel="noopener">GPLv3</a></small></p>
       </div></div></section>
     <section id="screen-spectate" class="game-screen" hidden>
@@ -4494,7 +4499,7 @@ function openGame(game){
 
   $("spectateOpen").hidden=!["casebattle","blackjack","wheel"].includes(game);
   $("spectateOpen").dataset.tableGame=game;
-  if(game==="chess")import("/arcade-plus.js").then(m=>m.openChess()).catch(()=>{$("chessTurn").textContent="Board unavailable. Reopen to retry.";});
+  if(game==="chess")import("/arcade-plus.js").then(m=>m.openChess({account:me.id, parseStake:parseAmount, balance:value=>minesBalance(value)})).catch(()=>{$("chessTurn").textContent="Board unavailable. Reopen to retry.";});
   $("screen-"+game).hidden = false;
   $("gameOverlay").hidden = false;
   if(game==="casebattle")void cbLoadCatalog().catch(err=>toast(err.message));

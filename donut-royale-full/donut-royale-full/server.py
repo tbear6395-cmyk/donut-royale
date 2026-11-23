@@ -10,6 +10,7 @@ except ImportError:
         import psycopg
         from psycopg.rows import dict_row
 import spectate
+import chess_matches
 from pathlib import Path
 from datetime import datetime, timezone, timedelta
 from decimal import Decimal, InvalidOperation
@@ -214,6 +215,7 @@ def setup_postgres():
         seed_owner(db)
         seed_extra_admin(db)
         setup_invites(db)
+        chess_matches.setup(db)
         db.execute("DELETE FROM sessions WHERE expires<=?", (now().isoformat(),))
 
 def seed_owner(db):
@@ -325,6 +327,7 @@ def setup():
                            (name, salt, pw_hash(password, salt)))
         seed_extra_admin(db)
         setup_invites(db)
+        chess_matches.setup(db)
         db.execute("DELETE FROM sessions WHERE expires<=?", (now().isoformat(),))
 
 def _deposit_time(value):
@@ -711,7 +714,7 @@ class Handler(BaseHTTPRequestHandler):
             return self.send_json(200, {"ok": True, "service": "donut-royale-bot"})
         if path == "/":
             path = "/index.html"
-        if path in ("/arcade-plus.js", "/arcade-plus.css", "/chess-rules.js", "/chess-worker.js", "/index.html", "/favicon.svg", "/game-thumbnails.webp", "/coinflip-thumbnail-hd.webp", "/coinflip-thumbnail-mobile.webp", "/lucky-dice-thumbnail-hd.webp", "/lucky-dice-thumbnail-mobile.webp", "/coin-heads.png", "/coin-tails.png", "/style.css", "/app.js", "/coin-sonic-hd.svg", "/coin-tails-hd.svg", "/bot-client-v3.js"):
+        if path in ("/arcade-plus.js", "/chess-3d.js", "/arcade-plus.css", "/chess-rules.js", "/chess-worker.js", "/index.html", "/favicon.svg", "/game-thumbnails.webp", "/coinflip-thumbnail-hd.webp", "/coinflip-thumbnail-mobile.webp", "/lucky-dice-thumbnail-hd.webp", "/lucky-dice-thumbnail-mobile.webp", "/coin-heads.png", "/coin-tails.png", "/style.css", "/app.js", "/coin-sonic-hd.svg", "/coin-tails-hd.svg", "/bot-client-v3.js"):
             file = BASE / path.lstrip("/")
             if not file.is_file():
                 return self.fail(404, "File not found")
@@ -724,6 +727,8 @@ class Handler(BaseHTTPRequestHandler):
             self.end_headers()
             self.wfile.write(data)
             return
+        if path == "/api/chess/status":
+            return self.send_json(200, {"ready":chess_matches.engine_ready.is_set()})
         if path == "/api/me":
             user = self.me()
             if user:
@@ -759,6 +764,10 @@ class Handler(BaseHTTPRequestHandler):
         user = self.me()
         if not user:
             return self.fail(401, "Please log in")
+        if path == "/api/chess/state":
+            with db_open() as db:
+                result = chess_matches.state(db, user["id"])
+            return self.send_json(200, result)
         if path.startswith("/api/spectate/"):
             game = path.rsplit("/", 1)[-1]
             if game not in spectate.GAMES:
@@ -1219,6 +1228,8 @@ class Handler(BaseHTTPRequestHandler):
         user = self.me()
         if not user:
             return self.fail(401, "Please log in")
+        if path.startswith("/api/chess/"):
+            return chess_matches.handle(self, path.rsplit("/", 1)[-1], user["id"], data, sys.modules[__name__])
         if path == "/api/invites/redeem":
             try:
                 with LOCK, db_open() as db:
@@ -1734,6 +1745,7 @@ class Handler(BaseHTTPRequestHandler):
 
 if __name__ == "__main__":
     setup()
+    chess_matches.warm()
     port = int(os.getenv("PORT", "8000"))
     print("DONUT ROYALE running on", port)
     ThreadingHTTPServer(("0.0.0.0", port), Handler).serve_forever()

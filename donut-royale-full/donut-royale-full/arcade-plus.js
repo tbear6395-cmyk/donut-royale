@@ -9,8 +9,50 @@ let selected = null, promotion = null, engine = null, ready = false;
 let pending = false, failure = false, started = false, generation = 0;
 const wasmUrl = "https://unpkg.com/stockfish@17.1.0/src/stockfish-17.1-lite-single-03e3232.wasm";
 let binary = null;
+let account=null, hooks=null, match=null, lastMatch=null, busy=false, synced=false;
+let paint3D=null, use3D=true, lastMoveError="";
+const activeBet=()=>match?.outcome==="active";
+const credit=n=>Number(n).toLocaleString("en-US");
+async function request(path,body){
+  const options=body?{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify(body)}:{};
+  const response=await fetch("/api/chess/"+path,{...options,cache:"no-store"});
+  const data=await response.json();
+  if(!response.ok)throw Error(data.error||"Could not reach the chess table");
+  return data;
+}
+function applyState(data,restore){
+  synced=true;lastMatch=data.match?.id||null;hooks.balance(data.balance);
+  if(!restore&&!match&&data.match?.outcome!=="active")return;
+  if(!data.match){match=null;return;}
+  match=data.match;generation++;engine?.terminate();engine=null;ready=true;failure=false;pending=false;
+  selected=null;promotion=null;game.reset();
+  for(const uci of match.moves)game.move({from:uci.slice(0,2),to:uci.slice(2,4),promotion:uci[4]});
+}
+async function loadMatch(restore=false){
+  const owner=account;
+  try{const state=await request("state");if(owner===account)applyState(state,restore);}
+  catch{if(owner===account){synced=false;lastMoveError="Could not sync the stake. Reopen Chess to retry.";}}
+  if(owner===account)renderChess();
+}
+async function submit(action,body){
+  if(busy)return;
+  const owner=account;busy=true;lastMoveError="";renderChess();
+  try{const data=await request(action,body);if(owner===account)applyState(data,true);}
+  catch(error){if(owner===account){lastMoveError=error.message;await loadMatch();}}
+  finally{if(owner===account){busy=false;renderChess();}}
+}
+function pick(square){
+  if(!square||busy||!ready||promotion||game.turn()!=="w"||game.isGameOver()||(match&&!activeBet()))return;
+  const move=selected&&game.moves({square:selected,verbose:true}).find(m=>m.to===square);
+  if(move?.promotion){promotion={from:selected,to:square};renderChess();return;}
+  if(move){play(selected,square);return;}
+  selected=selected!==square&&game.get(square)?.color==="w"?square:null;renderChess();
+}
+
 
 function positionStatus(){
+  if(match&&match.outcome!=="active")return ({win:"Checkmate · You win",lose:"Match lost",draw:"Draw"})[match.outcome];
+  if(busy)return "Processing match…";
   if(game.isCheckmate())return game.turn()==="w"?"Checkmate · Stockfish wins":"Checkmate · You win";
   if(game.isStalemate())return "Draw · Stalemate";
   if(game.isThreefoldRepetition())return "Draw · Threefold repetition";
@@ -36,6 +78,17 @@ function renderChess(){
     buttons.push(button);
   }
   board.replaceChildren(...buttons);
+  const spatial=Boolean(paint3D&&use3D);
+  byId("chessScene").hidden=!spatial;board.hidden=spatial;
+  byId("chessView").hidden=!paint3D;byId("chessView").textContent=spatial?"Use 2D board":"Use 3D board";
+  if(spatial)paint3D(game.board(),selected,moves);
+  byId("chessNew").disabled=busy;byId("chessNew").textContent=activeBet()?"Resign match":"New practice game";
+  byId("chessStake").disabled=busy||activeBet();
+  byId("chessBet").disabled=busy||!synced||activeBet();
+  let message="Practice · No credits at stake";
+  if(match){const payout=match.outcome==="win"?2*match.stake:match.outcome==="draw"?match.stake:0;
+    message=activeBet()?"In play: "+credit(match.stake)+" credits":"Stake: "+credit(match.stake)+" · Returned: "+credit(payout);}
+  byId("chessBank").textContent=lastMoveError||message;
   byId("chessTurn").textContent=positionStatus();
   byId("chessPromotion").hidden=!promotion;byId("chessRetry").hidden=!failure;
   byId("chessMoves").textContent=game.history().map((s,i)=>i%2?s:(i/2+1)+". "+s).join(" ");
@@ -80,26 +133,41 @@ async function launch(){
   }catch{fail();}
 }
 function play(from,to,promote){
+  if(activeBet()){
+    selected=null;promotion=null;
+    void submit("move",{id:match.id,ply:match.moves.length,move:from+to+(promote||"")});return;
+  }
   game.move({from,to,promotion:promote});selected=null;promotion=null;renderChess();think();
 }
-export function openChess(){
+export function openChess(options){
+  const changed=account!==options.account;
+  hooks=options;account=options.account;
+  if(changed){match=null;lastMatch=null;busy=false;synced=false;lastMoveError="";selected=null;promotion=null;game.reset();launch();}
+  if(!busy)void loadMatch(changed);
   if(started){renderChess();return;}
   started=true;
-  byId("chessBoard").onclick=e=>{
-    const square=e.target.closest("button")?.dataset.square;
-    if(!square||!ready||promotion||game.turn()!=="w"||game.isGameOver())return;
-    const move=selected&&game.moves({square:selected,verbose:true}).find(m=>m.to===square);
-    if(move?.promotion){promotion={from:selected,to:square};renderChess();return;}
-    if(move){play(selected,square);return;}
-    selected=selected!==square&&game.get(square)?.color==="w"?square:null;renderChess();
+  import("./chess-3d.js").then(({createBoard})=>{
+    paint3D=createBoard(byId("chessScene"),pick);renderChess();
+  }).catch(()=>{use3D=false;renderChess();});
+  byId("chessView").onclick=()=>{use3D=!use3D;renderChess();};
+  byId("chessBoard").onclick=e=>pick(e.target.closest("button")?.dataset.square);
+  byId("chessBet").onclick=()=>{
+    if(busy||!synced||activeBet())return;
+    let stake;try{stake=hooks.parseStake(byId("chessStake").value);}catch{}
+    if(!Number.isSafeInteger(stake)||stake<1||stake>3e9){lastMoveError="Enter a stake from 1 to 3B credits.";renderChess();return;}
+    if(confirm("Start a new chess match for "+credit(stake)+" credits? A loss or resignation loses the stake.")){
+      void submit("start",{stake,previous:lastMatch});
+    }
   };
   byId("chessPromotion").querySelector("button").onclick=()=>{if(promotion)play(promotion.from,promotion.to,byId("chessPromotion").querySelector("select").value);};
   byId("chessRetry").onclick=launch;
   byId("chessNew").onclick=()=>{
-    if(game.history().length&&!game.isGameOver()&&!confirm("Start a new chess game?"))return;
-    selected=null;promotion=null;game.reset();launch();
+    if(busy)return;
+    if(activeBet()){if(confirm("Resign and lose your stake of "+credit(match.stake)+" credits?"))void submit("resign",{id:match.id,ply:match.moves.length});return;}
+    if(!match&&game.history().length&&!game.isGameOver()&&!confirm("Start a new chess game?"))return;
+    match=null;lastMoveError="";selected=null;promotion=null;game.reset();launch();
   };
-  launch();
+  renderChess();
 }
 
 const titles={wheel:"Roulette",casebattle:"Case Battles",blackjack:"Blackjack"};
