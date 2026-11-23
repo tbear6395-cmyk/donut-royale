@@ -358,6 +358,10 @@ def withdrawal_config():
         return None
 
 
+MIN_DEPOSIT = 1_000_000
+MAX_DEPOSIT = 3_000_000_000
+
+
 def auto_credit_deposit(db, event_id, player, amount, raw_message, received_at=None):
     """Opt-in only. Requires independent validation of the payment source before enabling."""
     if os.getenv("AUTO_DEPOSIT_ENABLED") != "1" or not os.getenv("AUTO_DEPOSIT_START_UTC"):
@@ -382,13 +386,7 @@ def auto_credit_deposit(db, event_id, player, amount, raw_message, received_at=N
             receipt_time = min(receipt_time, captured)
         except (ValueError, TypeError, OverflowError):
             return "needs_review"
-    # Bound automatic credit risk. Larger events require manual verification.
-    try:
-        limit = int(os.getenv("AUTO_DEPOSIT_MAX_AMOUNT", "1000000"))
-        daily_limit = int(os.getenv("AUTO_DEPOSIT_DAILY_LIMIT", "5000000"))
-    except ValueError:
-        return "needs_review"
-    if limit < 1 or daily_limit < 1 or amount > limit:
+    if not MIN_DEPOSIT <= amount <= MAX_DEPOSIT:
         return "needs_review"
     receipt = re.fullmatch(r"(\.?[A-Za-z0-9_]{3,16}) paid you \$\s*([0-9,]+(?:\.[0-9]+)?)\s*([KMBT])?", raw_message, re.I)
     if not receipt or receipt.group(1).casefold() != player.casefold():
@@ -416,12 +414,6 @@ def auto_credit_deposit(db, event_id, player, amount, raw_message, received_at=N
     if len(matches) != 1:
         return "needs_review"
     ticket = matches[0]
-    previous = db.execute(
-        "SELECT amount,created FROM bot_deposit_credits WHERE user_id=?",
-        (ticket["user_id"],)).fetchall()
-    if amount + sum(p["amount"] for p in previous
-                    if 0 <= (now() - _deposit_time(p["created"])).total_seconds() < 86400) > daily_limit:
-        return "needs_review"
     if db.execute("SELECT event_id FROM bot_deposit_credits WHERE event_id=? OR ticket_id=?",
                   (event_id, ticket["id"])).fetchone():
         return "needs_review"
@@ -675,10 +667,11 @@ class Handler(BaseHTTPRequestHandler):
                     active = False
             return self.send_json(200, {
                 "auto_deposit_enabled": bool(active),
-                "max_automatic_amount": int(os.getenv("AUTO_DEPOSIT_MAX_AMOUNT", "1000000")),
-                "max_automatic_amount_per_user_24h": int(os.getenv("AUTO_DEPOSIT_DAILY_LIMIT", "5000000")),
+                "min_automatic_amount": MIN_DEPOSIT,
+                "max_automatic_amount": MAX_DEPOSIT,
+                "max_automatic_amount_per_user_24h": None,
                 "payment_deadline_minutes": 30,
-                "note": "Only fresh unambiguous bot-reported payments are eligible. Minecraft bot must be online; high or ambiguous amounts require review.",
+                "note": "Only fresh unambiguous bot-reported payments are eligible. Minecraft bot must be online; unmatched payments require review.",
             })
         if path == "/api/bot/withdrawals/pending":
             expected = os.getenv("BOT_API_KEY", "")
@@ -1443,6 +1436,8 @@ class Handler(BaseHTTPRequestHandler):
                 if not re.fullmatch(r"\[MINECRAFT NICK\] \.?[A-Za-z0-9_]{3,16}", message):
                     return self.fail(400, "Invalid Minecraft nickname")
             if kind == "deposit":
+                if not MIN_DEPOSIT <= amount <= MAX_DEPOSIT:
+                    return self.fail(400, "Deposit amount must be between 1M and 3B credits.")
                 # New deposit tickets must contain one canonical nickname and /pay request.
                 marker = re.fullmatch(
                     r"\[PAYMENT COMMAND\] /pay \.LeXimJames7858 ([0-9]+)\. "

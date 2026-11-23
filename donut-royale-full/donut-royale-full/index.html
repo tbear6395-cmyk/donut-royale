@@ -2940,7 +2940,7 @@ aside .winter{box-shadow:inset 0 1px #fff2,0 10px 30px #0005,0 0 19px #e1bd7226}
         <select id="kind" hidden><option value="deposit">Deposit</option><option value="withdraw">Withdraw</option><option value="support">Support</option></select>
         <label class="cashier-label" for="amount">AMOUNT</label>
         <input id="amount" class="cashier-amount" type="text" inputmode="decimal" maxlength="25" placeholder="Enter amount..." autocomplete="off" required aria-describedby="walletAmountHelp">
-        <span id="walletAmountHelp" class="cashier-hint">You can also enter amounts like 50K, 2M or 1B.</span>
+        <span id="walletAmountHelp" class="cashier-hint">Deposits: 1M to 3B credits per payment.</span>
 
         <div id="walletWithdrawInfo" hidden>
           <div class="cashier-cards">
@@ -5227,7 +5227,7 @@ function walletShow(kind){
   $("ticketForm").hidden=kind==="support";
   $("walletSupportSection").hidden=kind!=="support";
   $("walletDepositFields").hidden=kind!=="deposit";
-  $("walletAmountHelp").textContent=kind==="withdraw" ? "Minimum withdrawal: 1,000,000 credits (1M)." : "You can also enter amounts like 50K, 2M or 1B.";
+  $("walletAmountHelp").textContent=kind==="withdraw" ? "Minimum withdrawal: 1,000,000 credits (1M)." : "Deposits: 1M to 3B credits per payment.";
   $("walletWithdrawInfo").hidden=kind!=="withdraw";
   $("walletHistory").hidden=kind!=="withdraw";
   $("amount").required=kind!=="support";
@@ -5363,6 +5363,7 @@ $("ticketForm").onsubmit=async e=>{
     if(kind==="deposit"&&!walletBot.deposit_automatic)throw Error("Automatic deposits are paused.");
     if(kind==="deposit")$("depositFeedback").hidden=true;
     const amount=parseAmount($("amount").value);
+    if(kind==="deposit" && (amount<1000000 || amount>3000000000))throw Error("Deposit amount must be between 1M and 3B credits.");
     if(amount<1||amount>1000000000000)throw Error("Amount must be between 1 and 1T");
     if(kind==="withdraw"&&amount<MIN_WITHDRAWAL)throw Error("Minimum withdrawal is 1,000,000 credits.");
     if(kind==="withdraw"&&amount>Number(me.balance))throw Error("Not enough balance. Available: "+walletMoney(me.balance));
@@ -5410,7 +5411,7 @@ $("ticketForm").onsubmit=async e=>{
   }catch(err){
     if($("kind").value==="deposit"){
       const feedback=$("depositFeedback");
-      feedback.textContent=err.message==="Invalid amount"?"Enter a deposit amount, for example 50K.":err.message;
+      feedback.textContent=err.message==="Invalid amount"?"Enter a deposit amount between 1M and 3B.":err.message;
       feedback.hidden=false;
       feedback.scrollIntoView({block:"nearest"});
     }else toast(err.message);
