@@ -2966,15 +2966,10 @@ aside .winter{box-shadow:inset 0 1px #fff2,0 10px 30px #0005,0 0 19px #e1bd7226}
           <label class="cashier-label" for="depositNickname">YOUR MINECRAFT NICKNAME</label>
           <input id="depositNickname" type="text" maxlength="17" pattern="\.?[A-Za-z0-9_]{3,16}" placeholder="Enter Minecraft nickname" autocomplete="off">
           <p class="cashier-hint">Bedrock players: include the dot (.) if your name starts with one.</p>
-          <div class="wallet-command-box" id="payInfo">
-            <div class="wallet-command-label">CREATE DEPOSIT REQUEST BEFORE PAYING</div>
-            <code id="payCommand">/pay .LeXimJames7858 AMOUNT</code>
-            <button type="button" id="walletCopy" class="wallet-copy" disabled>CREATE REQUEST BEFORE COPYING</button>
-            <p id="walletNickWarning" hidden>Receiving account is not configured. Do not send money.</p>
-          </div>
           <p class="wallet-disclaimer">Create a deposit request before sending money. Incoming game payments can be credited automatically while the bot is connected; ambiguous payments may need review.</p>
         </div>
 
+        <p id="depositFeedback" role="status" aria-live="polite" hidden></p>
         <button class="cashier-submit" id="walletSubmit" type="submit" disabled>Withdrawals paused</button>
       </form>
       <section id="walletSupportSection" class="wallet-support-section" hidden>
@@ -5187,8 +5182,8 @@ function renderWalletStatus(){
     validAmount=amount>=(withdraw ? MIN_WITHDRAWAL : 1) && amount<=1000000000000;
     if(withdraw)enough=!!me && amount<=Number(me.balance);
   } catch {}
-  $("walletSubmit").disabled=walletBusy || !online || !validAmount || !validNick ||
-    (withdraw && (!allowed || !settings || !enough)) ||
+  $("walletSubmit").disabled=walletBusy || !online ||
+    (withdraw && (!validAmount || !validNick || !allowed || !settings || !enough)) ||
     (!withdraw && !walletBot.deposit_automatic);
   if(walletBusy){
     $("walletSubmit").textContent="Submitting...";
@@ -5238,6 +5233,9 @@ function walletShow(kind){
   $("amount").required=kind!=="support";
   $("depositNickname").required=kind==="deposit";
   $("message").required=kind==="withdraw";
+  $("message").disabled=kind!=="withdraw";
+  $("depositNickname").disabled=kind!=="deposit";
+  $("ticketForm").noValidate=kind==="deposit";
   $("walletSettingsCheck").required=kind==="withdraw";
   updateTicketForm();
   if(kind==="support")void loadWalletSupportTickets();
@@ -5341,18 +5339,14 @@ $("walletSettingsCheck").addEventListener("change",updateTicketForm);
 $("amount").addEventListener("input",updateTicketForm);
 
 function updateTicketForm(){
-  let amount="AMOUNT";
-  try{amount=String(parseAmount($("amount").value));}catch{}
-  $("payCommand").textContent="/pay "+DEPOSIT_BEDROCK_NICK+" "+amount;
-  $("walletNickWarning").hidden=!!DEPOSIT_BEDROCK_NICK;
-  $("walletCopy").disabled=true; // Do not let players pay before a deposit ticket exists.
+  $("depositFeedback").hidden=true;
   renderWalletStatus();
 }
 $("depositCopy").onclick=async()=>{
   try{await navigator.clipboard.writeText($("depositCommand").textContent);toast("Payment command copied!");}
   catch{toast("Select and copy the payment command manually.");}
 };
-$("walletCopy").onclick=()=>toast("Create a deposit request before sending money.");
+
 $("kind").onchange=updateTicketForm;
 walletShow("deposit");
 
@@ -5367,6 +5361,7 @@ $("ticketForm").onsubmit=async e=>{
     if(!walletBot.checked||!walletBot.online)throw Error("Bot offline. Wait before making a transfer.");
     if(kind==="withdraw"&&!walletBot.withdraw_automatic)throw Error("Automatic withdrawals are paused.");
     if(kind==="deposit"&&!walletBot.deposit_automatic)throw Error("Automatic deposits are paused.");
+    if(kind==="deposit")$("depositFeedback").hidden=true;
     const amount=parseAmount($("amount").value);
     if(amount<1||amount>1000000000000)throw Error("Amount must be between 1 and 1T");
     if(kind==="withdraw"&&amount<MIN_WITHDRAWAL)throw Error("Minimum withdrawal is 1,000,000 credits.");
@@ -5378,7 +5373,10 @@ $("ticketForm").onsubmit=async e=>{
     if(kind==="deposit"){
       ticketMessage="[PAYMENT COMMAND] /pay "+DEPOSIT_BEDROCK_NICK+" "+amount+". [PLAYER MESSAGE] "+ticketMessage;
       // Ticket creation MUST complete before revealing the payment command.
+      $("depositFeedback").textContent="Creating your deposit request…";
+      $("depositFeedback").hidden=false;
       await api("tickets",{kind,amount,message:ticketMessage});
+      $("depositFeedback").hidden=true;
       void loadTickets().catch(err=>console.warn("Could not refresh ticket list",err));
       $("depositBreakdown").textContent="DEPOSIT REQUEST CREATED: "+walletMoney(amount)+" ("+amount.toLocaleString("en-US")+" credits)";
       $("depositCommand").textContent="/pay "+DEPOSIT_BEDROCK_NICK+" "+amount;
@@ -5410,7 +5408,12 @@ $("ticketForm").onsubmit=async e=>{
     await refresh();
     await loadWalletHistory();
   }catch(err){
-    toast(err.message);
+    if($("kind").value==="deposit"){
+      const feedback=$("depositFeedback");
+      feedback.textContent=err.message==="Invalid amount"?"Enter a deposit amount, for example 50K.":err.message;
+      feedback.hidden=false;
+      feedback.scrollIntoView({block:"nearest"});
+    }else toast(err.message);
   }finally{
     walletBusy=false;
     renderWalletStatus();
