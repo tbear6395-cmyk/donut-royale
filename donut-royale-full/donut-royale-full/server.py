@@ -737,7 +737,7 @@ class Handler(BaseHTTPRequestHandler):
                     user["invite_claimed"] = bool(db.execute("SELECT 1 FROM invite_claims WHERE player_id=?", (user["id"],)).fetchone())
                     invite = db.execute("SELECT code,used FROM invites WHERE owner_id=?", (user["id"],)).fetchone()
                 if invite:
-                    user.update(invite_code=invite["code"], invite_used=bool(invite["used"]))
+                    user.update(invite_code=None if invite["used"] else invite["code"], invite_used=bool(invite["used"]))
             return self.send_json(200, {"user": user})
         if path == "/api/casebattle/catalog":
             with db_open() as db:

@@ -2595,10 +2595,12 @@ aside .winter{box-shadow:inset 0 1px #fff2,0 10px 30px #0005,0 0 19px #e1bd7226}
 <section id="500k-free" class="invite-page" aria-labelledby="inviteTitle" hidden>
   <a href="#dashboard">← Lobby</a>
   <h1 id="inviteTitle">500K FREE</h1>
+  <div id="inviteShare">
   <p>Share your code with a friend. When they redeem it, you earn 500,000 credits.</p>
   <label for="profileInvite">Your one-time invite code</label>
   <div class="invite-actions"><input id="profileInvite" readonly><button id="copyInvite" type="button">Copy code</button></div>
   <p id="profileInviteStatus" role="status"></p>
+  </div>
   <form id="redeemInviteForm">
     <label for="friendCode">Redeem a friend's code</label>
     <div class="invite-actions"><input id="friendCode" required pattern="[A-Za-z0-9]{8}" maxlength="8" autocapitalize="characters" autocomplete="off" spellcheck="false"><button id="redeemInvite">Redeem code</button></div>
@@ -3526,11 +3528,7 @@ async function refresh(){
   $("topBalance").textContent = fmt(me.balance);
   updateWalletBalances();
   void staffRefreshPublicRules();
-  $("friendCode").disabled = $("redeemInvite").disabled = !!me.invite_claimed;
-  $("redeemStatus").textContent = me.invite_claimed ? "You have already redeemed a friend's code." : "The owner receives 500,000 credits.";
-  $("profileInvite").value = me.invite_code || "";
-  $("copyInvite").disabled = !me.invite_code || me.invite_used;
-  $("profileInviteStatus").textContent = me.invite_used ? "Redeemed · 500K credited" : "Available · Can be used once.";
+  renderInvite();
   $("displayName").textContent = me.username;
   $("role").textContent = me.role.toUpperCase();
 
@@ -4074,6 +4072,20 @@ async function staffRefreshPublicRules(){
   }catch(_){} // Public rules are noncritical during network interruptions.
 }
 
+function inviteComplete(){
+  return !!(me?.invite_used && me?.invite_claimed);
+}
+
+function renderInvite(){
+  $("inviteShare").hidden = !!me.invite_used;
+  $("redeemInviteForm").hidden = !!me.invite_claimed;
+  $("profileInvite").value = me.invite_used ? "" : (me.invite_code || "");
+  $("copyInvite").disabled = !$("profileInvite").value;
+  $("profileInviteStatus").textContent = "Available · Can be used once.";
+  $("redeemStatus").textContent = "The owner receives 500,000 credits.";
+  $("redeemInvite").disabled = !!me.invite_claimed;
+}
+
 function syncRanksPage(){
   const allowed=!!me && ["admin","owner"].includes(me.role);
   const owner=!!me && me.can_manage_staff;
@@ -4089,7 +4101,10 @@ function syncRanksPage(){
   $("staffOwnerTab").hidden=!owner;
   $("staffPage").classList.toggle("owner-view",owner);
   $("staffAccessBadge").textContent=owner?"♛ OWNER ACCESS":"🛡 STAFF ACCESS";
-  const inviteActive=!!me && location.hash==="#500k-free";
+  const showInvite = !!me && !inviteComplete();
+  document.querySelectorAll('a[href="#500k-free"]').forEach(link=>{link.hidden=!showInvite;});
+  if(me && !showInvite && location.hash==="#500k-free") location.replace("#dashboard");
+  const inviteActive=showInvite && location.hash==="#500k-free";
   $("500k-free").hidden=!inviteActive;
   const subpage=active||chatActive||staffActive||inviteActive;
   document.querySelector(".hero").hidden=subpage;
@@ -4110,8 +4125,9 @@ $("redeemInviteForm").onsubmit=async event=>{
     await api("invites/redeem",{invite_code:$("friendCode").value.trim()});
     me.invite_claimed=true;
     $("friendCode").value="";
-    $("friendCode").disabled=true;
-    $("redeemStatus").textContent="Code redeemed. Your friend received 500,000 credits.";
+    renderInvite();
+    syncRanksPage();
+    toast("Code redeemed. Your friend received 500,000 credits.");
   }catch(err){
     $("redeemStatus").textContent=err.message;
     $("redeemInvite").disabled=false;
@@ -5641,7 +5657,13 @@ setInterval(async()=>{
   depositSyncInProgress=true;
   try{
     const result=await api("me");
-    if(!result.user)return;
+    if(!me || result.user?.id !== me.id)return;
+    if((result.user.invite_used && !me.invite_used) || (result.user.invite_claimed && !me.invite_claimed)){
+      me.invite_used ||= result.user.invite_used;
+      me.invite_claimed ||= result.user.invite_claimed;
+      renderInvite();
+      syncRanksPage();
+    }
     const updated=Number(result.user.balance);
     if(!Number.isSafeInteger(updated) || updated===Number(me.balance))return;
     me.balance=updated;
