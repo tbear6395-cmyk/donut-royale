@@ -83,7 +83,7 @@ class SupportConsoleTests(unittest.TestCase):
 
         before = profile()
         code = before["invite_code"]
-        self.assertRegex(code, r"^[0-9]{8}$")
+        self.assertRegex(code, r"^(?=.*[A-Z])(?=.*[0-9])[A-Z0-9]{8}$")
         def register(name):
             return self.request("POST", "/api/register", body={
                 "username": name, "password": "test-password", "invite_code": code
@@ -101,6 +101,22 @@ class SupportConsoleTests(unittest.TestCase):
         self.assertEqual(len(players), 1)
         self.assertEqual(players[0]["balance"], 100_000)
         self.assertNotEqual(players[0]["code"], code)
+
+    def test_profile_redemption_and_legacy_code(self):
+        server.setup()
+        def code(person):
+            return self.request("GET", "/api/me", person)[1]["user"]["invite_code"]
+        def redeem(person, value):
+            return self.request("POST", "/api/invites/redeem", person, {"invite_code": value})[0]
+        with server.db_open() as db:
+            db.execute("UPDATE invites SET code='00134567' WHERE owner_id=(SELECT id FROM users WHERE username='TicketAdmin')")
+        server.setup()
+        self.assertEqual(code("TicketAdmin"), "AAB34567")
+        self.assertEqual(redeem("TicketAdmin", "00134567"), 400)
+        self.assertEqual(redeem("AnotherPlayer", "aab34567"), 200)
+        self.assertEqual(redeem("TicketOwner", "00134567"), 400)
+        self.assertEqual(redeem("AnotherPlayer", code("TicketOwner")), 400)
+        self.assertEqual(redeem("TicketAdmin", code("TicketOwner")), 200)
 
     def test_private_thread_and_anonymous_staff_replies(self):
         code, created = self.request("POST", "/api/tickets", "TicketPlayer",

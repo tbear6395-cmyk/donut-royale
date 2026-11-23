@@ -2595,10 +2595,15 @@ aside .winter{box-shadow:inset 0 1px #fff2,0 10px 30px #0005,0 0 19px #e1bd7226}
 <section id="500k-free" class="invite-page" aria-labelledby="inviteTitle" hidden>
   <a href="#dashboard">← Lobby</a>
   <h1 id="inviteTitle">500K FREE</h1>
-  <p>Share your code with a friend. When they enter it at registration, you earn 500,000 credits.</p>
+  <p>Share your code with a friend. When they redeem it, you earn 500,000 credits.</p>
   <label for="profileInvite">Your one-time invite code</label>
   <div class="invite-actions"><input id="profileInvite" readonly><button id="copyInvite" type="button">Copy code</button></div>
   <p id="profileInviteStatus" role="status"></p>
+  <form id="redeemInviteForm">
+    <label for="friendCode">Redeem a friend's code</label>
+    <div class="invite-actions"><input id="friendCode" required pattern="[A-Za-z0-9]{8}" maxlength="8" autocapitalize="characters" autocomplete="off" spellcheck="false"><button id="redeemInvite">Redeem code</button></div>
+    <p id="redeemStatus" role="status"></p>
+  </form>
 </section>
 
 <section id="staffPage" class="royal-staff-page" hidden>
@@ -3045,7 +3050,7 @@ aside .winter{box-shadow:inset 0 1px #fff2,0 10px 30px #0005,0 0 19px #e1bd7226}
       <label for="password">Password</label>
       <input id="password" type="password" required minlength="8" autocomplete="new-password" placeholder="Password (minimum 8 characters)">
       <label id="inviteRow" for="inviteCode">Friend’s invite code (optional)
-        <input id="inviteCode" type="text" inputmode="numeric" pattern="[0-9]{8}" maxlength="8" placeholder="8 digits">
+        <input id="inviteCode" type="text" autocapitalize="characters" pattern="[A-Za-z0-9]{8}" maxlength="8" placeholder="8-character code">
       </label>
       <label class="auth-check" id="ageRow">
         <input id="ageCheck" type="checkbox" required>
@@ -3521,6 +3526,8 @@ async function refresh(){
   $("topBalance").textContent = fmt(me.balance);
   updateWalletBalances();
   void staffRefreshPublicRules();
+  $("friendCode").disabled = $("redeemInvite").disabled = !!me.invite_claimed;
+  $("redeemStatus").textContent = me.invite_claimed ? "You have already redeemed a friend's code." : "The owner receives 500,000 credits.";
   $("profileInvite").value = me.invite_code || "";
   $("copyInvite").disabled = !me.invite_code || me.invite_used;
   $("profileInviteStatus").textContent = me.invite_used ? "Redeemed · 500K credited" : "Available · Can be used once.";
@@ -4096,6 +4103,20 @@ function syncRanksPage(){
   }
 }
 window.addEventListener("hashchange",syncRanksPage);
+$("redeemInviteForm").onsubmit=async event=>{
+  event.preventDefault();
+  $("redeemInvite").disabled=true;
+  try{
+    await api("invites/redeem",{invite_code:$("friendCode").value.trim()});
+    me.invite_claimed=true;
+    $("friendCode").value="";
+    $("friendCode").disabled=true;
+    $("redeemStatus").textContent="Code redeemed. Your friend received 500,000 credits.";
+  }catch(err){
+    $("redeemStatus").textContent=err.message;
+    $("redeemInvite").disabled=false;
+  }
+};
 $("copyInvite").onclick=async()=>{
   const field=$("profileInvite");
   try{

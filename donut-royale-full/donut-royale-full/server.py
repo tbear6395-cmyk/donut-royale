@@ -63,9 +63,16 @@ def db_open():
     db.execute("PRAGMA busy_timeout=30000")
     return db
 
+def upgraded_invite(code):
+    # A-J encode the first three digits without losing leading zeroes.
+    return "".join("ABCDEFGHIJ"[int(digit)] for digit in code[:3]) + code[3:]
+
+
 def issue_invite(db, owner_id):
     while True:
-        code = f"{secrets.randbelow(100_000_000):08d}"
+        code = (secrets.choice("KLMNPQRSTUVWXYZ")
+                + "".join(secrets.choice("ABCDEFGHJKLMNPQRSTUVWXYZ23456789") for _ in range(6))
+                + secrets.choice("23456789"))
         inserted = db.execute("""INSERT INTO invites(owner_id,code) VALUES (?,?)
                                  ON CONFLICT DO NOTHING""", (owner_id, code))
         if inserted.rowcount or db.execute("SELECT 1 FROM invites WHERE owner_id=?", (owner_id,)).fetchone():
@@ -76,6 +83,13 @@ def setup_invites(db):
     db.execute("""CREATE TABLE IF NOT EXISTS invites (
         owner_id BIGINT PRIMARY KEY REFERENCES users(id) ON DELETE CASCADE,
         code TEXT NOT NULL UNIQUE, used INTEGER NOT NULL DEFAULT 0)""")
+    db.execute("""CREATE TABLE IF NOT EXISTS invite_claims (
+        player_id BIGINT PRIMARY KEY REFERENCES users(id),
+        owner_id BIGINT NOT NULL UNIQUE REFERENCES users(id),
+        CHECK (player_id <> owner_id))""")
+    for invite in db.execute("SELECT code FROM invites WHERE substr(code,1,1) BETWEEN '0' AND '9'").fetchall():
+        old = invite["code"]
+        db.execute("UPDATE invites SET code=? WHERE code=?", (upgraded_invite(old), old))
     missing = db.execute("""SELECT id FROM users WHERE NOT EXISTS
                             (SELECT 1 FROM invites WHERE owner_id=users.id)""").fetchall()
     for user in missing:
@@ -84,6 +98,28 @@ def setup_invites(db):
 
 class InvalidInvite(ValueError):
     pass
+
+
+def redeem_invite(db, player_id, raw_code):
+    if not isinstance(raw_code, str) or not re.fullmatch(r"[A-Za-z0-9]{8}", raw_code.strip()):
+        raise InvalidInvite("Enter an 8-character invite code.")
+    code = raw_code.strip().upper()
+    if code.isdigit():
+        code = upgraded_invite(code)
+    invite = db.execute("SELECT owner_id FROM invites WHERE code=?", (code,)).fetchone()
+    if not invite:
+        raise InvalidInvite("Invite code not found.")
+    owner_id = invite["owner_id"]
+    if owner_id == player_id:
+        raise InvalidInvite("Enter a friend's code instead of your own.")
+    claimed = db.execute("UPDATE invites SET used=1 WHERE code=? AND used=0", (code,))
+    if not claimed.rowcount:
+        raise InvalidInvite("This invite code has already been used.")
+    claim = db.execute("""INSERT INTO invite_claims(player_id,owner_id) VALUES (?,?)
+                          ON CONFLICT DO NOTHING""", (player_id, owner_id))
+    if not claim.rowcount:
+        raise InvalidInvite("You have already used a friend's code.")
+    db.execute("UPDATE users SET balance=balance+500000 WHERE id=?", (owner_id,))
 
 
 def seed_extra_admin(db):
@@ -698,6 +734,7 @@ class Handler(BaseHTTPRequestHandler):
             user = self.me()
             if user:
                 with db_open() as db:
+                    user["invite_claimed"] = bool(db.execute("SELECT 1 FROM invite_claims WHERE player_id=?", (user["id"],)).fetchone())
                     invite = db.execute("SELECT code,used FROM invites WHERE owner_id=?", (user["id"],)).fetchone()
                 if invite:
                     user.update(invite_code=invite["code"], invite_used=bool(invite["used"]))
@@ -1144,8 +1181,6 @@ class Handler(BaseHTTPRequestHandler):
             if not 8 <= len(password) <= 128:
                 return self.fail(400, "Password must contain 8-128 characters")
             code = data.get("invite_code", "")
-            if not isinstance(code, str) or (code and not re.fullmatch(r"[0-9]{8}", code)):
-                return self.fail(400, "Enter the 8 digits of your friend's invite code")
             salt = secrets.token_hex(16)
             password_hash = pw_hash(password, salt)
             try:
@@ -1156,16 +1191,12 @@ class Handler(BaseHTTPRequestHandler):
                     if not cursor.rowcount:
                         return self.fail(409, "Username already exists")
                     user_id = cursor.fetchone()["id"] if USE_POSTGRES else cursor.lastrowid
-                    if code:
-                        claimed = db.execute("UPDATE invites SET used=1 WHERE code=? AND used=0", (code,))
-                        if claimed.rowcount != 1:
-                            raise InvalidInvite()
-                        db.execute("""UPDATE users SET balance=balance+500000
-                            WHERE id=(SELECT owner_id FROM invites WHERE code=?)""", (code,))
+                    if code != "":
+                        redeem_invite(db, user_id, code)
                     issue_invite(db, user_id)
                     token = create_session(db, user_id)
-            except InvalidInvite:
-                return self.fail(400, "This invite code is invalid or has already been used")
+            except InvalidInvite as err:
+                return self.fail(400, str(err))
             return self.send_json(200, {"ok": True}, self.cookie(token))
         if path == "/api/login":
             username = str(data.get("username", "")).strip()
@@ -1189,6 +1220,13 @@ class Handler(BaseHTTPRequestHandler):
         user = self.me()
         if not user:
             return self.fail(401, "Please log in")
+        if path == "/api/invites/redeem":
+            try:
+                with LOCK, db_open() as db:
+                    redeem_invite(db, user["id"], data.get("invite_code"))
+            except InvalidInvite as err:
+                return self.fail(400, str(err))
+            return self.send_json(200, {"ok": True})
         if path in ("/api/mines/start", "/api/mines/pick", "/api/mines/cashout"):
             with LOCK, db_open() as db:
                 if USE_POSTGRES:
