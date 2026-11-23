@@ -5379,13 +5379,16 @@ $("ticketForm").onsubmit=async e=>{
       ticketMessage="[PAYMENT COMMAND] /pay "+DEPOSIT_BEDROCK_NICK+" "+amount+". [PLAYER MESSAGE] "+ticketMessage;
       // Ticket creation MUST complete before revealing the payment command.
       await api("tickets",{kind,amount,message:ticketMessage});
-      await loadTickets();
+      void loadTickets().catch(err=>console.warn("Could not refresh ticket list",err));
       $("depositBreakdown").textContent="DEPOSIT REQUEST CREATED: "+walletMoney(amount)+" ("+amount.toLocaleString("en-US")+" credits)";
       $("depositCommand").textContent="/pay "+DEPOSIT_BEDROCK_NICK+" "+amount;
       $("depositConfirm").hidden=false;
-      await new Promise(resolve=>{
-        const accept=()=>{cleanup();resolve();};
-        const cancel=()=>{cleanup();resolve();};
+      const paid=await new Promise(resolve=>{
+        const accept=()=>{
+          if(!window.confirm("Have you already sent "+amount.toLocaleString("en-US")+" in-game credits to the Bedrock account "+DEPOSIT_BEDROCK_NICK+"? Only confirm if you have already paid."))return;
+          cleanup();resolve(true);
+        };
+        const cancel=()=>{cleanup();resolve(false);};
         const cleanup=()=>{
           $("depositAccept").removeEventListener("click",accept);
           $("depositCancel").removeEventListener("click",cancel);
@@ -5396,7 +5399,7 @@ $("ticketForm").onsubmit=async e=>{
       $("depositConfirm").hidden=true;
       $("amount").value="";
       walletClose();
-      toast("Deposit request created. Pay using the command shown; eligible payments credit automatically.");
+      toast(paid?"Confirmation recorded in this window. The bot still needs to verify the payment.":"Deposit request created. You chose to pay later.");
       return;
     }
     await api("tickets",{kind,amount,message:ticketMessage});
