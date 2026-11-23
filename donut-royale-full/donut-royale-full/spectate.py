@@ -36,14 +36,16 @@ def tables(game):
             elif game == "wheel":
                 if age > 95:
                     continue
-                state.update(choice=view["choice"], live=age < 5)
+                state.update(choice=view["choice"], pocket=view["pocket"], elapsed_ms=int(age*1000), live=age < 5)
                 if not state["live"]:
                     state["result"] = view["result"]
             else:
                 shown = min(int(age / 2.77), len(view["drops"]))
                 if age > len(view["drops"]) * 2.77 + 90:
                     continue
-                state.update(case=view["case"], rounds=len(view["drops"]),
+                state.update(case=view["case"], rounds=len(view["drops"]), pool=view["pool"], seed=view["seed"],
+                             rolling=view["drops"][shown] if shown < len(view["drops"]) else None,
+                             elapsed_ms=int(age*1000),
                              drops=view["drops"][:shown], live=shown < len(view["drops"]))
             result.append(state)
             if len(result) == 30:

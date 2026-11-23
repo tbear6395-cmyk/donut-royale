@@ -5,10 +5,7 @@ const symbols = {w:"♙♘♗♖♕♔", b:"♟♞♝♜♛♚"};
 const pieces = "pnbrqk";
 const names = ["pawn","knight","bishop","rook","queen","king"];
 const game = new Chess();
-let selected = null, promotion = null, engine = null, ready = false;
-let pending = false, failure = false, started = false, generation = 0;
-const wasmUrl = "https://unpkg.com/stockfish@17.1.0/src/stockfish-17.1-lite-single-03e3232.wasm";
-let binary = null;
+let selected=null, promotion=null, started=false;
 let account=null, hooks=null, match=null, lastMatch=null, busy=false, synced=false;
 let paint3D=null, use3D=true, lastMoveError="";
 const activeBet=()=>match?.outcome==="active";
@@ -24,7 +21,7 @@ function applyState(data,restore){
   synced=true;lastMatch=data.match?.id||null;hooks.balance(data.balance);
   if(!restore&&!match&&data.match?.outcome!=="active")return;
   if(!data.match){match=null;return;}
-  match=data.match;generation++;engine?.terminate();engine=null;ready=true;failure=false;pending=false;
+  match=data.match;
   selected=null;promotion=null;game.reset();
   for(const uci of match.moves)game.move({from:uci.slice(0,2),to:uci.slice(2,4),promotion:uci[4]});
 }
@@ -42,7 +39,7 @@ async function submit(action,body){
   finally{if(owner===account){busy=false;renderChess();}}
 }
 function pick(square){
-  if(!square||busy||!ready||promotion||game.turn()!=="w"||game.isGameOver()||(match&&!activeBet()))return;
+  if(!square||busy||!synced||!activeBet()||promotion||game.turn()!=="w"||game.isGameOver()||(match&&!activeBet()))return;
   const move=selected&&game.moves({square:selected,verbose:true}).find(m=>m.to===square);
   if(move?.promotion){promotion={from:selected,to:square};renderChess();return;}
   if(move){play(selected,square);return;}
@@ -58,8 +55,7 @@ function positionStatus(){
   if(game.isThreefoldRepetition())return "Draw · Threefold repetition";
   if(game.isInsufficientMaterial())return "Draw · Insufficient material";
   if(game.isDraw())return "Draw · Fifty-move rule";
-  if(failure)return "Engine could not load. Check your connection and retry.";
-  if(!ready)return "Loading Stockfish…";
+  if(!activeBet())return synced?"Enter your stake to start a match.":"Loading match…";
   if(promotion)return "Choose a promotion piece.";
   return game.turn()==="w"?(game.isCheck()?"Your king is in check":"Your move · White"):"Stockfish is thinking…";
 }
@@ -82,67 +78,28 @@ function renderChess(){
   byId("chessScene").hidden=!spatial;board.hidden=spatial;
   byId("chessView").hidden=!paint3D;byId("chessView").textContent=spatial?"Use 2D board":"Use 3D board";
   if(spatial)paint3D(game.board(),selected,moves);
-  byId("chessNew").disabled=busy;byId("chessNew").textContent=activeBet()?"Resign match":"New practice game";
+  byId("chessNew").disabled=busy;byId("chessNew").hidden=!activeBet();
   byId("chessStake").disabled=busy||activeBet();
   byId("chessBet").disabled=busy||!synced||activeBet();
-  let message="Practice · No credits at stake";
+  let message="";
   if(match){const payout=match.outcome==="win"?2*match.stake:match.outcome==="draw"?match.stake:0;
     message=activeBet()?"In play: "+credit(match.stake)+" credits":"Stake: "+credit(match.stake)+" · Returned: "+credit(payout);}
   byId("chessBank").textContent=lastMoveError||message;
   byId("chessTurn").textContent=positionStatus();
-  byId("chessPromotion").hidden=!promotion;byId("chessRetry").hidden=!failure;
+  byId("chessPromotion").hidden=!promotion;
   byId("chessMoves").textContent=game.history().map((s,i)=>i%2?s:(i/2+1)+". "+s).join(" ");
-}
-function think(){
-  if(!ready||pending||game.turn()!=="b"||game.isGameOver())return;
-  pending=true;
-  const moves=game.history({verbose:true}).map(m=>m.from+m.to+(m.promotion||""));
-  engine.postMessage("position startpos moves "+moves.join(" "));
-  engine.postMessage("go movetime 750");
-}
-async function launch(){
-  const token=++generation;
-  engine?.terminate();engine=null;ready=false;failure=false;pending=false;renderChess();
-  const fail=()=>{
-    if(token!==generation)return;
-    engine?.terminate();engine=null;ready=false;pending=false;failure=true;renderChess();
-  };
-  try{
-    if(!binary){
-      const response=await fetch(wasmUrl,{integrity:"sha256-fKMb7dFmFIkxocyE29jdnPABdE6ZlMryOjxv9JiNcIY=",signal:AbortSignal.timeout(45000)});
-      if(!response.ok)throw Error("Engine download failed");
-      binary=URL.createObjectURL(new Blob([await response.arrayBuffer()],{type:"application/wasm"}));
-    }
-    if(token!==generation)return;
-    engine=new Worker("/chess-worker.js#"+encodeURIComponent(binary));
-    engine.onerror=fail;
-    engine.onmessage=({data})=>{
-      if(token!==generation||typeof data!=="string")return;
-      if(data==="uciok"){
-        engine.postMessage("setoption name UCI_LimitStrength value true");
-        engine.postMessage("setoption name UCI_Elo value 1600");
-        engine.postMessage("ucinewgame");engine.postMessage("isready");
-      }else if(data==="readyok"){ready=true;renderChess();think();}
-      else if(data.startsWith("bestmove ")&&pending){
-        const move=data.split(" ")[1];pending=false;
-        try{game.move({from:move.slice(0,2),to:move.slice(2,4),promotion:move[4]});renderChess();}
-        catch{fail();}
-      }
-    };
-    engine.postMessage("uci");
-  }catch{fail();}
 }
 function play(from,to,promote){
   if(activeBet()){
     selected=null;promotion=null;
     void submit("move",{id:match.id,ply:match.moves.length,move:from+to+(promote||"")});return;
   }
-  game.move({from,to,promotion:promote});selected=null;promotion=null;renderChess();think();
+
 }
 export function openChess(options){
   const changed=account!==options.account;
   hooks=options;account=options.account;
-  if(changed){match=null;lastMatch=null;busy=false;synced=false;lastMoveError="";selected=null;promotion=null;game.reset();launch();}
+  if(changed){match=null;lastMatch=null;busy=false;synced=false;lastMoveError="";selected=null;promotion=null;game.reset();}
   if(!busy)void loadMatch(changed);
   if(started){renderChess();return;}
   started=true;
@@ -160,38 +117,95 @@ export function openChess(options){
     }
   };
   byId("chessPromotion").querySelector("button").onclick=()=>{if(promotion)play(promotion.from,promotion.to,byId("chessPromotion").querySelector("select").value);};
-  byId("chessRetry").onclick=launch;
   byId("chessNew").onclick=()=>{
-    if(busy)return;
-    if(activeBet()){if(confirm("Resign and lose your stake of "+credit(match.stake)+" credits?"))void submit("resign",{id:match.id,ply:match.moves.length});return;}
-    if(!match&&game.history().length&&!game.isGameOver()&&!confirm("Start a new chess game?"))return;
-    match=null;lastMoveError="";selected=null;promotion=null;game.reset();launch();
+    if(!busy&&activeBet()&&confirm("Resign and lose your stake of "+credit(match.stake)+" credits?"))
+      void submit("resign",{id:match.id,ply:match.moves.length});
   };
   renderChess();
 }
 
 const titles={wheel:"Roulette",casebattle:"Case Battles",blackjack:"Blackjack"};
 let watchSession=0;
-export function watch(kind){
+export function watch(kind,art){
   const session=++watchSession, select=byId("watchTable"),stage=byId("watchStage");
   let tables=[];
   const visible=()=>session===watchSession&&!byId("screen-spectate").hidden&&!byId("gameOverlay").hidden;
   byId("watchTitle").textContent="Spectate · "+titles[kind];
   byId("watchPicker").hidden=true;stage.textContent="Loading tables…";select.replaceChildren();
+  let mounted=null,fields={},info=null,phase=null;
+  function mount(table){
+    const selector={blackjack:".bj-casino-scene",wheel:".roulette-table",casebattle:".cb-arena"}[kind];
+    const scene=byId("screen-"+kind).querySelector(selector).cloneNode(true);
+    fields={};
+    for(const node of [scene,...scene.querySelectorAll("[id]")]){
+      if(node.id){fields[node.id]=node;node.removeAttribute("id");}
+    }
+    if(kind==="blackjack"){
+      fields.bjPlayer.replaceChildren();fields.bjDealer.replaceChildren();
+      fields.bjFlightLayer.replaceChildren();fields.bjPayoutPop.remove();
+      const label=scene.querySelector(".bj-player-zone .bj-zone-title");
+      label.firstChild.textContent="♠ "+table.player+" ";
+    }
+    const wrap=document.createElement("div");wrap.className="watch-"+kind;
+    info=document.createElement("strong");info.className="watch-info";
+    wrap.append(info,scene);stage.replaceChildren(wrap);mounted=table.id;phase=null;
+  }
+  function animatePart(node,end,ms,elapsed,easing){
+    node.style.transform=end;
+    if(typeof node.animate!=="function"||elapsed>=ms||window.matchMedia("(prefers-reduced-motion: reduce)").matches)return;
+    const start=end.startsWith("rotate")?"rotate(0deg)":"translateY(0px)";
+    const anim=node.animate([{transform:start},{transform:end}],{duration:ms,easing});
+    anim.currentTime=Math.max(0,elapsed);
+  }
   function draw(){
     const table=tables.find(t=>t.id===select.value);
-    stage.replaceChildren();
-    if(!table){stage.textContent="No active or recent tables. Waiting for a player…";return;}
-    const line=(text,tag="p")=>{const node=document.createElement(tag);node.textContent=text;stage.append(node);};
-    line((table.live?"LIVE":"FINISHED")+" · "+table.player+" · "+table.stake.toLocaleString()+" credits","strong");
-    if(kind==="wheel"){line("Bet on "+table.choice);line(table.live?"Ball spinning…":"Ball landed on "+table.result.toUpperCase());}
-    if(kind==="blackjack"){line("Dealer   "+table.dealer.join("  "));line("Player   "+table.cards.join("  "));line(table.live?"Waiting for the player’s move…":"Result: "+table.outcome);}
-    if(kind==="casebattle"){
-      line(table.case+" · "+table.drops.length+" / "+table.rounds+" rounds revealed");
-      let player=0,bot=0;
-      table.drops.forEach((d,i)=>{player+=d.player.value;bot+=d.bot.value;line((i+1)+". "+d.player.name+" ("+d.player.value+") vs "+d.bot.name+" ("+d.bot.value+")");});
-      line("Score   "+player+" — "+bot);
-      line(table.live?"Opening next case…":player>bot?"Player wins":"Royal Bot wins");
+    if(!table){mounted=null;stage.textContent="No active or recent tables. Waiting for a player…";return;}
+    if(mounted!==table.id)mount(table);
+    const header=(table.live?"LIVE":"FINISHED")+" · "+table.player+" · "+credit(table.stake)+" credits";
+    if(kind==="blackjack"){
+      info.textContent=header+" · "+(table.live?"Playing":table.outcome);
+      for(const [zone,ranks,node] of [["dealer",table.dealer,fields.bjDealer],["player",table.cards,fields.bjPlayer]]){
+        ranks.forEach((rank,i)=>{
+          const old=node.children[i];
+          if(old?.dataset.rank===rank)return;
+          const card=old||art.bjMakeCard(rank,zone,i);
+          if(rank!=="🂠")art.bjFlip(card,rank,zone,i);
+          if(!old)node.append(card);
+        });
+      }
+      fields.bjScore.textContent=table.score;fields.bjDealerScore.textContent=table.dealer_score??"?";
+    }else if(kind==="wheel"){
+      info.textContent=header+" · Bet on "+table.choice;
+      fields.rouletteCenterLabel.textContent=table.live?"BALL IN MOTION":"BALL LANDED ON";
+      fields.rouletteCenterValue.textContent=table.live?"SPINNING":table.result.toUpperCase();
+      fields.rouletteCenterValue.className="roulette-center-number"+(table.live?"":" is-result-"+table.result);
+      fields.rouletteCenterDetail.textContent="RED / BLACK";
+      if(phase!==table.live){
+        phase=table.live;const deg=1800+table.pocket*360/37;
+        animatePart(fields.rouletteBallTrack,"rotate("+deg+"deg)",5000,table.elapsed_ms,"cubic-bezier(.13,.66,.18,1)");
+      }
+    }else{
+      const shown=table.drops.length,round=table.live?shown:shown-1;
+      const roundKey=round+":"+table.live;
+      info.textContent=header+" · "+table.case+" · Round "+(round+1)+" / "+table.rounds;
+      if(phase===roundKey)return;
+      phase=roundKey;fields.cbPlayerName.textContent=table.player;
+      const drop=table.rolling||table.drops[round];
+      let scores=[];
+      for(const [side,key] of [["player","Player"],["bot","Bot"]]){
+        const history=fields["cb"+key+"History"];history.replaceChildren();
+        let score=0;
+        for(const [i,d] of table.drops.entries()){
+          const item=d[side];score+=item.value;
+          const row=document.createElement("div");row.textContent=(i+1)+". "+item.name+" · "+credit(item.value);history.prepend(row);
+        }
+        fields["cb"+key+"Score"].textContent=credit(score);scores.push(score);
+        if(drop){
+          const reel=art.cbReelPrepare(fields["cb"+key+"Reel"],drop[side],table.pool,table.seed+round*2+(side==="bot"?1:0));
+          animatePart(reel.track,"translateY(-"+reel.offset+"px)",2350,table.live?table.elapsed_ms-round*2770:2350,"cubic-bezier(.12,.66,.12,1)");
+        }
+      }
+      if(!table.live)info.textContent+=" · "+(scores[0]>scores[1]?"Player wins":"Royal Bot wins");
     }
   }
   select.onchange=draw;
@@ -202,11 +216,13 @@ export function watch(kind){
       if(!response.ok)throw Error();
       const data=await response.json();if(!visible())return;
       const previous=select.value;tables=data.tables;
-      select.replaceChildren(...tables.map(t=>new Option((t.live?"Live":"Finished")+" · "+t.player+" · "+t.id.slice(-4),t.id)));
+      const choices=tables.map(t=>[(t.live?"Live":"Finished")+" · "+t.player+" · "+t.id.slice(-4),t.id]);
+      if(select.length!==choices.length||choices.some(([label,id],i)=>select.options[i].value!==id||select.options[i].text!==label))
+        select.replaceChildren(...choices.map(([label,id])=>new Option(label,id)));
       if(tables.some(t=>t.id===previous))select.value=previous;
       byId("watchPicker").hidden=!tables.length;draw();
-    }catch{if(visible()){stage.textContent="Connection interrupted. Reconnecting…";byId("watchPicker").hidden=true;}}
-    if(visible())setTimeout(poll,1500);
+    }catch{if(visible()){mounted=null;stage.textContent="Connection interrupted. Reconnecting…";byId("watchPicker").hidden=true;}}
+    if(visible())setTimeout(poll,850);
   }
   poll();
 }

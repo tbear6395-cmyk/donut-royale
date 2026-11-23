@@ -1676,7 +1676,7 @@ class Handler(BaseHTTPRequestHandler):
                 hand["table"] = spectate.publish("blackjack", user["username"], {
                     "stake": hand["amount"], "cards": list(hand["player"]),
                     "dealer": list(hand["dealer"]) if finished else [hand["dealer"][0], "🂠"],
-                    "outcome": outcome
+                    "outcome": outcome, "score": player_score, "dealer_score": bj_score(hand["dealer"]) if finished else None
                 }, hand.get("table"))
                 return self.send_json(200,{"player":hand["player"],"dealer":hand["dealer"] if finished else [hand["dealer"][0], "🂠"],"player_score":player_score,"dealer_score":bj_score(hand["dealer"]) if finished else None,"outcome":outcome,"payout":payout,"amount":hand["amount"],"balance":balance,"all_in":hand["all_in"]})
         if path == "/api/game":
@@ -1724,10 +1724,10 @@ class Handler(BaseHTTPRequestHandler):
                     details = {"case": case_type, "case_name": CASE_BATTLE_CASES[case_type]["name"],
                                "case_price": selected_price,
                                "rounds": rounds, "amount": amount, "payout": amount * 2 if win else 0,
-                               "drops": drops, "player_score": player_score, "bot_score": bot_score}
+                               "reel_seed": secrets.randbits(30), "drops": drops, "player_score": player_score, "bot_score": bot_score}
                 else:
                     result = choice if win else ("black" if choice == "red" else "red")
-                    details = {"result": result}
+                    details = {"result": result, "pocket": 2*secrets.randbelow(18)+(1 if result=="red" else 2)}
                 profit = amount if win else -amount
                 db.execute("UPDATE users SET balance=balance+? WHERE id=?", (profit, user["id"]))
                 balance = row["balance"] + profit
@@ -1736,9 +1736,9 @@ class Handler(BaseHTTPRequestHandler):
                          {"case": case_type, "rounds": rounds} if game == "casebattle" else
                          {"choice": choice} if game in ("coinflip", "wheel") else {})
             if game == "wheel":
-                spectate.publish(game, user["username"], {"stake": amount, "choice": choice, "result": result})
+                spectate.publish(game, user["username"], {"stake": amount, "choice": choice, "result": result, "pocket": details["pocket"]})
             elif game == "casebattle":
-                spectate.publish(game, user["username"], {"stake": amount, "case": details["case_name"], "drops": drops})
+                spectate.publish(game, user["username"], {"stake": amount, "case": details["case_name"], "pool":case_battle_pool(case_type, selected_price), "seed":details["reel_seed"], "drops": drops})
             return self.send_json(200, {"win": win, "profit": profit, "balance": balance,
                                         "all_in": all_in, "payout_multiplier": 2, **details})
         return self.fail(404, "Not found")

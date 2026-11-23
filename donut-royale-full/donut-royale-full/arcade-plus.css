@@ -26,3 +26,13 @@
 .chess-stakes{display:grid;gap:9px;margin:15px 0;padding:14px;border:1px solid #686245;border-radius:10px;background:linear-gradient(145deg,#253c35,#182923)}
 .chess-stakes label{font-size:11px;letter-spacing:.14em;color:#e2cf9e}.chess-stakes input{width:100%;box-sizing:border-box;padding:10px;border-radius:6px;background:#11241e;border:1px solid #758972;color:white}
 .chess-side .chess-stakes button{margin:0;background:#e7c581;color:#24251b;font-weight:800}.chess-stakes small,.chess-stakes output{line-height:1.4;color:#d4ddcf}.chess-stakes output{font-weight:700}
+.game-window:has(#screen-chess:not([hidden])){width:min(1450px,99vw);max-height:98dvh;padding:clamp(8px,1.4vw,22px)}
+#screen-chess .chess-layout{display:grid;grid-template-columns:minmax(0,1fr) clamp(190px,19vw,255px);gap:clamp(10px,2vw,26px);align-items:start}
+#screen-chess .chess-table{width:min(100%,max(540px,calc(92dvh - 100px)));justify-self:center}
+#chessNew[hidden]{display:none!important}
+.game-window:has(#screen-spectate:not([hidden])){width:min(1100px,98vw);max-height:96dvh}
+#watchStage{padding:clamp(6px,1.2vw,15px)}#watchStage .watch-info{display:block;margin:0 0 12px}
+#watchStage .roulette-table{max-width:620px;margin:auto}#watchStage .cb-arena{margin:6px 0}
+#watchStage .bj-card3d{animation:watchDeal .22s ease-out}@keyframes watchDeal{from{opacity:0;transform:translateY(-10px)}}
+@media(max-width:720px){#gameOverlay:has(#screen-chess:not([hidden])){padding:2px}#screen-chess .chess-layout{grid-template-columns:100%}#screen-chess .chess-table{width:100%}}
+@media(prefers-reduced-motion:reduce){#watchStage .bj-card3d{animation:none}}
