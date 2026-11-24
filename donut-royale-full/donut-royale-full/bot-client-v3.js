@@ -97,7 +97,7 @@ async function poll() {
 function retry() {
   if(reconnectTimer)return;
   const delay=retryDelay;
-  retryDelay=Math.min(60000,delay*2);
+  retryDelay=Math.min(120000,delay*2);
   log('NOVE PRIPOJENI ZA',delay/1000,'s');
   reconnectTimer=setTimeout(()=>{reconnectTimer=null;connect();},delay);
 }
@@ -110,6 +110,7 @@ function connect() {
   function lost(reason) {
     if(client!==session)return;
     client=null;online=false;
+    if(/already online|request-join-cache/i.test(String(reason))) retryDelay=Math.max(60000,retryDelay);
     clearTimeout(joinTimer);
     log('SPOJENI UKONCENO:',reason);
     try{session.close();}catch(e){log('UZAVRENI SPOJENI:',e.message);}
@@ -119,8 +120,8 @@ function connect() {
   session.on('close',()=>lost('close'));
   session.on('disconnect',p=>lost(p?.message||'disconnect'));
   session.on('error',e=>lost(e.message));
-  session.on('join',()=>{
-    if(client!==session)return;
+  session.on('spawn',()=>{
+    if(client!==session||online)return;
     clearTimeout(joinTimer);online=true;retryDelay=5000;queueSnapshot='';
     log('DONUT ROYALE BOT v3 ONLINE');void flush();void poll();
   });
