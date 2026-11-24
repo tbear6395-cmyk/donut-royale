@@ -2568,6 +2568,21 @@ aside .winter{box-shadow:inset 0 1px #fff2,0 10px 30px #0005,0 0 19px #e1bd7226}
 .xmas-hero-present{filter:drop-shadow(0 0 12px #ffcc7977)}
 .xmas-snowflake{color:#fff!important;text-shadow:0 0 6px #d4f5ff}
 </style>
+<style id="christmas-max">
+header{box-shadow:inset 0 4px #e9c77c,inset 0 -4px #b52b42!important;background-image:linear-gradient(100deg,#173e30,#682337,#173e30)!important}
+.christmas-hero{background-image:radial-gradient(ellipse at 75% 35%,#266e50aa,transparent 65%),linear-gradient(125deg,#741e36,#143d30 60%,#173b2d)!important;border-color:#f4cf80!important;box-shadow:inset 0 0 50px #e6c47722,0 0 22px #e6c47733!important}
+.royale-hero-kicker{color:#ffe4a1!important}
+.xmas-event{background-image:radial-gradient(circle at 90% 10%,#a1374566,transparent 55%),linear-gradient(110deg,#174e38,#102f26)!important}
+.xmas-event-main::after{content:"🎄  🎁  🔔  ❄  ⭐  🎅  🎁  🎄";display:block;color:#ffe6a0;font-size:clamp(16px,2.3vw,30px);letter-spacing:4px;margin-top:12px;pointer-events:none}
+.winter{box-shadow:inset 0 0 0 2px #e5c477,0 0 14px #e5c47744!important}
+.winter-sidebar-icon{color:#fff3bf!important}
+#xmasSnowToggle{border:2px solid #f5d58c!important;background:#195b43!important;color:#fff!important}
+.xmas-snowflake{font-weight:bold;text-shadow:0 0 8px white!important}
+.xmas-bulb:nth-child(3n+1){background:#ffe28a!important;color:#ffe28a}
+.xmas-bulb:nth-child(3n+2){background:#ff5367!important;color:#ff5367}
+.xmas-bulb:nth-child(3n){background:#54e8a5!important;color:#54e8a5}
+.game-card{outline:2px solid #d8b66c99;outline-offset:-2px}
+</style>
 </head>
 
 <body>
@@ -5762,7 +5777,7 @@ refresh().catch(err=>toast(err.message));
 
   // Small fixed number of decorative flakes; never intercept clicks.
   const flakes = document.createDocumentFragment();
-  for (let i = 0; i < 38; i++) {
+  for (let i = 0; i < 65; i++) {
     const flake = document.createElement("span");
     flake.className = "xmas-snowflake";
     flake.textContent = i % 6 === 0 ? "✧" : "❄";
