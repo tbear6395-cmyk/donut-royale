@@ -1,0 +1,4 @@
+User-agent: *
+Disallow: /api/
+
+Sitemap: https://donut-royale.onrender.com/sitemap.xml

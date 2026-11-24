@@ -723,7 +723,7 @@ class Handler(BaseHTTPRequestHandler):
             return self.send_json(200, {"ok": True, "service": "donut-royale-bot"})
         if path == "/":
             path = "/index.html"
-        if path in ("/arcade-plus.js", "/chess-3d.js", "/arcade-plus.css", "/chess-rules.js", "/chess-worker.js", "/index.html", "/favicon.svg", "/game-thumbnails.webp", "/coinflip-thumbnail-hd.webp", "/coinflip-thumbnail-mobile.webp", "/lucky-dice-thumbnail-hd.webp", "/lucky-dice-thumbnail-mobile.webp", "/coin-heads.png", "/coin-tails.png", "/style.css", "/app.js", "/coin-sonic-hd.svg", "/coin-tails-hd.svg", "/bot-client-v3.js"):
+        if path in ("/robots.txt", "/sitemap.xml", "/arcade-plus.js", "/chess-3d.js", "/arcade-plus.css", "/chess-rules.js", "/chess-worker.js", "/index.html", "/favicon.svg", "/game-thumbnails.webp", "/coinflip-thumbnail-hd.webp", "/coinflip-thumbnail-mobile.webp", "/lucky-dice-thumbnail-hd.webp", "/lucky-dice-thumbnail-mobile.webp", "/coin-heads.png", "/coin-tails.png", "/style.css", "/app.js", "/coin-sonic-hd.svg", "/coin-tails-hd.svg", "/bot-client-v3.js"):
             file = BASE / path.lstrip("/")
             if not file.is_file():
                 return self.fail(404, "File not found")
