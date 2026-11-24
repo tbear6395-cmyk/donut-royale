@@ -7,6 +7,7 @@ const names = ["pawn","knight","bishop","rook","queen","king"];
 const game = new Chess();
 let selected=null, promotion=null, started=false;
 let account=null, hooks=null, match=null, lastMatch=null, busy=false, synced=false;
+let revision=0;
 let paint3D=null, use3D=true, lastMoveError="";
 const activeBet=()=>match?.outcome==="active";
 const credit=n=>Number(n).toLocaleString("en-US");
@@ -26,16 +27,17 @@ function applyState(data,restore){
   for(const uci of match.moves)game.move({from:uci.slice(0,2),to:uci.slice(2,4),promotion:uci[4]});
 }
 async function loadMatch(restore=false){
-  const owner=account;
-  try{const state=await request("state");if(owner===account)applyState(state,restore);}
-  catch{if(owner===account){synced=false;lastMoveError="Could not sync the stake. Reopen Chess to retry.";}}
-  if(owner===account)renderChess();
+  const owner=account, version=++revision;
+  try{const state=await request("state");if(owner===account&&version===revision)applyState(state,restore);}
+  catch{if(owner===account&&version===revision){synced=false;lastMoveError="Could not sync the stake. Reopen Chess to retry.";}}
+  if(owner===account&&version===revision)renderChess();
 }
 async function submit(action,body){
   if(busy)return;
-  const owner=account;busy=true;lastMoveError="";renderChess();
-  try{const data=await request(action,body);if(owner===account)applyState(data,true);}
-  catch(error){if(owner===account){lastMoveError=error.message;await loadMatch();}}
+  const owner=account, version=++revision;busy=true;lastMoveError="";renderChess();
+  try{const data=await request(action,body);if(owner===account&&version===revision)applyState(data,true);}
+  catch(error){if(owner===account){if(action==="move")game.undo();
+    lastMoveError=error.message;await loadMatch(true);}}
   finally{if(owner===account){busy=false;renderChess();}}
 }
 function pick(square){
@@ -49,7 +51,7 @@ function pick(square){
 
 function positionStatus(){
   if(match&&match.outcome!=="active")return ({win:"Checkmate · You win",lose:"Match lost",draw:"Draw"})[match.outcome];
-  if(busy)return "Processing match…";
+  if(busy)return game.turn()==="b"?"Waiting for the bot’s reply…":"Processing match…";
   if(game.isCheckmate())return game.turn()==="w"?"Checkmate · Stockfish wins":"Checkmate · You win";
   if(game.isStalemate())return "Draw · Stalemate";
   if(game.isThreefoldRepetition())return "Draw · Threefold repetition";
@@ -61,19 +63,7 @@ function positionStatus(){
 }
 function renderChess(){
   const board=byId("chessBoard"), moves=selected?game.moves({square:selected,verbose:true}):[];
-  const buttons=[];
-  for(const [row,rank] of game.board().entries())for(const [col,piece] of rank.entries()){
-    const square="abcdefgh"[col]+(8-row),button=document.createElement("button");
-    button.type="button";button.dataset.square=square;
-    button.classList.toggle("dark",Boolean((row+col)%2));
-    button.classList.toggle("selected",square===selected);
-    button.classList.toggle("legal",moves.some(m=>m.to===square));
-    button.setAttribute("aria-label",square+(piece?" "+(piece.color==="w"?"white ":"black ")+names[pieces.indexOf(piece.type)]:""));
-    if(piece){button.textContent=symbols[piece.color][pieces.indexOf(piece.type)];button.classList.toggle("white-piece",piece.color==="w");}
-    if(col===0||row===7){const mark=document.createElement("small");mark.textContent=(col===0?8-row:"")+(row===7?"abcdefgh"[col]:"");button.append(mark);}
-    buttons.push(button);
-  }
-  board.replaceChildren(...buttons);
+  drawSquares(board,game,selected,moves);
   const spatial=Boolean(paint3D&&use3D);
   byId("chessScene").hidden=!spatial;board.hidden=spatial;
   byId("chessView").hidden=!paint3D;byId("chessView").textContent=spatial?"Use 2D board":"Use 3D board";
@@ -89,8 +79,26 @@ function renderChess(){
   byId("chessPromotion").hidden=!promotion;
   byId("chessMoves").textContent=game.history().map((s,i)=>i%2?s:(i/2+1)+". "+s).join(" ");
 }
+function drawSquares(board,position,selected,moves,readOnly=false){
+  const buttons=[];
+  for(const [row,rank] of position.board().entries())for(const [col,piece] of rank.entries()){
+    const square="abcdefgh"[col]+(8-row),button=document.createElement("button");
+    if(readOnly)button.disabled=true;
+    button.type="button";button.dataset.square=square;
+    button.classList.toggle("dark",Boolean((row+col)%2));
+    button.classList.toggle("selected",square===selected);
+    button.classList.toggle("legal",moves.some(m=>m.to===square));
+    button.setAttribute("aria-label",square+(piece?" "+(piece.color==="w"?"white ":"black ")+names[pieces.indexOf(piece.type)]:""));
+    if(piece){button.textContent=symbols[piece.color][pieces.indexOf(piece.type)];button.classList.toggle("white-piece",piece.color==="w");}
+    if(col===0||row===7){const mark=document.createElement("small");mark.textContent=(col===0?8-row:"")+(row===7?"abcdefgh"[col]:"");button.append(mark);}
+    buttons.push(button);
+  }
+  board.replaceChildren(...buttons);
+}
 function play(from,to,promote){
   if(activeBet()){
+    if(busy||!synced)return;
+    game.move({from,to,promotion:promote});
     selected=null;promotion=null;
     void submit("move",{id:match.id,ply:match.moves.length,move:from+to+(promote||"")});return;
   }
@@ -124,7 +132,7 @@ export function openChess(options){
   renderChess();
 }
 
-const titles={wheel:"Roulette",casebattle:"Case Battles",blackjack:"Blackjack"};
+const titles={chess:"Chess",wheel:"Roulette",casebattle:"Case Battles",blackjack:"Blackjack"};
 let watchSession=0;
 export function watch(kind,art){
   const session=++watchSession, select=byId("watchTable"),stage=byId("watchStage");
@@ -135,8 +143,9 @@ export function watch(kind,art){
   let mounted=null,fields={},info=null,phase=null;
   function mount(table){
     const selector={blackjack:".bj-casino-scene",wheel:".roulette-table",casebattle:".cb-arena"}[kind];
-    const scene=byId("screen-"+kind).querySelector(selector).cloneNode(true);
+    const scene=kind==="chess"?document.createElement("div"):byId("screen-"+kind).querySelector(selector).cloneNode(true);
     fields={};
+    if(kind==="chess"){scene.className="watch-board";fields.board=scene;}
     for(const node of [scene,...scene.querySelectorAll("[id]")]){
       if(node.id){fields[node.id]=node;node.removeAttribute("id");}
     }
@@ -162,7 +171,22 @@ export function watch(kind,art){
     if(!table){mounted=null;stage.textContent="No active or recent tables. Waiting for a player…";return;}
     if(mounted!==table.id)mount(table);
     const header=(table.live?"LIVE":"FINISHED")+" · "+table.player+" · "+credit(table.stake)+" credits";
-    if(kind==="blackjack"){
+    if(kind==="chess"){
+      info.textContent=header+" · "+({active:"Playing",win:"White wins",lose:"Bot wins",draw:"Draw"})[table.outcome];
+      const count=table.moves.length;
+      if(phase===count)return;
+      const position=new Chess();
+      const apply=uci=>position.move({from:uci.slice(0,2),to:uci.slice(2,4),promotion:uci[4]});
+      const replay=phase!==null&&count===phase+2;
+      table.moves.slice(0,replay?-1:undefined).forEach(apply);
+      const board=fields.board;
+      drawSquares(board,position,null,[],true);
+      if(replay)setTimeout(()=>{
+        if(!visible()||mounted!==table.id||phase!==count||fields.board!==board)return;
+        apply(table.moves[count-1]);drawSquares(board,position,null,[],true);
+      },350);
+      phase=count;
+    }else if(kind==="blackjack"){
       info.textContent=header+" · "+(table.live?"Playing":table.outcome);
       for(const [zone,ranks,node] of [["dealer",table.dealer,fields.bjDealer],["player",table.cards,fields.bjPlayer]]){
         ranks.forEach((rank,i)=>{

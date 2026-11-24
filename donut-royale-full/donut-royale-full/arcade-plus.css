@@ -2,12 +2,12 @@
 .chess-knight{position:absolute;right:9%;bottom:4%;font:clamp(110px,13vw,200px)/1 Georgia,serif;color:#fce4b8;text-shadow:4px 5px #a17d52,0 14px 16px #0d1b25}
 .plus-heading{display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:8px;margin:14px 0}
 .plus-heading h2{margin:0}.chess-layout{display:grid;grid-template-columns:minmax(0,1fr) minmax(120px,.45fr);gap:18px;text-align:left}
-#chessBoard{display:grid;grid-template-columns:repeat(8,1fr);border:3px solid #203936;width:100%;aspect-ratio:1;align-self:start}
-#chessBoard button{position:relative;display:grid;place-items:center;min-width:0;padding:0;margin:0;border:0;border-radius:0;background:#e2e4c9;color:#151e22;font:clamp(20px,5.8vw,52px)/1 Georgia,serif;box-shadow:none}
-#chessBoard .dark{background:#67918a}#chessBoard .white-piece{color:white;text-shadow:0 1px 2px #102827,1px 0 1px #102827,-1px 0 1px #102827}
-#chessBoard .selected{box-shadow:inset 0 0 0 4px #ffe15e}
-#chessBoard .legal:after{content:"";position:absolute;width:22%;aspect-ratio:1;border-radius:50%;background:#164c5ebe}
-#chessBoard small{position:absolute;bottom:2px;left:3px;font:9px sans-serif;color:#183d3f;text-shadow:none}
+:is(#chessBoard,.watch-board){display:grid;grid-template-columns:repeat(8,1fr);border:3px solid #203936;width:100%;aspect-ratio:1;align-self:start}
+:is(#chessBoard,.watch-board) button{position:relative;display:grid;place-items:center;min-width:0;padding:0;margin:0;border:0;border-radius:0;background:#e2e4c9;color:#151e22;font:clamp(20px,5.8vw,52px)/1 Georgia,serif;box-shadow:none}
+:is(#chessBoard,.watch-board) .dark{background:#67918a}:is(#chessBoard,.watch-board) .white-piece{color:white;text-shadow:0 1px 2px #102827,1px 0 1px #102827,-1px 0 1px #102827}
+:is(#chessBoard,.watch-board) .selected{box-shadow:inset 0 0 0 4px #ffe15e}
+:is(#chessBoard,.watch-board) .legal:after{content:"";position:absolute;width:22%;aspect-ratio:1;border-radius:50%;background:#164c5ebe}
+:is(#chessBoard,.watch-board) small{position:absolute;bottom:2px;left:3px;font:9px sans-serif;color:#183d3f;text-shadow:none}
 .chess-side{align-self:start}.chess-side button,.plus-heading button,#watchPicker select{margin:5px;padding:8px 12px}
 #chessMoves{max-height:14em;overflow:auto;line-height:1.7;color:#bfced4}
 #watchStage{margin:16px auto;padding:20px;background:#132630;border:1px solid #47626d;border-radius:12px;text-align:left;min-height:125px}
@@ -21,7 +21,7 @@
 .game-grid .chess-cover .chess-knight{right:4%;bottom:7%;transform:rotate(-8deg);color:#ffe9b9;text-shadow:1px 1px #ceaa72,2px 2px #b28c55,3px 3px #917044,4px 4px #745332,5px 5px #533f2d,5px 12px 12px #101e18}
 #screen-chess .plus-heading h2{font-size:clamp(35px,5vw,62px);margin:0}
 #chessScene{display:block;width:100%;aspect-ratio:1.08;background:radial-gradient(ellipse,#324735,#121d1b 76%);border:1px solid #716342;border-radius:12px;touch-action:manipulation;cursor:pointer}
-#chessScene[hidden],#chessBoard[hidden],#chessView[hidden]{display:none!important}
+#chessScene[hidden],:is(#chessBoard,.watch-board)[hidden],#chessView[hidden]{display:none!important}
 .chess-table{min-width:0}#chessView{margin:8px 0;background:#233d38;color:#eadbb8}
 .chess-stakes{display:grid;gap:9px;margin:15px 0;padding:14px;border:1px solid #686245;border-radius:10px;background:linear-gradient(145deg,#253c35,#182923)}
 .chess-stakes label{font-size:11px;letter-spacing:.14em;color:#e2cf9e}.chess-stakes input{width:100%;box-sizing:border-box;padding:10px;border-radius:6px;background:#11241e;border:1px solid #758972;color:white}
@@ -36,3 +36,5 @@
 #watchStage .bj-card3d{animation:watchDeal .22s ease-out}@keyframes watchDeal{from{opacity:0;transform:translateY(-10px)}}
 @media(max-width:720px){#gameOverlay:has(#screen-chess:not([hidden])){padding:2px}#screen-chess .chess-layout{grid-template-columns:100%}#screen-chess .chess-table{width:100%}}
 @media(prefers-reduced-motion:reduce){#watchStage .bj-card3d{animation:none}}
+
+.watch-chess{width:min(100%,780px);margin:auto}.watch-board button:disabled{opacity:1;cursor:default}

@@ -215,7 +215,7 @@ def setup_postgres():
         seed_owner(db)
         seed_extra_admin(db)
         setup_invites(db)
-        chess_matches.setup(db)
+        chess_matches.setup(db, USE_POSTGRES)
         db.execute("DELETE FROM sessions WHERE expires<=?", (now().isoformat(),))
 
 def seed_owner(db):
@@ -327,7 +327,7 @@ def setup():
                            (name, salt, pw_hash(password, salt)))
         seed_extra_admin(db)
         setup_invites(db)
-        chess_matches.setup(db)
+        chess_matches.setup(db, USE_POSTGRES)
         db.execute("DELETE FROM sessions WHERE expires<=?", (now().isoformat(),))
 
 def _deposit_time(value):
@@ -779,6 +779,10 @@ class Handler(BaseHTTPRequestHandler):
             return self.send_json(200, result)
         if path.startswith("/api/spectate/"):
             game = path.rsplit("/", 1)[-1]
+            if game == "chess":
+                with db_open() as db:
+                    tables = chess_matches.spectator_tables(db)
+                return self.send_json(200, {"tables": tables})
             if game not in spectate.GAMES:
                 return self.fail(404, "Unknown table")
             return self.send_json(200, {"tables": spectate.tables(game)})

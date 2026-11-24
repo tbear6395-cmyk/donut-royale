@@ -4533,7 +4533,7 @@ function openGame(game){
   document.querySelectorAll(".game-screen")
     .forEach(s=>s.hidden=true);
 
-  $("spectateOpen").hidden=!["casebattle","blackjack","wheel"].includes(game);
+  $("spectateOpen").hidden=!["casebattle","blackjack","wheel","chess"].includes(game);
   $("spectateOpen").dataset.tableGame=game;
   if(game==="chess")import("/arcade-plus.js").then(m=>m.openChess({account:me.id, parseStake:parseAmount, balance:value=>minesBalance(value)})).catch(()=>{$("chessTurn").textContent="Board unavailable. Reopen to retry.";});
   $("screen-"+game).hidden = false;

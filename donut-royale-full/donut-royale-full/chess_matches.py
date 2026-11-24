@@ -8,6 +8,7 @@ import shutil
 import subprocess
 import tempfile
 import threading
+import time
 import urllib.request
 
 BASE = Path(__file__).resolve().parent
@@ -48,10 +49,24 @@ def warm():
     threading.Thread(target=prepare, daemon=True).start()
 
 
-def setup(db):
+def setup(db, postgres=False):
     db.execute("""CREATE TABLE IF NOT EXISTS chess_matches(
         user_id BIGINT PRIMARY KEY REFERENCES users(id), game_id TEXT NOT NULL,
         stake BIGINT NOT NULL, moves TEXT NOT NULL, outcome TEXT NOT NULL)""")
+
+    if postgres:
+        db.execute("ALTER TABLE chess_matches ADD COLUMN IF NOT EXISTS updated_at BIGINT NOT NULL DEFAULT 0")
+    elif not any(row["name"] == "updated_at" for row in db.execute("PRAGMA table_info(chess_matches)")):
+        db.execute("ALTER TABLE chess_matches ADD COLUMN updated_at BIGINT NOT NULL DEFAULT 0")
+
+
+def spectator_tables(db):
+    rows = db.execute("""SELECT game_id,username,stake,moves,outcome FROM chess_matches
+        JOIN users ON users.id=chess_matches.user_id WHERE outcome='active' OR updated_at>=?
+        ORDER BY updated_at DESC,game_id LIMIT 30""", (int(time.time())-90,)).fetchall()
+    return [dict(id=r["game_id"], player=r["username"][:1]+"...........", stake=r["stake"],
+                 moves=json.loads(r["moves"]), outcome=r["outcome"], live=r["outcome"]=="active")
+            for r in rows]
 
 
 def current(db, uid):
@@ -89,10 +104,10 @@ def handle(h, action, uid, body, srv):
             if not db.execute("UPDATE users SET balance=balance-? WHERE id=? AND balance>=?",
                               (stake, uid, stake)).rowcount:
                 return h.fail(400, "Insufficient credits")
-            db.execute("""INSERT INTO chess_matches(user_id,game_id,stake,moves,outcome)
-                VALUES(?,?,?,'[]','active') ON CONFLICT(user_id) DO UPDATE SET
-                game_id=excluded.game_id,stake=excluded.stake,moves='[]',outcome='active'""",
-                       (uid, secrets.token_hex(16), stake))
+            db.execute("""INSERT INTO chess_matches(user_id,game_id,stake,moves,outcome,updated_at)
+                VALUES(?,?,?,'[]','active',?) ON CONFLICT(user_id) DO UPDATE SET
+                game_id=excluded.game_id,stake=excluded.stake,moves='[]',outcome='active',updated_at=excluded.updated_at""",
+                       (uid, secrets.token_hex(16), stake, int(time.time())))
             result = state(db, uid)
         return h.send_json(200, result)
 
@@ -123,8 +138,8 @@ def handle(h, action, uid, body, srv):
         lock_user(db)
         if current(db, uid) != match:
             return h.fail(409, "Match changed. Reloading the board.")
-        db.execute("UPDATE chess_matches SET moves=?,outcome=? WHERE user_id=?",
-                   (json.dumps(moves), outcome, uid))
+        db.execute("UPDATE chess_matches SET moves=?,outcome=?,updated_at=? WHERE user_id=?",
+                   (json.dumps(moves), outcome, int(time.time()), uid))
         if outcome != "active":
             payout = match["stake"] * {"win": 2, "draw": 1, "lose": 0}[outcome]
             db.execute("UPDATE users SET balance=balance+? WHERE id=?", (payout, uid))
