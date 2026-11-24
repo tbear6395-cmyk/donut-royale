@@ -1,6 +1,8 @@
 'use strict';
 // Forward local console output to the read-only Royal Staff CMD panel when installed.
-require('./bot-console-forwarder.js');
+if (require('fs').existsSync(require('path').join(__dirname,'bot-console-forwarder.js'))) {
+  require('./bot-console-forwarder.js');
+}
 const bedrock = require('bedrock-protocol');
 const fs = require('fs');
 const crypto = require('crypto');
@@ -20,11 +22,12 @@ function persist() {
 }
 const log = (...x)=>console.log(new Date().toISOString(),...x);
 let online=false, pollBusy=false, flushing=false, capture=null, queueSnapshot='';
-const client=bedrock.createClient({
+let client=null, reconnectTimer=null, retryDelay=5000;
+const connectionOptions={
   host:'40.223.14.114',port:19132,username:'.LeXimJames7858',
   offline:false,profilesFolder:'./auth',raknetBackend:'raknet-native',
   useRaknetWorkers:false,skipPing:true
-});
+};
 async function api(path, body) {
   const r=await fetch(WEB_URL+path,{
     method:body===undefined?'GET':'POST',
@@ -59,9 +62,11 @@ function command(value) {
 const sleep=ms=>new Promise(resolve=>setTimeout(resolve,ms));
 async function poll() {
   if(!online||pollBusy)return;
+  const session=client;
   pollBusy=true;
   try {
     const q=await api('/api/bot/withdrawals/pending');
+    if(session!==client||!online)return;
     const snapshot=JSON.stringify(q);
     if(snapshot!==queueSnapshot){queueSnapshot=snapshot;log('WITHDRAW FRONTA:',q.mode,JSON.stringify(q.withdrawals));}
     // The operator has already selected exactly one diagnostic ticket on Render.
@@ -73,9 +78,9 @@ async function poll() {
     if(test&&(jobs.length!==1||!Number.isSafeInteger(job.amount)||job.amount<1||job.amount>100)){log('DIAGNOSTIKA: Neocekavany pozadavek; nic neposilam');return;}
     const claim=await api('/api/bot/withdrawals/claim',{ticket_id:job.ticket_id});
     const lines=[];
-    capture={lines,uuid:null};
+    capture={lines,uuid:null,session};
     try {
-      if(!online||!/^\.?[A-Za-z0-9_]{3,16}$/.test(claim.player)||!Number.isSafeInteger(claim.amount)||claim.amount<=0)throw Error('Neplatny nebo odpojeny vyber');
+      if(!online||session!==client||!/^\.?[A-Za-z0-9_]{3,16}$/.test(claim.player)||!Number.isSafeInteger(claim.amount)||claim.amount<=0)throw Error('Neplatny nebo odpojeny vyber');
       if(claim.ticket_id!==job.ticket_id||claim.amount!==job.amount||claim.player.toLowerCase()!==job.player.toLowerCase())throw Error('Nesouhlasi prevzaty vyber');
       log('WITHDRAW POKUS:',claim.ticket_id,claim.player,claim.amount);
       capture.uuid=command('/pay '+claim.player+' '+claim.amount);
@@ -89,26 +94,57 @@ async function poll() {
   }catch(e){log('WITHDRAW FRONTA:',e.message);}
   finally{pollBusy=false;}
 }
-client.on('join',()=>{online=true;log('DONUT ROYALE BOT v3 ONLINE');void flush();void poll();});
-client.on('text',p=>{
-  const msg=String(p.message||'').replace(/§[0-9a-fk-or]/gi,'').replace(/[\u00a0\u202f]/g,' ').trim();
-  log('CHAT ['+p.type+']',msg);
-  if(capture&&p.type==='system'&&msg.length<=500&&capture.lines.length<30)capture.lines.push(msg);
-  const m=msg.match(/^(\.?[A-Za-z0-9_]{3,16}) paid you \$\s*([0-9,]+(?:\.[0-9]+)?)\s*([KMBT])?$/i);
-  if(!m){if(/paid you|payment/i.test(msg))log('PLATEBNI ZPRAVA NEROZPOZNANA:',msg);return;}
-  if(p.type!=='system'){log('IGNOROVANA NESYSTEMOVA PLATBA');return;}
-  const amount=Number(m[2].replace(/,/g,''))*({'':1,K:1e3,M:1e6,B:1e9,T:1e12}[(m[3]||'').toUpperCase()]);
-  if(!Number.isSafeInteger(amount)||amount<=0||amount>1e12){log('NEPODPOROVANA PLATBA',amount);return;}
-  const entry={event_id:crypto.randomUUID(),player:m[1],amount,raw_message:msg,received_at:new Date().toISOString()};
-  outbox.push(entry);
-  try{persist();}catch(e){log('CHYBA ULOZENI DEPOSIT:',e.message);}
-  log('DEPOSIT PRIJAT:',m[1],amount,entry.event_id);
-  void flush();
-});
-client.on('command_output',p=>log('COMMAND OUTPUT:',JSON.stringify(p,(_,v)=>typeof v==='bigint'?v.toString():v)));
-client.on('disconnect',p=>{online=false;log('ODPOJEN:',p);});
-client.on('close',()=>{online=false;log('SPOJENI UKONCENO');});
-client.on('error',e=>log('CHYBA:',e.message));
+function retry() {
+  if(reconnectTimer)return;
+  const delay=retryDelay;
+  retryDelay=Math.min(60000,delay*2);
+  log('NOVE PRIPOJENI ZA',delay/1000,'s');
+  reconnectTimer=setTimeout(()=>{reconnectTimer=null;connect();},delay);
+}
+function connect() {
+  if(client)return;
+  let session;
+  try { session=bedrock.createClient(connectionOptions); }
+  catch(e){log('CHYBA PRIPOJENI:',e.message);retry();return;}
+  client=session;
+  function lost(reason) {
+    if(client!==session)return;
+    client=null;online=false;
+    clearTimeout(joinTimer);
+    log('SPOJENI UKONCENO:',reason);
+    try{session.close();}catch(e){log('UZAVRENI SPOJENI:',e.message);}
+    retry();
+  }
+  const joinTimer=setTimeout(()=>lost('prihlaseni vyprselo'),300000);
+  session.on('close',()=>lost('close'));
+  session.on('disconnect',p=>lost(p?.message||'disconnect'));
+  session.on('error',e=>lost(e.message));
+  session.on('join',()=>{
+    if(client!==session)return;
+    clearTimeout(joinTimer);online=true;retryDelay=5000;queueSnapshot='';
+    log('DONUT ROYALE BOT v3 ONLINE');void flush();void poll();
+  });
+  session.on('text',p=>{
+    if(client!==session)return;
+    const msg=String(p.message||'').replace(/§[0-9a-fk-or]/gi,'').replace(/[\u00a0\u202f]/g,' ').trim();
+    log('CHAT ['+p.type+']',msg);
+    if(capture?.session===session&&p.type==='system'&&msg.length<=500&&capture.lines.length<30)capture.lines.push(msg);
+    const m=msg.match(/^(\.?[A-Za-z0-9_]{3,16}) paid you \$\s*([0-9,]+(?:\.[0-9]+)?)\s*([KMBT])?$/i);
+    if(!m){if(/paid you|payment/i.test(msg))log('PLATEBNI ZPRAVA NEROZPOZNANA:',msg);return;}
+    if(p.type!=='system'){log('IGNOROVANA NESYSTEMOVA PLATBA');return;}
+    const amount=Number(m[2].replace(/,/g,''))*({'':1,K:1e3,M:1e6,B:1e9,T:1e12}[(m[3]||'').toUpperCase()]);
+    if(!Number.isSafeInteger(amount)||amount<=0||amount>1e12){log('NEPODPOROVANA PLATBA',amount);return;}
+    const entry={event_id:crypto.randomUUID(),player:m[1],amount,raw_message:msg,received_at:new Date().toISOString()};
+    outbox.push(entry);
+    try{persist();}catch(e){log('CHYBA ULOZENI DEPOSIT:',e.message);}
+    log('DEPOSIT PRIJAT:',m[1],amount,entry.event_id);
+    void flush();
+  });
+  session.on('command_output',p=>{
+    if(client===session)log('COMMAND OUTPUT:',JSON.stringify(p,(_,v)=>typeof v==='bigint'?v.toString():v));
+  });
+}
+connect();
 setInterval(()=>void flush(),5000);
 setInterval(()=>void poll(),15000);
 readline.createInterface({input:process.stdin,output:process.stdout,terminal:false}).on('line',line=>{
