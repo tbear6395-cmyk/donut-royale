@@ -5814,5 +5814,45 @@ refresh().catch(err=>toast(err.message));
 
 </script>
 
+
+<!-- Christmas music: visible official YouTube player -->
+<style>
+#christmas-music{position:fixed;right:12px;bottom:12px;z-index:9000;width:min(320px,calc(100vw - 24px));background:#102b31;color:white;border:1px solid #547b78;border-radius:12px;padding:8px;box-shadow:0 4px 20px #0006}
+#christmas-music button{width:100%;padding:8px;background:#17474a;color:white;border:1px solid #70928d;border-radius:8px;cursor:pointer;font:inherit}
+#christmas-music iframe{display:block;width:100%;height:200px;border:0;margin-top:8px}
+</style>
+<aside id="christmas-music" aria-label="Christmas music">
+<button id="christmas-music-toggle" type="button" aria-expanded="false">🔊 Christmas music: ON</button>
+<div id="christmas-music-player"></div>
+</aside>
+<script>
+(function(){
+ const button=document.getElementById('christmas-music-toggle');
+ const holder=document.getElementById('christmas-music-player');
+ let enabled=true;
+ try{enabled=localStorage.getItem('donut-christmas-music')!=='off';}catch(e){}
+ function render(){
+  button.textContent=enabled?'🔊 Christmas music: ON — turn off':'🔇 Christmas music: OFF — turn on';
+  button.setAttribute('aria-expanded',String(enabled));
+  holder.replaceChildren();
+  if(enabled){
+   const frame=document.createElement('iframe');
+   frame.title='Mariah Carey — All I Want for Christmas Is You';
+   frame.src='https://www.youtube.com/embed/yXQViqx6GMY?autoplay=1&loop=1&playlist=yXQViqx6GMY&playsinline=1';
+   frame.allow='autoplay; encrypted-media; picture-in-picture; fullscreen';
+   frame.allowFullscreen=true;
+   frame.referrerPolicy='strict-origin-when-cross-origin';
+   holder.appendChild(frame);
+  }
+ }
+ button.addEventListener('click',function(){
+  enabled=!enabled;
+  try{localStorage.setItem('donut-christmas-music',enabled?'on':'off');}catch(e){}
+  render();
+ });
+ render();
+})();
+</script>
+
 </body>
 </html>
