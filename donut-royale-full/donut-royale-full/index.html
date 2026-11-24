@@ -5815,42 +5815,23 @@ refresh().catch(err=>toast(err.message));
 </script>
 
 
-<!-- Christmas music: visible official YouTube player -->
-<style>
-#christmas-music{position:fixed;right:12px;bottom:12px;z-index:9000;width:min(320px,calc(100vw - 24px));background:#102b31;color:white;border:1px solid #547b78;border-radius:12px;padding:8px;box-shadow:0 4px 20px #0006}
-#christmas-music button{width:100%;padding:8px;background:#17474a;color:white;border:1px solid #70928d;border-radius:8px;cursor:pointer;font:inherit}
-#christmas-music iframe{display:block;width:100%;height:200px;border:0;margin-top:8px}
-</style>
-<aside id="christmas-music" aria-label="Christmas music">
-<button id="christmas-music-toggle" type="button" aria-expanded="false">🔊 Christmas music: ON</button>
-<div id="christmas-music-player"></div>
-</aside>
+<!-- Christmas music: public-domain recording from Wikimedia Commons -->
+<style>#christmas-music{position:fixed;right:12px;bottom:12px;z-index:9000;padding:8px;background:#102b31;color:white;border:1px solid #547b78;border-radius:12px}#christmas-music button{padding:8px;background:#17474a;color:white;border:1px solid #70928d;border-radius:8px;cursor:pointer;font:inherit}</style>
+<aside id="christmas-music"><button id="christmas-music-toggle" type="button">🔊 Play Christmas music</button><audio id="christmas-audio" loop preload="none" src="https://commons.wikimedia.org/wiki/Special:FilePath/Jingle_Bells_(2020)_-_Starlifter_and_Roots_in_Blue_-_United_States_Air_Force_Band_of_Mid-America.mp3"></audio></aside>
 <script>
 (function(){
- const button=document.getElementById('christmas-music-toggle');
- const holder=document.getElementById('christmas-music-player');
- let enabled=true;
- try{enabled=localStorage.getItem('donut-christmas-music')!=='off';}catch(e){}
- function render(){
-  button.textContent=enabled?'🔊 Christmas music: ON — turn off':'🔇 Christmas music: OFF — turn on';
-  button.setAttribute('aria-expanded',String(enabled));
-  holder.replaceChildren();
-  if(enabled){
-   const frame=document.createElement('iframe');
-   frame.title='Mariah Carey — All I Want for Christmas Is You';
-   frame.src='https://www.youtube.com/embed/yXQViqx6GMY?autoplay=1&loop=1&playlist=yXQViqx6GMY&playsinline=1';
-   frame.allow='autoplay; encrypted-media; picture-in-picture; fullscreen';
-   frame.allowFullscreen=true;
-   frame.referrerPolicy='strict-origin-when-cross-origin';
-   holder.appendChild(frame);
-  }
- }
- button.addEventListener('click',function(){
-  enabled=!enabled;
-  try{localStorage.setItem('donut-christmas-music',enabled?'on':'off');}catch(e){}
-  render();
- });
- render();
+const a=document.getElementById('christmas-audio'),b=document.getElementById('christmas-music-toggle');
+let enabled=true;try{enabled=localStorage.getItem('donut-christmas-music')!=='off'}catch(e){}
+a.volume=.3;
+function sync(){b.textContent=!a.paused?'🔊 Music: ON — turn off':'🔇 Music: OFF — turn on';}
+function play(){if(enabled&&a.paused)a.play().catch(sync)}
+function retry(e){if(!b.contains(e.target))play()}
+document.addEventListener('click',retry);
+document.addEventListener('keydown',retry);
+a.addEventListener('play',()=>{sync();document.removeEventListener('click',retry);document.removeEventListener('keydown',retry)});
+a.addEventListener('pause',sync);
+b.addEventListener('click',()=>{enabled=a.paused;try{localStorage.setItem('donut-christmas-music',enabled?'on':'off')}catch(e){} if(enabled)play();else a.pause();sync()});
+sync();play();
 })();
 </script>
 
