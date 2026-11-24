@@ -2626,14 +2626,6 @@ header{box-shadow:inset 0 4px #e9c77c,inset 0 -4px #b52b42!important;background-
   <button data-game="casebattle">📦 Case Battle</button>
   <button data-game="chess">♞ Chess</button>
   <button data-game="mines">💎 Mines</button>
-  <h4>FREE ARCADE · 3D</h4>
-  <button type="button" data-free-arcade="0">🚀 Rocket</button>
-  <button type="button" data-free-arcade="1">🔮 Marble Maze</button>
-  <button type="button" data-free-arcade="2">🗼 Tower Climb</button>
-  <button type="button" data-free-arcade="3">🐔 Chicken Crossing</button>
-  <button type="button" data-free-arcade="4">🎨 Color Match</button>
-  <button type="button" data-free-arcade="5">✊ Hand Duel</button>
-  <button type="button" data-free-arcade="6">🔢 Number Memory</button>
   <h4>WALLET</h4>
   <button type="button" id="walletSide">💸 Deposit / Withdraw</button>
   <a href="#myTickets">📋 Transaction Requests</a>
@@ -5919,25 +5911,6 @@ refresh().catch(err=>toast(err.message));
   play();
 })();
 </script>
-<style>
-#freeArcade{color:#fff;background:#101d30;border:1px solid #607eaa;border-radius:20px;padding:20px;width:min(540px,90vw);max-height:90vh;overflow:auto;box-shadow:0 24px 80px #000a}#freeArcade::backdrop{background:#000b}#faStage{height:260px;position:relative;overflow:hidden;perspective:650px;background:radial-gradient(ellipse at top,#304d83,#101828 75%);border-radius:14px;display:grid;place-items:center}#faWorld{display:grid;grid-template-columns:repeat(3,1fr);gap:12px;transform:rotateX(22deg) rotateZ(-4deg);transform-style:preserve-3d;width:75%}#faWorld button{font-size:30px;min-height:56px;border:1px solid #a7c7ff;background:linear-gradient(145deg,#466ca5,#192d50);color:white;border-radius:12px;box-shadow:0 8px 0 #0a1428,0 14px 18px #0008;transition:transform .18s;cursor:pointer}#faWorld button:active{transform:translateZ(-8px)}#faWorld button.hit{background:#26865f;transform:translateZ(25px)}#faWorld button.miss{background:#a23850}#faActions{display:flex;gap:8px;flex-wrap:wrap;margin-top:16px}#faActions button,#faClose{padding:10px 16px;border-radius:9px;border:1px solid #7797c5;background:#243d62;color:white;cursor:pointer}#faClose{float:right}#faScore{color:#f5d47a}
-</style>
-<dialog id="freeArcade"><button id="faClose" type="button">✕</button><h2 id="faTitle"></h2><p id="faHelp"></p><p id="faScore" aria-live="polite"></p><div id="faStage"><div id="faWorld"></div></div><div id="faActions"></div><p>Free play · score only</p></dialog>
-<script>
-(()=>{
-const names=["Rocket","Marble Maze","Tower Climb","Chicken Crossing","Color Match","Hand Duel","Number Memory"], d=document.getElementById("freeArcade"),w=document.getElementById("faWorld"),a=document.getElementById("faActions"),scoreEl=document.getElementById("faScore");let mode=0,score=0,round=0,target=0,sequence=[],cursor=0,token=0,position=0;
-const rand=n=>Math.floor(Math.random()*n);
-function status(t=""){scoreEl.textContent="Score: "+score+" · Round: "+round+" "+t}
-function btn(parent,label,fn){const b=document.createElement("button");b.type="button";b.textContent=label;b.onclick=fn;parent.append(b);return b}
-function grid(labels,fn){w.replaceChildren();labels.forEach((x,i)=>btn(w,x,()=>fn(i)))}
-function next(){const current=++token;round++;a.replaceChildren();status();const icons=["🚀","🔮","🧱","🐔","🎨","✊","🔢"];document.getElementById("faHelp").textContent=["Choose the glowing launch pad.","Guide the marble to the marked exit.","Find the highlighted step to climb.","Choose the clear crossing lane.","Match the displayed color.","Choose rock, paper or scissors against the computer.","Memorize the sequence, then repeat it."][mode];
-if(mode===5){grid(["✊","✋","✌️"],i=>{const cpu=rand(3);const win=(i-cpu+3)%3===1;score+=win?1:0;status("Computer: "+["✊","✋","✌️"][cpu]+(win?" · Win":i===cpu?" · Draw":" · Try again"));w.querySelectorAll("button").forEach(b=>b.disabled=true);btn(a,"Next",next)});return}
-if(mode===6){sequence=Array.from({length:Math.min(3+Math.floor(round/3),7)},()=>rand(9));cursor=0;grid(Array.from({length:9},(_,i)=>String(i+1)),i=>{if(i!==sequence[cursor]){status("Incorrect");finish();return}cursor++;if(cursor===sequence.length){score++;status("Correct!");finish()}});w.querySelectorAll("button").forEach(b=>b.disabled=true);status("Remember: "+sequence.map(i=>i+1).join(" – "));setTimeout(()=>{if(current!==token||!d.open)return;status("Repeat the sequence");w.querySelectorAll("button").forEach(b=>b.disabled=false)},2200);return}
-target=rand(9);const colors=["🔴","🟡","🟢","🔵","🟣","🟠","⚪","🟤","⚫"];grid(Array.from({length:9},(_,i)=>mode===4?colors[i]:i===target?icons[mode]:"◇"),i=>{const b=w.children[i];b.classList.add(i===target?"hit":"miss");if(i===target)score++;status(i===target?"Success!":"Try again");finish()});if(mode===4)status("Find "+colors[target]);else w.children[target].classList.add("hit");
-}
-function finish(){w.querySelectorAll("button").forEach(b=>b.disabled=true);btn(a,"Next round",next)}
-document.querySelectorAll("[data-free-arcade]").forEach(b=>b.addEventListener("click",()=>{mode=Number(b.dataset.freeArcade);score=0;round=0;document.getElementById("faTitle").textContent=names[mode];if(!d.open)d.showModal();next()}));document.getElementById("faClose").onclick=()=>d.close();d.addEventListener("close",()=>token++);
-})();
-</script>
+
 </body>
 </html>
