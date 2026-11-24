@@ -133,6 +133,32 @@ export function openChess(options){
 }
 
 const titles={chess:"Chess",wheel:"Roulette",casebattle:"Case Battles",blackjack:"Blackjack"};
+let spectatorBoard;
+function getSpectatorBoard(){
+  if(spectatorBoard)return spectatorBoard;
+  const scene=document.createElement("div"), board=document.createElement("div");
+  const canvas=document.createElement("canvas"), toggle=document.createElement("button");
+  board.className="watch-board";canvas.className="watch-scene";toggle.className="watch-view";
+  canvas.setAttribute("aria-label","Spectator chessboard in 3D");
+  canvas.hidden=true;toggle.type="button";toggle.hidden=true;
+  scene.append(toggle,canvas,board);
+  let position=null,paint=null;
+  function render(current){
+    position=current;
+    const spatial=Boolean(paint&&use3D);
+    board.hidden=spatial;canvas.hidden=!spatial;
+    toggle.textContent=spatial?"Use 2D board":"Use 3D board";
+    if(!position)return;
+    if(spatial)paint(position.board(),null,[]);
+    else drawSquares(board,position,null,[],true);
+  }
+  toggle.onclick=()=>{use3D=!use3D;render(position);};
+  import("./chess-3d.js").then(({createBoard})=>{
+    paint=createBoard(canvas);toggle.hidden=false;render(position);
+  }).catch(()=>{toggle.hidden=true;});
+  spectatorBoard={scene,render};
+  return spectatorBoard;
+}
 let watchSession=0;
 export function watch(kind,art){
   const session=++watchSession, select=byId("watchTable"),stage=byId("watchStage");
@@ -143,9 +169,9 @@ export function watch(kind,art){
   let mounted=null,fields={},info=null,phase=null;
   function mount(table){
     const selector={blackjack:".bj-casino-scene",wheel:".roulette-table",casebattle:".cb-arena"}[kind];
-    const scene=kind==="chess"?document.createElement("div"):byId("screen-"+kind).querySelector(selector).cloneNode(true);
+    const scene=kind==="chess"?getSpectatorBoard().scene:byId("screen-"+kind).querySelector(selector).cloneNode(true);
     fields={};
-    if(kind==="chess"){scene.className="watch-board";fields.board=scene;}
+
     for(const node of [scene,...scene.querySelectorAll("[id]")]){
       if(node.id){fields[node.id]=node;node.removeAttribute("id");}
     }
@@ -179,11 +205,11 @@ export function watch(kind,art){
       const apply=uci=>position.move({from:uci.slice(0,2),to:uci.slice(2,4),promotion:uci[4]});
       const replay=phase!==null&&count===phase+2;
       table.moves.slice(0,replay?-1:undefined).forEach(apply);
-      const board=fields.board;
-      drawSquares(board,position,null,[],true);
+      const view=getSpectatorBoard();
+      view.render(position);
       if(replay)setTimeout(()=>{
-        if(!visible()||mounted!==table.id||phase!==count||fields.board!==board)return;
-        apply(table.moves[count-1]);drawSquares(board,position,null,[],true);
+        if(!visible()||mounted!==table.id||phase!==count)return;
+        apply(table.moves[count-1]);view.render(position);
       },350);
       phase=count;
     }else if(kind==="blackjack"){

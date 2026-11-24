@@ -20,9 +20,9 @@
 .game-grid .game-card.chess-cover .game-title{position:absolute!important;transform:none!important;top:14%!important;left:7%!important;right:auto!important;bottom:auto!important;font-size:clamp(38px,4.2vw,76px)!important;line-height:1!important;z-index:3}
 .game-grid .chess-cover .chess-knight{right:4%;bottom:7%;transform:rotate(-8deg);color:#ffe9b9;text-shadow:1px 1px #ceaa72,2px 2px #b28c55,3px 3px #917044,4px 4px #745332,5px 5px #533f2d,5px 12px 12px #101e18}
 #screen-chess .plus-heading h2{font-size:clamp(35px,5vw,62px);margin:0}
-#chessScene{display:block;width:100%;aspect-ratio:1.08;background:radial-gradient(ellipse,#324735,#121d1b 76%);border:1px solid #716342;border-radius:12px;touch-action:manipulation;cursor:pointer}
-#chessScene[hidden],:is(#chessBoard,.watch-board)[hidden],#chessView[hidden]{display:none!important}
-.chess-table{min-width:0}#chessView{margin:8px 0;background:#233d38;color:#eadbb8}
+#chessScene,.watch-scene{display:block;width:100%;aspect-ratio:1.08;background:radial-gradient(ellipse,#324735,#121d1b 76%);border:1px solid #716342;border-radius:12px;touch-action:manipulation;cursor:pointer}
+#chessScene[hidden],.watch-scene[hidden],.watch-view[hidden],:is(#chessBoard,.watch-board)[hidden],#chessView[hidden]{display:none!important}
+.chess-table{min-width:0}#chessView,.watch-view{margin:8px 0;background:#233d38;color:#eadbb8}
 .chess-stakes{display:grid;gap:9px;margin:15px 0;padding:14px;border:1px solid #686245;border-radius:10px;background:linear-gradient(145deg,#253c35,#182923)}
 .chess-stakes label{font-size:11px;letter-spacing:.14em;color:#e2cf9e}.chess-stakes input{width:100%;box-sizing:border-box;padding:10px;border-radius:6px;background:#11241e;border:1px solid #758972;color:white}
 .chess-side .chess-stakes button{margin:0;background:#e7c581;color:#24251b;font-weight:800}.chess-stakes small,.chess-stakes output{line-height:1.4;color:#d4ddcf}.chess-stakes output{font-weight:700}
@@ -38,3 +38,5 @@
 @media(prefers-reduced-motion:reduce){#watchStage .bj-card3d{animation:none}}
 
 .watch-chess{width:min(100%,780px);margin:auto}.watch-board button:disabled{opacity:1;cursor:default}
+
+.watch-scene{cursor:default}

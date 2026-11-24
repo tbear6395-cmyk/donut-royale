@@ -41,15 +41,43 @@ export function createBoard(canvas, select){
   const horse=new T.Shape();horse.moveTo(-.22,0);for(const [x,y] of [[-.18,.23],[-.07,.5],[-.05,.63],[.04,.59],[.09,.7],[.13,.54],[.30,.36],[.27,.27],[.15,.26],[.04,.32],[.01,.19],[.16,0]])horse.lineTo(x,y);
   horse.closePath();
   const horseGeo=new T.ExtrudeGeometry(horse,{depth:.17,bevelEnabled:true,bevelThickness:.035,bevelSize:.035,bevelSegments:2,steps:1});horseGeo.center();
+  const tower=lathe([[0,0],[.34,0],[.355,.055],[.33,.11],[.27,.16],[.275,.21],
+    [.23,.25],[.202,.64],[.24,.68],[.29,.71],[.315,.77],[.315,.83],[.20,.83],[.20,.76],[0,.76]]);
+  // A hollow parapet with curved merlons and open gaps around the rim.
+  const merlon=new T.Shape(), arc=.34;
+  merlon.absarc(0,0,.311,-arc,arc,false);
+  merlon.absarc(0,0,.213,arc,-arc,true);merlon.closePath();
+  const merlonGeo=new T.ExtrudeGeometry(merlon,{depth:.13,bevelSize:.009,bevelThickness:.009,bevelSegments:2});
+  merlonGeo.rotateX(-Math.PI/2);
+
+  // Two lobes make the diagonal mitre cut visible against the board.
+  const tip=new T.Shape();
+  tip.moveTo(-.074,.035);tip.quadraticCurveTo(-.27,.18,-.18,.34);
+  tip.quadraticCurveTo(-.10,.49,0,.60);tip.quadraticCurveTo(.075,.50,.11,.434);
+  tip.lineTo(-.074,.035);
+  const cheek=new T.Shape();
+  cheek.moveTo(-.025,.018);cheek.lineTo(.154,.36);
+  cheek.quadraticCurveTo(.305,.14,.084,.018);cheek.closePath();
+  const mitre=[tip,cheek].map(profile=>{
+    const geo=new T.ExtrudeGeometry(profile,{depth:.14,bevelSize:.018,bevelThickness:.045,bevelSegments:4});
+    geo.translate(0,0,-.07);return geo;
+  });
   const templates={};
   for(const color of ["w","b"])for(const type of "pnbrqk"){
     const g=new T.Group(),m=color==="w"?ivory:obsidian,band=color==="w"?lightBand:darkBand;
-    mesh(body,m,g,0,0,0);mesh(collar,band,g,0,.14,0);
+    mesh(type==="r"?tower:body,m,g,0,0,0);mesh(collar,band,g,0,.14,0);
     const part=(shape,material,x,y,z,sx,sy,sz)=>{const o=mesh(shape,material,g,x,y,z);o.scale.set(sx,sy,sz);return o;};
     if(type==="p")part(orb,m,0,.64,0,.205,.205,.205);
     if(type==="n"){const n=mesh(horseGeo,m,g,0,.78,0);n.rotation.y=color==="w"?-.35:2.8;}
-    if(type==="b"){part(orb,m,0,.72,0,.195,.30,.195);part(orb,band,0,1.03,0,.055,.055,.055);const slash=part(cube,band,.052,.80,.16,.033,.17,.022);slash.rotation.z=-.42;}
-    if(type==="r"){part(cylinder,m,0,.65,0,.235,.23,.235);for(let i=0;i<6;i++){const a=i*Math.PI/3;part(cube,m,.19*Math.cos(a),.82,.19*Math.sin(a),.105,.15,.11).rotation.y=-a;}}
+    if(type==="b"){
+      part(collar,band,0,.565,0,.84,1,.84);
+      for(const half of mitre)mesh(half,m,g,0,.575,0);
+      part(orb,band,0,1.215,0,.045,.052,.045);
+    }
+    if(type==="r"){
+      part(collar,band,0,.693,0,1.09,.68,1.09);
+      for(let i=0;i<6;i++)mesh(merlonGeo,m,g,0,.83,0).rotation.y=i*Math.PI/3;
+    }
     if(type==="q"||type==="k"){
       part(cylinder,m,0,.68,0,.17,.28,.17);part(collar,band,0,.81,0,.93,1,.93);
       if(type==="q"){for(let i=0;i<7;i++){const a=i*Math.PI*2/7;part(orb,m,.15*Math.cos(a),.91,.15*Math.sin(a),.062,.125,.062);}part(orb,band,0,1.02,0,.075,.085,.075);}
@@ -59,7 +87,7 @@ export function createBoard(canvas, select){
   }
   let pieces=new T.Group();scene.add(pieces);
   const pointer=new T.Vector2(),ray=new T.Raycaster();
-  canvas.addEventListener("click",e=>{
+  if(select)canvas.addEventListener("click",e=>{
     const rect=canvas.getBoundingClientRect();pointer.set((e.clientX-rect.left)/rect.width*2-1,1-(e.clientY-rect.top)/rect.height*2);
     ray.setFromCamera(pointer,camera);
     const hit=ray.intersectObjects([...pieces.children,...board],true)[0];let obj=hit?.object;
