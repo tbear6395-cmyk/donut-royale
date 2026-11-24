@@ -344,6 +344,15 @@ def withdrawal_test_ticket():
     return int(value) if re.fullmatch(r"[1-9][0-9]{0,17}", value) else None
 
 
+# Minecraft confirms /pay with the recipient and amount, without a ticket ID.
+# Keep one send in flight and quarantine ambiguous payments with the same signature.
+WITHDRAWAL_BLOCKED = """EXISTS (
+    SELECT 1 FROM withdraw_attempts old JOIN tickets prior ON prior.id=old.ticket_id
+    WHERE old.status='claimed' OR (old.status='needs_review'
+        AND prior.amount=t.amount AND lower(prior.message)=lower(t.message))
+)"""
+
+
 def withdrawal_config():
     # Do not send any payment until an actual outgoing receipt format is verified.
     try:
@@ -692,7 +701,7 @@ class Handler(BaseHTTPRequestHandler):
                        JOIN tickets t ON t.id=r.ticket_id
                        WHERE r.status='reserved' AND t.status='open'
                        AND NOT EXISTS (SELECT 1 FROM withdraw_attempts a WHERE a.ticket_id=t.id)
-                       ORDER BY t.id LIMIT 50""").fetchall()
+                       AND NOT """ + WITHDRAWAL_BLOCKED + " ORDER BY t.id LIMIT 50").fetchall()
             items = []
             for row in rows:
                 nick = re.fullmatch(r"\[MINECRAFT NICK\] (\.?[A-Za-z0-9_]{3,16})", row["message"])
@@ -1067,9 +1076,10 @@ class Handler(BaseHTTPRequestHandler):
                                 or (cap and ticket["amount"] > cap)
                                 or ticket["amount"] > 9_007_199_254_740_991):
                             return self.fail(409, "Withdrawal outside automatic limits")
-                    # A single unresolved send blocks further automatic transfers until reconciliation.
-                    if db.execute("SELECT ticket_id FROM withdraw_attempts WHERE status IN ('claimed','needs_review') LIMIT 1").fetchone():
-                        return self.fail(409, "An earlier payout needs reconciliation")
+                    blocked = db.execute("SELECT t.id FROM tickets t WHERE t.id=? AND " + WITHDRAWAL_BLOCKED,
+                                         (tid,)).fetchone()
+                    if blocked:
+                        return self.fail(409, "A payout is in flight or a matching payment needs review")
                     recent = db.execute("""SELECT r.amount,a.created FROM withdraw_attempts a
                         JOIN withdraw_reservations r ON r.ticket_id=a.ticket_id""").fetchall()
                     if daily and ticket["amount"] + sum(r["amount"] for r in recent
