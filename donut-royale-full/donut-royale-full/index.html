@@ -5747,7 +5747,7 @@ refresh().catch(err=>toast(err.message));
 
   // Small fixed number of decorative flakes; never intercept clicks.
   const flakes = document.createDocumentFragment();
-  for (let i = 0; i < 72; i++) {
+  for (let i = 0; i < 38; i++) {
     const flake = document.createElement("span");
     flake.className = "xmas-snowflake";
     flake.textContent = i % 6 === 0 ? "✧" : "❄";
@@ -5812,29 +5812,6 @@ refresh().catch(err=>toast(err.message));
   });
 })();
 
-</script>
-
-
-<!-- Mega Christmas: decorative only -->
-<style>
-body{background-color:#10271e!important;background-image:radial-gradient(ellipse at 10% 10%,#74252d66,transparent 45%),radial-gradient(ellipse at 90% 50%,#176b4c66,transparent 55%)!important}
-.xmas-event{border:2px solid #f5cf83!important;box-shadow:0 0 30px #e7bd5140,inset 0 0 25px #e7bd5115!important}
-.game-card{outline:1px solid #d8b56c88;outline-offset:-1px}
-.game-card:hover{outline-color:#ffe3a0;box-shadow:0 0 24px #ffd98055}
-#mega-xmas-garland{position:fixed;inset:0 0 auto;z-index:9999;display:flex;justify-content:space-around;pointer-events:none;height:12px;background:repeating-linear-gradient(120deg,#b92439 0 12px,#fff4d7 12px 24px);box-shadow:0 3px 16px #f9ce75aa}
-#mega-xmas-garland span{position:relative;top:9px;font-size:19px;filter:drop-shadow(0 0 6px #ffdc82);animation:megaGlow 2s ease-in-out infinite alternate}
-#mega-xmas-garland span:nth-child(3n){animation-delay:-1s}
-@keyframes megaGlow{to{opacity:.55;transform:translateY(3px)}}
-#mega-xmas-corners{position:fixed;inset:0;pointer-events:none;z-index:100;overflow:hidden}
-#mega-xmas-corners span{position:absolute;bottom:10px;font-size:clamp(32px,5vw,70px);filter:drop-shadow(0 0 12px #ffd67888)}
-#mega-xmas-corners span:first-child{left:8px}#mega-xmas-corners span:last-child{right:8px}
-#mega-xmas-greeting{margin:12px 0;padding:12px;text-align:center;color:#fff3c8;background:linear-gradient(100deg,#781f35,#14533d,#781f35);border:1px solid #e6c67c;border-radius:12px;font-weight:800;letter-spacing:1px}
-@media(max-width:600px){#mega-xmas-garland span:nth-child(even){display:none}#mega-xmas-corners{display:none}}
-@media(prefers-reduced-motion:reduce){#mega-xmas-garland span{animation:none}}
-</style>
-<div id="mega-xmas-garland" aria-hidden="true"></div><div id="mega-xmas-corners" aria-hidden="true"><span>🎄🎁</span><span>☃️🎁</span></div>
-<script>
-(()=>{const g=document.getElementById('mega-xmas-garland');const ornaments=['🔴','⭐','🟢','🔔','❄️','🎀'];for(let i=0;i<24;i++){const s=document.createElement('span');s.textContent=ornaments[i%ornaments.length];g.append(s)}const event=document.querySelector('.xmas-event');if(event){const banner=document.createElement('div');banner.id='mega-xmas-greeting';banner.textContent='🎅 ✨ MERRY CHRISTMAS • DONUT ROYALE WINTER WONDERLAND ✨ 🎄';event.before(banner)}})();
 </script>
 
 </body>
